@@ -1,0 +1,53 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { registerSecret, SECRET_NAMES } from "./secrets.ts";
+
+export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+function readEnvFile(file: string): Record<string, string> {
+  if (!fs.existsSync(file)) return {};
+  const out: Record<string, string> = {};
+  for (const line of fs.readFileSync(file, "utf8").split("\n")) {
+    const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+    if (!m) continue;
+    out[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+  return out;
+}
+
+const fileEnv = readEnvFile(path.join(ROOT, ".env.local"));
+// Optional machine-wide sandbox settings shared by several local projects (lowest priority).
+const sharedEnv = readEnvFile(process.env.HEISTPROOF_SHARED_ENV ?? path.join(process.env.HOME ?? "", ".config", "paypal-hackathon", "sandbox.env"));
+export const env = (name: string, fallback?: string): string | undefined => process.env[name] ?? fileEnv[name] ?? sharedEnv[name] ?? fallback;
+for (const name of SECRET_NAMES) registerSecret(env(name));
+export const requireEnv = (name: string): string => {
+  const v = env(name);
+  if (!v) throw new Error(`${name} is not set. Run: npm run setup`);
+  return v;
+};
+
+export const paypal = {
+  clientId: () => requireEnv("PAYPAL_CLIENT_ID"),
+  clientSecret: () => requireEnv("PAYPAL_CLIENT_SECRET"),
+  apiBase: () => env("PAYPAL_API_BASE", "https://api-m.sandbox.paypal.com")!,
+};
+
+export const PORTS = {
+  console: 4410,
+  shop: 4411,
+  shopBaseline: 4412,
+  webhookTap: 4417,
+  paypalProxy: 4418,
+  probe: 4419,
+};
+
+/** The APIMatic Context Plugin for PayPal, pinned to the marketplace commit this project was built against. */
+export const APIMATIC = {
+  repo: "https://github.com/context-plugins/plugin-marketplace.git",
+  commit: env("APIMATIC_MARKETPLACE_COMMIT", "7cbdf85dc95f09d9ede8c5d349506686684fa0d4")!,
+  dir: path.join(ROOT, ".heistproof", "vendor", "plugin-marketplace"),
+  pluginDir: () => path.join(ROOT, ".heistproof", "vendor", "plugin-marketplace", "plugins", "paypal"),
+};
+
+export const HEISTPROOF_PLUGIN_DIR = path.join(ROOT, "plugin");

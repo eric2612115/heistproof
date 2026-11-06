@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Heistproof</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand"><span class="lock" aria-hidden="true"></span>Heistproof</div>
+      <select id="run-select" aria-label="Run"></select>
+      <div class="engine" id="engine"></div>
+    </header>
+
+    <section class="title">
+      <div>
+        <p class="eyebrow" id="eyebrow">Card-only shop</p>
+        <h1 id="headline">Add PayPal. Then try to rob it.</h1>
+      </div>
+      <div class="verdict pending" id="verdict">Running</div>
+    </section>
+
+    <nav class="rail" id="rail">
+      <div data-phase="migrate"><b>1</b>Add PayPal<small>coding agent</small></div>
+      <div data-phase="prove"><b>2</b>Buy it<small>real sandbox purchase</small></div>
+      <div data-phase="attack"><b>3</b>Rob it<small>Checkout Chaos</small></div>
+      <div data-phase="fix"><b>4</b>Fix it<small>agent patches, re-test</small></div>
+      <div data-phase="ship"><b>5</b>Ship it<small>pull request + evidence</small></div>
+    </nav>
+
+    <main class="grid">
+      <section class="panel agent">
+        <header><h2>Coding agent</h2><span id="skill-count" class="chip"></span></header>
+        <ol id="agent-log"></ol>
+      </section>
+
+      <section class="panel board">
+        <header><h2>Heist board</h2><span id="board-score" class="chip"></span></header>
+        <div id="cards" class="cards"></div>
+      </section>
+
+      <section class="panel proof">
+        <header><h2>Proof</h2><span id="proof-chip" class="chip"></span></header>
+        <div id="amount" class="amount" hidden></div>
+        <dl id="proof-facts" class="facts"></dl>
+        <div id="shots" class="shots"></div>
+      </section>
+    </main>
+
+    <dialog id="viewer"><img id="viewer-img" alt="" /><button id="viewer-close" type="button">Close</button></dialog>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

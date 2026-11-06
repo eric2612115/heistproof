@@ -1,0 +1,131 @@
+<p align="center"><img src="assets/logo-512.png" width="96" alt="Heistproof logo"></p>
+
+# Heistproof
+
+**Add PayPal, Venmo and Pay Later to a card-only shop with an AI coding agent. Then try to rob it. Nothing ships until every attack fails.**
+
+A shopper asks a small shop "Do you take Venmo?". Heistproof answers with a pull request:
+
+1. **Add.** A coding agent (Claude Code with [APIMatic's PayPal Context Plugin](https://github.com/context-plugins/plugin-marketplace/tree/main/plugins/paypal)) reads the shop and adds JS SDK v6 buttons for PayPal, Venmo and Pay Later with Pay Later messaging, server-side Orders v2 create and capture through APIMatic's PayPal TypeScript SDK, and signature-verified webhooks wired into the shop's own fulfilment. Before it edits a file it writes `paypal-plan.md`, a contract sheet grounded in the SDK's own map.
+2. **Buy.** A browser agent makes a real purchase in the PayPal sandbox, like a shopper. Before it approves, it checks that the amount PayPal will charge equals the bag total (a $49 hoodie must not become a $4,900 PayPal order).
+3. **Rob.** *Checkout Chaos* attacks the running shop in the sandbox: a $0.01 price, payment claimed for an order nobody approved, shipping on approval alone, forged and replayed webhooks, events out of order, a double-click capture, a card declined at capture (PayPal's own negative-testing header), bad bags and a hunt for the secret in the browser.
+4. **Fix.** Anything that works for the attacker goes back to the coding agent with the evidence, and the whole check runs again.
+5. **Ship.** The output is a branch with the change, its tests and `HEISTPROOF-REPORT.md`: the verdict and PayPal's own order, capture, webhook and debug ids for every check.
+
+> All money is PayPal sandbox money. The shop is a sample shop. See [Sandbox vs production](#sandbox-vs-production).
+
+## Try it
+
+| What you want | What you need | Command |
+|---|---|---|
+| Watch real recorded runs (agent steps, purchase, attacks, evidence) | nothing | `npm install && npm run console` then open http://127.0.0.1:4410 |
+| Buy and attack the shop the agent already wrote | a PayPal sandbox app | `npm run check -- examples/fogline-after` |
+| Let Heistproof harden a naive PayPal checkout | a PayPal sandbox app + any AI key | `npm run heist -- fogline-naive --existing` |
+| The whole job on the card-only shop | a PayPal sandbox app + any AI key | `npm run heist -- fogline-express` |
+
+Setup, once:
+
+```bash
+git clone https://github.com/eric2612115/heistproof && cd heistproof
+npm install            # also installs Playwright's Chromium
+npm run setup          # asks for your sandbox app, buyer and (optional) AI key; secrets are hidden and stay in .env.local
+npm run doctor         # checks every setting and tells you what to fix
+```
+
+You also need `cloudflared` so PayPal's sandbox can deliver webhooks to your machine (`brew install cloudflared`, or the [download page](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) on Windows and Linux). Already have a public URL that forwards to port 4417? Set `HEISTPROOF_PUBLIC_URL` instead.
+
+A PayPal sandbox app takes two minutes: [developer.paypal.com](https://developer.paypal.com) > Apps & Credentials > Sandbox > Create App (a US business account). The sandbox buyer is any Personal account under Testing Tools > Sandbox Accounts.
+
+## Bring any model
+
+The agent harness is always Claude Code, because that is where APIMatic's plugin lives. The model behind it is whatever key you paste into `npm run setup`:
+
+| Key | Provider | How it is called |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic | directly |
+| `MODEL_API_KEY` | Meta Model API (Muse) | directly (Anthropic Messages protocol) |
+| `DEEPSEEK_API_KEY` | DeepSeek | directly (Anthropic Messages protocol) |
+| `OPENAI_API_KEY` | OpenAI | through Heistproof's built-in protocol bridge |
+| `GEMINI_API_KEY` | Google Gemini | through the bridge (Gemini's OpenAI-compatible API) |
+| `OPENROUTER_API_KEY` | OpenRouter (any model) | through the bridge |
+| `HEISTPROOF_BASE_URL` + `HEISTPROOF_API_KEY` + `HEISTPROOF_MODEL` | anything OpenAI- or Anthropic-compatible | bridge or direct (`HEISTPROOF_PROTOCOL`) |
+
+`src/bridge.ts` translates Claude Code's Anthropic Messages calls (tools and streaming included) into Chat Completions and back, so the same agent, plugin and prompts run on any of them. The recorded runs in this repo used Meta's `muse-wonder-1.0`.
+
+## PayPal APIs used
+
+| API | Where | What for |
+|---|---|---|
+| JS SDK v6 `paypal-payments`, `venmo-payments` | shop (written by the agent) | PayPal, Venmo and Pay Later buttons, one-time payment sessions |
+| JS SDK v6 `paypal-messages` | shop | "Pay in 4 interest-free payments of $12.25" next to the total |
+| Orders v2: create, capture, get | shop, via APIMatic's PayPal TypeScript SDK | server-priced orders, capture, re-reading unknown outcomes |
+| Webhooks: verify-webhook-signature | shop | trust no event until PayPal confirms its signature |
+| Webhooks: create / update webhook | Heistproof | points the sandbox app's webhook at the run's public address |
+| Orders v2: get | Heistproof | checks PayPal's amount and capture against what the shop recorded |
+| Negative testing (`PayPal-Mock-Response`) | Heistproof's recording proxy | real `INSTRUMENT_DECLINED` and `TRANSACTION_REFUSED` answers from the sandbox at capture |
+| OAuth 2.0 client credentials | both | access tokens |
+
+## Sandbox vs production
+
+| | In this repo (sandbox) | In production |
+|---|---|---|
+| Money | PayPal sandbox only, no real funds | live app credentials, `PAYPAL_API_BASE=https://api-m.paypal.com`, live SDK URL |
+| Attacks | run against the sandbox, including `PayPal-Mock-Response` | never run against live; run Heistproof in CI against your sandbox app before deploying |
+| Webhooks | a temporary tunnel address registered on the sandbox app | your deployed URL, registered once |
+| `testBuyerCountry` | `US`, so Venmo and Pay Later show when testing from outside the US | not sent |
+| Shops | sample shops in `shops/` | your repository; Heistproof opens a branch and a pull request |
+
+## The attacks
+
+| Attack | Rule it tests | What a failure looks like |
+|---|---|---|
+| Pay $0.01 for the $49 hoodie | prices come only from the server; cents become dollars exactly | a PayPal order for USD 0.01, or JPY |
+| Negative, fractional and fake items | the bag is validated | a PayPal order for a quantity of -1 |
+| Claim payment for an order nobody approved | paid means captured | the shop marks an unapproved order paid |
+| Forge PayPal's "payment completed" webhook | every webhook is verified with PayPal | an unsigned or edited event changes an order |
+| Replay a real webhook to ship twice | events are idempotent | two shipping labels for one payment |
+| Send "approved" after "completed" | orders never move backwards | a paid order drops back |
+| Get it shipped on approval alone | approval is not payment | a label for an order that was approved but never captured |
+| Double-click: capture twice at once | fulfil exactly once | two labels from two simultaneous captures |
+| Card declined at capture | failed captures stay unpaid | a label after PayPal's `INSTRUMENT_DECLINED` |
+| Find the PayPal secret in the browser | secrets stay on the server | the client secret in a page or script |
+
+The rules the agent is asked to meet are in [`plugin/skills/checkout-hardening`](plugin/skills/checkout-hardening/SKILL.md); the attacks are in [`src/attacks.ts`](src/attacks.ts).
+
+## How it works
+
+```
+card-only shop ──> coding agent (Claude Code + APIMatic PayPal Context Plugin + Heistproof skills, any model)
+                        │  paypal-plan.md, code, tests
+                        v
+shop on :4411 <──> recording proxy (:4418) <──> PayPal sandbox API   (negative-testing header injected here)
+     ^                                              │
+     │ webhooks (byte-exact copies kept)            │ webhooks
+webhook tap (:4417) <── cloudflared tunnel <────────┘
+     ^
+browser agent (Playwright): buys like a shopper, checks the amount, approves as the sandbox buyer
+     │
+Checkout Chaos: replays and tampers what it watched, reads the shop's back office and PayPal's own records
+     │
+report + fix loop + branch with HEISTPROOF-REPORT.md
+```
+
+- `src/agent.ts` runs Claude Code headless through the Claude Agent SDK, with APIMatic's plugin pinned to a marketplace commit, an isolated config folder, a tool allow-list and a guard that keeps the agent out of secrets and inside the shop folder.
+- `src/prove.ts` is the browser agent; it handles JS SDK v6 web components and v5 iframes.
+- `src/attacks.ts` learns the shop's checkout routes by watching the real purchase, so it works on code it did not write.
+- `src/console` is the live view shown in the video.
+
+## APIMatic's PayPal Context Plugin
+
+The plugin (`paypal@context-plugins`, MIT) is a set of skills that point a coding agent at the SDK map shipped inside APIMatic's PayPal TypeScript SDK and make it plan before it codes. In every recorded run the agent loads `typescript-integrate-paypal` first, then the getting-started, error-handling, client-initialization, testing, calling-endpoints, authentication, models and configuration-resilience skills, writes `paypal-plan.md` and only then edits the shop. The project also enables the plugin for Claude Code in `.claude/settings.json`.
+
+## Limits
+
+- The sample shops are small Express apps. Other stacks need their own templates; the attacks only need the shop to run.
+- `cloudflared` quick tunnels are for testing; they change address every run, and Heistproof re-points the sandbox webhook each time.
+- PayPal's sandbox login page can change; the browser agent's selectors are in `src/prove.ts`.
+- A model that ignores the plugin still gets attacked; the attacks, not the model's summary, decide whether it ships.
+
+## License
+
+MIT. APIMatic's plugin is fetched at run time under its own MIT license. Sample shop art is original.

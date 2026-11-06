@@ -1,0 +1,101 @@
+:root {
+  --fog: #f3f1ec;
+  --fog-deep: #e4e0d6;
+  --ink: #13202b;
+  --muted: #5f6b73;
+  --buoy: #e8642c;
+  --harbor: #2f5d62;
+  --line: #d9d4c8;
+  --white: #ffffff;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
+  background: var(--fog);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, .wordmark { font-family: "Fraunces", Georgia, serif; }
+img { display: block; max-width: 100%; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 40px; background: rgba(243, 241, 236, 0.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.wordmark { font-size: 26px; font-weight: 700; color: var(--ink); text-decoration: none; letter-spacing: -0.5px; }
+.wordmark span { font-family: "Inter", sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-left: 10px; }
+.topbar nav { display: flex; gap: 24px; align-items: center; }
+.topbar nav a { color: var(--ink); text-decoration: none; font-weight: 500; }
+.bag-button { border: 1px solid var(--ink); background: transparent; border-radius: 999px; padding: 8px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+.bag-button span { display: inline-grid; place-items: center; min-width: 22px; height: 22px; margin-left: 6px; border-radius: 999px; background: var(--ink); color: var(--fog); font-size: 12px; }
+
+main { max-width: 1180px; margin: 0 auto; padding: 32px 40px 80px; }
+
+.hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 56px; align-items: center; min-height: 520px; }
+.hero-art { border-radius: 28px; background: radial-gradient(120% 90% at 30% 20%, #ffffff 0%, var(--fog-deep) 60%, #d3cdbf 100%); padding: 48px; }
+.hero-art img { width: 100%; filter: drop-shadow(0 30px 40px rgba(19, 32, 43, 0.18)); }
+.kicker { text-transform: uppercase; letter-spacing: 2px; font-size: 12px; font-weight: 600; color: var(--harbor); margin: 0 0 12px; }
+.hero h1 { font-size: 64px; line-height: 1; margin: 0 0 18px; letter-spacing: -1.5px; }
+.blurb { font-size: 18px; line-height: 1.55; color: var(--muted); margin: 0 0 24px; max-width: 420px; }
+.price { font-family: "Fraunces", serif; font-size: 34px; font-weight: 700; margin: 0 0 22px; }
+.add { border: 0; background: var(--ink); color: var(--fog); border-radius: 999px; padding: 16px 34px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; }
+.add:hover { background: var(--harbor); transform: translateY(-1px); }
+.add.small { padding: 9px 18px; font-size: 14px; }
+
+.drop h2 { font-size: 30px; margin: 64px 0 20px; }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.card { background: var(--white); border-radius: var(--radius); padding: 24px; border: 1px solid var(--line); }
+.card img { height: 180px; margin: 0 auto 16px; }
+.card h3 { margin: 0 0 6px; font-size: 22px; }
+.card p { margin: 0 0 16px; color: var(--muted); line-height: 1.5; }
+.card-foot { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 18px; }
+
+.scrim { position: fixed; inset: 0; background: rgba(19, 32, 43, 0.35); opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 9; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+.panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); background: var(--white); z-index: 10; transform: translateX(100%); transition: transform 0.25s ease; box-shadow: -20px 0 60px rgba(19, 32, 43, 0.18); overflow-y: auto; }
+.panel.open { transform: none; }
+.panel-inner { padding: 28px 32px 40px; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.panel-head h2 { margin: 0; font-size: 28px; }
+.close { border: 0; background: none; font-size: 32px; cursor: pointer; color: var(--muted); }
+
+.lines { list-style: none; margin: 0; padding: 0; }
+.lines li { display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.lines li img { width: 64px; height: 64px; object-fit: contain; background: var(--fog); border-radius: 10px; padding: 6px; }
+.lines li strong { display: block; }
+.lines li span { color: var(--muted); font-size: 14px; }
+.lines li.empty { display: block; color: var(--muted); }
+.qty { display: flex; align-items: center; gap: 10px; }
+.qty button { width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--line); background: var(--white); cursor: pointer; font-size: 16px; }
+.total-row { display: flex; justify-content: space-between; align-items: baseline; padding: 18px 0 8px; font-size: 18px; }
+.total-row strong { font-family: "Fraunces", serif; font-size: 28px; }
+
+.checkout h3 { font-size: 20px; margin: 18px 0 14px; }
+#payment-options { display: flex; flex-direction: column; gap: 12px; }
+.card-form { display: grid; gap: 12px; }
+.card-form label { display: grid; gap: 6px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.card-form input { width: 100%; min-width: 0; font: inherit; font-size: 16px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--fog); color: var(--ink); }
+.card-form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pay { border: 0; border-radius: 10px; padding: 15px; font: inherit; font-size: 16px; font-weight: 600; background: var(--buoy); color: var(--white); cursor: pointer; }
+.pay:disabled { opacity: 0.6; }
+.fine { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+.paypal-options { display: grid; gap: 10px; }
+.paypal-options paypal-button, .paypal-options venmo-button, .paypal-options paypal-pay-later-button { display: block; }
+.paypal-options [hidden] { display: none !important; }
+.error { color: #b42318; font-weight: 600; min-height: 1em; }
+
+.confirmation { padding: 12px 0; }
+.confirmation h3 { font-size: 30px; margin: 0 0 12px; }
+
+@media (max-width: 860px) {
+  .topbar { padding: 14px 18px; }
+  main { padding: 18px; }
+  .hero { grid-template-columns: 1fr; gap: 24px; }
+  .hero h1 { font-size: 44px; }
+  .grid { grid-template-columns: 1fr; }
+}

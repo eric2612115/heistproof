@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fogline Supply Co.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="wordmark" href="/">Fogline<span>Supply Co.</span></a>
+      <nav>
+        <a href="#drop">The drop</a>
+        <button id="bag-button" class="bag-button" type="button" aria-label="Open bag">Bag <span id="bag-count">0</span></button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="hero"></section>
+
+      <section class="drop" id="drop">
+        <h2>Also in this drop</h2>
+        <div class="grid" id="product-grid"></div>
+      </section>
+    </main>
+
+    <aside class="panel" id="checkout-panel" aria-hidden="true">
+      <div class="panel-inner">
+        <header class="panel-head">
+          <h2 id="panel-title">Your bag</h2>
+          <button class="close" id="close-panel" type="button" aria-label="Close">&times;</button>
+        </header>
+
+        <div id="bag-view">
+          <ul class="lines" id="bag-lines"></ul>
+          <div class="total-row"><span>Total</span><strong id="bag-total">$0.00</strong></div>
+
+          <section class="checkout" id="checkout">
+            <h3>Payment</h3>
+            <div id="payment-options">
+              <form id="card-form" class="card-form" autocomplete="off">
+                <label>Email<input id="email" name="email" type="email" placeholder="you@example.com" required /></label>
+                <label>Card number<input id="card-number" name="number" inputmode="numeric" placeholder="1234 1234 1234 1234" required /></label>
+                <div class="row">
+                  <label>Expiry<input id="card-exp" name="exp" placeholder="MM / YY" required /></label>
+                  <label>CVC<input id="card-cvc" name="cvc" inputmode="numeric" placeholder="123" required /></label>
+                </div>
+                <button id="pay-card" class="pay" type="submit">Pay</button>
+                <p class="fine">Cards only for now. Payments are processed securely.</p>
+              </form>
+            </div>
+            <p class="error" id="checkout-error" role="alert"></p>
+          </section>
+        </div>
+
+        <div id="order-confirmation" class="confirmation" hidden></div>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
