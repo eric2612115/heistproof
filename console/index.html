@@ -3,7 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Heistproof</title>
+    <title>Heistproof: recorded PayPal sandbox robberies</title>
+    <meta name="description" content="An AI coding agent adds PayPal to a shop; Heistproof buys for real in PayPal's sandbox and runs ten robberies on it. Recorded runs: a hand-written checkout robbed 8 ways, the checkout built with Heistproof robbed 0 ways." />
+    <meta property="og:title" content="Heistproof: add PayPal, then try to rob it" />
+    <meta property="og:description" content="Ten scripted robberies with real PayPal sandbox payments. Hand-written checkout: 8 robbed. Built with Heistproof: 0 robbed. Replay the recorded runs, no keys needed." />
+    <meta property="og:type" content="website" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -12,86 +16,140 @@
   </head>
   <body>
     <header class="top">
-      <div class="brand">
+      <a class="brand" href="#" data-home>
         <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs><mask id="hp-seam"><rect width="512" height="512" fill="#fff" /><rect x="232" y="0" width="48" height="216" fill="#000" /><rect x="232" y="296" width="48" height="216" fill="#000" /></mask></defs><circle cx="256" cy="256" r="192" fill="currentColor" mask="url(#hp-seam)" /></svg>
         Heistproof
-      </div>
-      <label class="picker"><span>Run</span><select id="run-select" aria-label="Run"></select></label>
+      </a>
+      <nav class="links" aria-label="Site">
+        <a href="#" data-home id="nav-runs">Runs</a>
+        <a href="https://github.com/eric2612115/heistproof" rel="noopener">GitHub</a>
+        <a id="nav-video" href="#" rel="noopener" hidden>Video</a>
+        <a href="#how" data-how>How it works</a>
+      </nav>
       <div class="engine" id="engine"></div>
     </header>
 
-    <!-- What this run was, in one sentence, and how it ended. The longer story sits behind "Read more". -->
-    <section class="hero">
-      <div class="hero-text">
-        <p class="eyebrow" id="eyebrow"></p>
-        <h1 id="headline">Add PayPal. Then try to rob it.</h1>
-        <p class="story" id="story">Loading the run…</p>
-        <p class="story-more" id="story-more" hidden></p>
-        <button type="button" class="linkish" id="story-btn" data-fold aria-expanded="false" aria-controls="story-more" data-closed="Read more" data-open="Read less" hidden>Read more<span class="chev" aria-hidden="true"></span></button>
+    <!-- ===================== Home: why it matters, the headline result, one card per run ===================== -->
+    <section class="home" id="home" hidden>
+      <div class="intro">
+        <h1>Add PayPal. Then try to rob it.</h1>
+        <p class="why">AI agents now build shops, and soon they will shop in them. One mistake in a checkout is free money for the first agent that finds it. Heistproof lets an AI coding agent add PayPal to a shop, buys from the shop for real in PayPal's sandbox, then runs ten robberies on it. The checkout ships only when every robbery fails.</p>
       </div>
-      <aside class="verdict-card pending" id="verdict-card" aria-live="polite">
-        <p class="verdict-label">Verdict <button type="button" class="info-btn" aria-label="What the verdict means" aria-expanded="false" aria-controls="tip-verdict">i</button></p>
-        <p class="verdict"><span class="dot"></span><span id="verdict-text">Loading</span></p>
-        <p class="verdict-note" id="verdict-note"></p>
-        <div class="tally" id="tally"></div>
-      </aside>
-    </section>
 
-    <!-- The five steps every run goes through -->
-    <nav class="rail" id="rail" aria-label="The five steps">
-      <div data-phase="migrate"><b>1</b><div><span class="name">Add PayPal</span><small id="note-migrate">AI coding agent</small></div></div>
-      <div data-phase="prove"><b>2</b><div><span class="name">Buy it</span><small id="note-prove">real sandbox purchase</small></div></div>
-      <div data-phase="attack"><b>3</b><div><span class="name">Rob it</span><small id="note-attack">10 robberies</small></div></div>
-      <div data-phase="fix"><b>4</b><div><span class="name">Fix it</span><small id="note-fix">agent fixes, check again</small></div></div>
-      <div data-phase="ship"><b>5</b><div><span class="name">Ship it</span><small id="note-ship">branch + evidence report</small></div></div>
-    </nav>
-
-    <main class="grid">
-      <!-- The ten robberies as a checklist; each row opens to show the result, PayPal's ids and the screenshots. -->
-      <section class="panel board">
-        <header><h2>10 robberies</h2><button type="button" class="info-btn" aria-label="What blocked and robbed mean" aria-expanded="false" aria-controls="tip-rows">i</button></header>
-        <ol id="rows" class="rows"></ol>
+      <section class="compare" aria-labelledby="compare-title">
+        <h2 id="compare-title">Same 10 robberies, real sandbox payments</h2>
+        <div class="compare-grid" id="compare"></div>
+        <p class="compare-note" id="compare-note"></p>
       </section>
 
-      <div class="side">
-        <!-- PayPal's own answers: the amount check and three facts first, the rest behind "All evidence". -->
-        <section class="panel proof">
-          <header><h2>Proof from PayPal</h2><button type="button" class="info-btn" aria-label="What these PayPal terms mean" aria-expanded="false" aria-controls="tip-proof">i</button><span class="chip">sandbox · no real money</span></header>
-          <div class="scroll">
-            <p class="empty" id="proof-empty">PayPal's answers appear here once the real purchase starts.</p>
-            <div id="amount" class="amount" hidden></div>
-            <dl id="proof-facts" class="facts"></dl>
-            <button type="button" class="fold-btn" id="proof-btn" data-fold aria-expanded="false" aria-controls="proof-more" data-closed="All evidence" data-open="Less" hidden>All evidence<span class="chev" aria-hidden="true"></span></button>
-            <div id="proof-more" hidden>
-              <div id="refusal" class="refusal" hidden></div>
-              <dl id="proof-more-facts" class="facts"></dl>
-              <div id="shots" class="shots"></div>
-            </div>
+      <section class="runs" aria-labelledby="runs-title">
+        <h2 id="runs-title">Recorded runs</h2>
+        <p class="runs-sub">Every number on this site is read from the run's own event log. Open a run for the verdict, the robberies, PayPal's own ids and the screenshots.</p>
+        <div class="cards" id="cards"></div>
+        <div id="more-runs" hidden><h3>Local runs on this machine</h3><ul class="more" id="more-list"></ul></div>
+      </section>
+
+      <section class="how" id="how" aria-labelledby="how-title">
+        <h2 id="how-title">How a run goes</h2>
+        <ol class="how-steps">
+          <li><b>Add</b><span>An AI coding agent adds PayPal, Venmo and Pay Later to the shop, working from APIMatic's PayPal plugin. It writes a plan before any code.</span></li>
+          <li><b>Buy</b><span>A scripted browser (no AI) buys a $49 hoodie for real in PayPal's sandbox and checks that PayPal will charge exactly the bag total before it approves.</span></li>
+          <li><b>Rob</b><span>Ten scripted robberies try to steal from the running shop: a $0.01 price, payment claimed for an order nobody approved, forged and replayed messages from PayPal, a declined card, a double capture, and more.</span></li>
+          <li><b>Fix</b><span>Anything that worked for the thief goes back to the coding agent with PayPal's own answer (status, issue, debug id), and the whole check runs again.</span></li>
+          <li><b>Ship</b><span>A branch with the change, its tests and the evidence report. A pull request is opened only when the shop is on GitHub and the checkout is safe.</span></li>
+        </ol>
+        <p class="fine">All money is PayPal sandbox money; no real money moves. The shops are sample shops kept in this repository. The robberies are deterministic scripts, not an AI; the AI is the coding agent that writes and fixes the checkout. An incomplete check is never called safe.</p>
+      </section>
+    </section>
+
+    <!-- ===================== One run ===================== -->
+    <section class="run-view" id="run" hidden>
+      <nav class="switch" aria-label="Recorded runs">
+        <a class="back" href="#" data-home>All runs</a>
+        <div class="chips" id="chips"></div>
+      </nav>
+
+      <section class="hero">
+        <div class="hero-text">
+          <p class="eyebrow" id="eyebrow"></p>
+          <h1 id="headline">Add PayPal. Then try to rob it.</h1>
+          <p class="story" id="story">Loading the run…</p>
+          <p class="shop-note" id="shop-note" hidden></p>
+          <ol class="beats" id="beats" aria-label="What happened, in short"></ol>
+        </div>
+        <aside class="verdict-card pending" id="verdict-card" aria-live="polite">
+          <p class="verdict-label"><span>Verdict</span><button type="button" class="info-btn" aria-label="What the verdict means" aria-expanded="false" aria-controls="tip-verdict">i</button></p>
+          <p class="verdict"><span class="dot"></span><span id="verdict-text">Loading</span></p>
+          <p class="verdict-note" id="verdict-note"></p>
+          <div class="tally" id="tally"></div>
+          <div class="actions">
+            <button type="button" class="replay-btn" id="replay-btn" hidden><span class="play" aria-hidden="true"></span><span id="replay-label">Replay this run</span></button>
+            <span class="replay-hint" id="replay-hint" hidden>about 1 min, real timing compressed</span>
           </div>
+          <div class="evidence-links" id="evidence-links"></div>
+        </aside>
+      </section>
+
+      <nav class="rail" id="rail" aria-label="The five steps">
+        <div data-phase="migrate"><b>1</b><div><span class="name">Add PayPal</span><small id="note-migrate">AI coding agent</small></div></div>
+        <div data-phase="prove"><b>2</b><div><span class="name">Buy it</span><small id="note-prove">real sandbox purchase</small></div></div>
+        <div data-phase="attack"><b>3</b><div><span class="name">Rob it</span><small id="note-attack">10 robberies</small></div></div>
+        <div data-phase="fix"><b>4</b><div><span class="name">Fix it</span><small id="note-fix">agent fixes, check again</small></div></div>
+        <div data-phase="ship"><b>5</b><div><span class="name">Ship it</span><small id="note-ship">branch + evidence report</small></div></div>
+      </nav>
+
+      <main class="grid">
+        <section class="panel board" aria-labelledby="board-title">
+          <header><h2 id="board-title">10 robberies</h2><button type="button" class="info-btn" aria-label="What blocked and robbed mean" aria-expanded="false" aria-controls="tip-rows">i</button><span class="chip" id="board-chip"></span></header>
+          <ol id="rows" class="rows"></ol>
+          <p class="notrun-note" id="notrun-note" hidden></p>
         </section>
 
-        <!-- The story, round by round, folded by default; the raw agent log is folded inside it. -->
-        <section class="panel happened">
-          <header><h2>What happened</h2><span id="tl-chip" class="chip"></span><button type="button" class="fold-btn" id="tl-btn" data-fold aria-expanded="false" aria-controls="tl-body" data-closed="Show timeline" data-open="Hide timeline">Show timeline<span class="chev" aria-hidden="true"></span></button></header>
-          <div class="scroll" id="tl-body" hidden>
-            <ol id="timeline" class="tl"></ol>
-            <details id="log-box">
-              <summary>Full agent log <span id="log-count"></span></summary>
-              <ol id="agent-log"></ol>
-            </details>
-          </div>
-        </section>
-      </div>
-    </main>
+        <aside class="side">
+          <section class="panel proof" aria-labelledby="proof-title">
+            <header><h2 id="proof-title">Proof from PayPal</h2><button type="button" class="info-btn" aria-label="What these PayPal terms mean" aria-expanded="false" aria-controls="tip-proof">i</button><span class="chip">sandbox, no real money</span></header>
+            <div class="proof-body">
+              <p class="empty" id="proof-empty">PayPal's answers appear here once the real purchase starts.</p>
+              <div id="heist-box" class="amount bad" hidden></div>
+              <div id="amount" class="amount" hidden></div>
+              <div id="refusal" class="refusal" hidden></div>
+              <dl id="proof-facts" class="facts"></dl>
+              <div id="proof-links" class="proof-links"></div>
+              <button type="button" class="fold-btn" id="proof-btn" data-fold aria-expanded="false" aria-controls="proof-more" data-closed="All evidence" data-open="Less" hidden>All evidence<span class="chev" aria-hidden="true"></span></button>
+              <div id="proof-more" hidden>
+                <dl id="proof-more-facts" class="facts"></dl>
+                <div id="shots" class="shots"></div>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </main>
+
+      <section class="panel happened" aria-labelledby="tl-title">
+        <header><h2 id="tl-title">What happened</h2><span id="tl-chip" class="chip"></span><button type="button" class="fold-btn" id="tl-btn" data-fold aria-expanded="true" aria-controls="tl-body" data-closed="Show the story" data-open="Hide the story">Hide the story<span class="chev" aria-hidden="true"></span></button></header>
+        <div id="tl-body">
+          <ol id="timeline" class="tl"></ol>
+          <details id="log-box">
+            <summary>Full agent log <span id="log-count"></span></summary>
+            <ol id="agent-log"></ol>
+          </details>
+        </div>
+      </section>
+    </section>
 
     <!-- Explanations behind the small "i" buttons -->
-    <div class="tip" id="tip-verdict" hidden><b>Safe to ship</b> means the real sandbox purchase went through once and all 10 robberies were blocked. <b>Do not ship</b> means at least one robbery worked, or the purchase itself failed. <b>Partial check</b> means not every robbery could run, so there is no verdict on the rest.</div>
-    <div class="tip" id="tip-rows" hidden>Each robbery is a real attempt on the shop through PayPal's sandbox, not a simulation. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Skipped</b>: it could not run on this shop. <b>Not run</b>: the run ended first. Open a row for the result and PayPal's own ids.</div>
-    <div class="tip" id="tip-proof" hidden>Everything here comes from PayPal's sandbox, so no real money moves. <b>PayPal order</b>: PayPal's id for the purchase. <b>Capture</b>: the moment PayPal actually took the money. <b>Signed webhook</b>: PayPal's own "payment completed" message, its signature checked with PayPal. <b>All evidence</b> adds the webhook id, the buttons that appeared, the shop's order number and the screenshots.</div>
+    <div class="tip" id="tip-verdict" hidden><b>Safe to ship</b> means the real sandbox purchase went through once and all 10 robberies were blocked. <b>Do not ship</b> means at least one robbery worked, or the purchase itself failed. <b>Incomplete</b> means not every robbery could run, so there is no verdict on the rest; an incomplete check is never called safe.</div>
+    <div class="tip" id="tip-rows" hidden>Each robbery is a real attempt on the shop through PayPal's sandbox, not a simulation. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Not run</b>: it was not part of this recording. <b>Skipped</b>: it could not run on this shop. Open a row for the result, the screenshots and PayPal's own ids.</div>
+    <div class="tip" id="tip-proof" hidden>Everything here comes from PayPal's sandbox, so no real money moves. <b>PayPal order</b>: PayPal's id for the purchase. <b>Capture</b>: the moment PayPal actually took the money. <b>Signed webhook</b>: PayPal's own "payment completed" message, its signature checked with PayPal. The raw answers are the recorded calls, byte for byte.</div>
 
-    <dialog id="viewer">
+    <dialog id="viewer" aria-label="Screenshot">
       <figure><img id="viewer-img" alt="" /><figcaption id="viewer-caption"></figcaption></figure>
       <button id="viewer-close" type="button">Close</button>
+    </dialog>
+
+    <dialog id="doc" aria-labelledby="doc-title">
+      <header><h2 id="doc-title"></h2><a id="doc-raw" href="#" target="_blank" rel="noopener">Open the file</a><button id="doc-close" type="button" aria-label="Close">Close</button></header>
+      <div id="doc-body" class="doc-body"></div>
     </dialog>
     <script type="module" src="/app.js"></script>
   </body>
