@@ -6,13 +6,14 @@ import { fixPrompt } from "./prompts.ts";
 import { diff, runTests, commit, ensureInstalled } from "./workspace.ts";
 import { loadProfile } from "./shop-profile.ts";
 import { shopOrders } from "./shop-process.ts";
+import { reconcile, type Books } from "./books.ts";
 import { pace } from "./config.ts";
 import type { Run, Phase } from "./events.ts";
 
 export type PayPalError = { call: string; status: number; name: string | null; issue: string | null; message: string | null; debugId: string | null };
 /** How the shop answered PayPal's genuine, signed PAYMENT.CAPTURE.COMPLETED event for its own order ("verified" in older runs means accepted). */
 export type WebhookStatus = "accepted" | "verified" | "refused" | "not-delivered";
-export type Round = { round: number; tests: boolean; prove: PurchaseResult; attacks: AttackOutcome[]; webhookVerified?: boolean; webhook?: WebhookStatus; webhookEvent?: string | null; paypalErrors?: PayPalError[] };
+export type Round = { round: number; tests: boolean; prove: PurchaseResult; attacks: AttackOutcome[]; webhookVerified?: boolean; webhook?: WebhookStatus; webhookEvent?: string | null; paypalErrors?: PayPalError[]; books?: Books };
 
 export type Verdict = "safe" | "unsafe" | "incomplete";
 
@@ -20,13 +21,14 @@ export type Verdict = "safe" | "unsafe" | "incomplete";
 export const ALL_ATTACKS = ORDER;
 
 /**
- * safe: the tests pass, the real purchase worked, and all ten robberies ran and were blocked.
- * unsafe: a robbery worked, the tests fail, the shop refused PayPal's genuine webhook, or the purchase failed because of the shop.
+ * safe: the tests pass, the real purchase worked, all ten robberies ran and were blocked, and the shop's books match PayPal's.
+ * unsafe: a robbery worked, the books do not match (an order paid or shipped without PayPal's capture behind it), the tests
+ * fail, the shop refused PayPal's genuine webhook, or the purchase failed because of the shop.
  * incomplete: nothing got through, but not every robbery ran (one was skipped or errored, or only some were asked for),
  * or PayPal's sandbox stopped the purchase. Run it again; an incomplete check is never "safe".
  */
 export function verdictOf(r: Round): Verdict {
-  if (r.attacks.some((a) => a.verdict === "robbed") || !r.tests || r.webhook === "refused") return "unsafe";
+  if (r.attacks.some((a) => a.verdict === "robbed") || !r.tests || r.webhook === "refused" || (r.books?.mismatches.length ?? 0) > 0) return "unsafe";
   if (!r.prove.ok) return environmentProblem(r) ? "incomplete" : "unsafe";
   const held = new Set(r.attacks.filter((a) => a.verdict === "held").map((a) => a.id));
   if (ALL_ATTACKS.some((id) => !held.has(id))) return "incomplete";
@@ -67,13 +69,17 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     }
     let attacks: AttackOutcome[] = [];
     if (!opts.skipAttacks && (legit.ok || legit.paypalOrderId)) {
-      // Without a completed purchase only the attacks that need no buyer and no real webhook can run.
-      // A purchase PayPal captured is enough to attack with, even if the shop then misbehaved (shipped twice, say).
+      // Once a buyer could approve a payment, every robbery can be tried, even if the shop then misbehaved (shipped
+      // twice, or shipped without capturing); a robbery that lacks what it needs says so and does not count as blocked.
+      // Without that, only the robberies that need no buyer can run.
       const buyerFree = ["price-tamper", "bad-bag", "capture-unapproved", "secret-leak"];
-      const purchased = legit.ok || legit.captureStatus === "COMPLETED";
-      const only = purchased ? opts.attacks : (opts.attacks ?? buyerFree).filter((id) => buyerFree.includes(id));
+      const buyerWorks = legit.ok || legit.approved || legit.captureStatus === "COMPLETED";
+      const only = buyerWorks ? opts.attacks : (opts.attacks ?? buyerFree).filter((id) => buyerFree.includes(id));
       attacks = await runAttacks({ run, round, shop: sandbox.shop, proxy: sandbox.proxy, tap: sandbox.tap, legit, items }, only);
     }
+    // After every robbery, the shop's books against PayPal's own records.
+    const books = legit.paypalOrderId ? await reconcile(sandbox.shop, sandbox.proxy.calls, legit).catch(() => undefined) : undefined;
+    if (books) run.emit("attack", "books.reconciled", { round, ...books });
     // The webhook verdict for the round: how the shop answered PayPal's genuine PAYMENT.CAPTURE.COMPLETED for one of its
     // own orders. Events about other shops' orders (one sandbox app can serve several projects) do not count.
     const orders = await shopOrders(sandbox.shop).catch(() => []);
@@ -81,7 +87,7 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     const best = ours.find((d) => d.resourceId === legit.captureId) ?? ours[0];
     const webhook: WebhookStatus = !best ? "not-delivered" : best.shopStatus >= 200 && best.shopStatus < 300 ? "accepted" : "refused";
     run.emit("prove", "prove.webhook", { round, status: webhook, eventId: best?.eventId ?? null, resourceId: best?.resourceId ?? null, shopStatus: best?.shopStatus ?? null, paypalVerified: best?.paypalVerified ?? null, ok: webhook === "accepted" });
-    const result: Round = { round, tests: tests.ok, prove: legit, attacks, webhook, webhookEvent: best?.eventId ?? null, paypalErrors };
+    const result: Round = { round, tests: tests.ok, prove: legit, attacks, webhook, webhookEvent: best?.eventId ?? null, paypalErrors, books };
     run.writeJson(`round${round}.json`, result);
     return result;
   } finally {
@@ -112,6 +118,7 @@ export function failures(r: Round): Array<{ title: string; detail: string }> {
   if (r.webhook === "refused") out.push({ title: "The shop refused PayPal's genuine PAYMENT.CAPTURE.COMPLETED webhook", detail: `A genuine, signed delivery (event ${r.webhookEvent}) to the shop's webhook route did not get a 2xx answer.` });
   for (const a of r.attacks) if (a.verdict === "error") out.push({ title: `Robbery "${a.title}" could not run`, detail: a.summary });
   for (const a of r.attacks) if (a.verdict === "robbed") out.push({ title: `Robbery "${a.title}" worked (${a.what}; rules ${a.rule.join(", ")})`, detail: a.summary });
+  if (r.books?.mismatches.length) out.push({ title: "The shop's books do not match PayPal's", detail: r.books.mismatches.map((m) => `order ${m.order}: ${m.problem}`).join("; ") });
   return out;
 }
 

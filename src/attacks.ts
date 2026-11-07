@@ -1,6 +1,7 @@
 import { getOrder, orderAmount } from "./paypal/rest.ts";
 import { shopOrders, settledOrders, backOfficeUrl, type ShopProcess } from "./shop-process.ts";
 import type { ShopOrder } from "./shop-profile.ts";
+import { itemList, skuKey, qtyKey } from "./checkout-shape.ts";
 import { purchase, browser, type PurchaseResult, type ShopCall } from "./prove.ts";
 import { paypal, pace } from "./config.ts";
 import type { PayPalProxy } from "./paypal/proxy.ts";
@@ -232,10 +233,10 @@ export const ATTACKS: Attack[] = [
       if (!c.ok || !c.create) return noControl(c.why);
       const create = c.create;
       const base = clone(create.body ?? {}) as any;
-      const items = Array.isArray(base.items) ? base.items : Array.isArray(base.cart) ? base.cart : null;
+      const list = itemList(base);
       const variants: Array<{ name: string; body: any }> = [
-        { name: "total fields set to one cent", body: { ...base, amount: "0.01", total: "0.01", totalCents: 1, price: 1, value: "0.01" } },
-        { name: "item prices set to one cent", body: { ...base, ...(items ? { [Array.isArray(base.items) ? "items" : "cart"]: items.map((i: any) => ({ ...i, price: 1, priceCents: 1, unitCents: 1, unit_amount: { currency_code: "USD", value: "0.01" }, amount: "0.01" })) } : {}) } },
+        { name: "total fields set to one cent", body: { ...base, amount: "0.01", total: "0.01", totalCents: 1, total_cents: 1, price: 1, value: "0.01" } },
+        { name: "item prices set to one cent", body: { ...base, ...(list ? { [list.key]: list.items.map((i: any) => ({ ...i, price: 1, priceCents: 1, price_cents: 1, unitCents: 1, unit_amount: { currency_code: "USD", value: "0.01" }, amount: "0.01" })) } : {}) } },
         { name: "currency switched to yen", body: { ...base, currency: "JPY", currency_code: "JPY", currencyCode: "JPY" } },
       ];
       const tries = [];
@@ -265,7 +266,7 @@ export const ATTACKS: Attack[] = [
         tap: ctx.tap,
         items: ctx.items,
         label: `${prefix(ctx)}-attack-penny`,
-        tamperCreate: (body) => ({ ...body, ...Object.fromEntries(Object.entries(variant.body).filter(([k]) => !(k in base) || k === "items" || k === "cart")) }),
+        tamperCreate: (body) => ({ ...body, ...Object.fromEntries(Object.entries(variant.body).filter(([k]) => !(k in base) || k === list?.key)) }),
         skipAmountCheck: true,
         expectPaid: false,
       });
@@ -310,18 +311,19 @@ export const ATTACKS: Attack[] = [
       const c = await control(ctx);
       if (!c.ok || !c.create) return noControl(c.why);
       const base = clone(c.create.body ?? {}) as any;
-      const key = Array.isArray(base.items) ? "items" : Array.isArray(base.cart) ? "cart" : null;
-      if (!key) return { verdict: "skipped", summary: "The create request carries no item list.", evidence: { body: base } };
-      const orig = base[key][0] ?? {};
-      const sku = orig.sku ?? orig.id ?? orig.productId ?? ctx.items[0]?.sku;
+      const list = itemList(base);
+      if (!list) return { verdict: "skipped", summary: "The create request carries no item list (the shop keeps the bag on its server), so bad bags cannot be sent through it.", evidence: { body: base } };
+      const key = list.key;
+      const orig = list.items[0] ?? {};
+      const sk = skuKey(orig) ?? "sku";
+      const qk = qtyKey(orig) ?? "quantity";
       // Each bad bag keeps the real item's fields and changes only what the robbery is about.
-      const withQty = (q: number) => ({ ...orig, ...("qty" in orig || !("quantity" in orig) ? { qty: q } : {}), ...("quantity" in orig ? { quantity: q } : {}) });
-      const unknown = Object.fromEntries(Object.entries(orig).map(([k, v]) => [k, v === sku ? "FREE-HOODIE" : v]));
+      const withQty = (q: number) => ({ ...orig, [qk]: q });
       const bags = [
         { name: "quantity -1", items: [withQty(-1)] },
         { name: "quantity 0.5", items: [withQty(0.5)] },
         { name: "quantity 1000", items: [withQty(1000)] },
-        { name: "unknown product", items: [{ ...unknown, sku: "FREE-HOODIE" }] },
+        { name: "unknown product", items: [{ ...orig, [sk]: "FREE-ITEM-0" }] },
         { name: "empty bag", items: [] },
       ];
       const mark = ctx.proxy.calls.length;
@@ -546,8 +548,13 @@ export const ATTACKS: Attack[] = [
     rule: [8, 10],
     async run(ctx) {
       const { capture } = learnRoutes(ctx.legit);
-      const orderId = approvedOrder.get(ctx);
-      if (!capture || !ctx.legit.paypalOrderId || !orderId) return { verdict: "skipped", summary: "Needs the approved, uncaptured order that approval-alone leaves behind.", evidence: {} };
+      let orderId = approvedOrder.get(ctx);
+      if (!orderId && capture) {
+        // Run on its own (approval-alone did not run): make an approved, uncaptured order the same way.
+        const p = await purchase({ run: ctx.run, phase: "attack", shop: ctx.shop, tap: ctx.tap, items: ctx.items, label: `${prefix(ctx)}-attack-double-setup`, onBeforeCapture: async () => "abort", expectPaid: false });
+        if (p.approved && p.captureBlocked && p.paypalOrderId) orderId = p.paypalOrderId;
+      }
+      if (!capture || !ctx.legit.paypalOrderId || !orderId) return { verdict: "skipped", summary: "Needs an approved, uncaptured order, and none could be made.", evidence: {} };
       const status = (await getOrder(orderId)).body?.status;
       if (status !== "APPROVED") return { verdict: "skipped", summary: `Order ${orderId} is ${status} at PayPal, not APPROVED, so there is nothing to capture twice.`, evidence: { paypalOrderId: orderId, paypalStatus: status } };
       const before = await settle(ctx);

@@ -118,7 +118,7 @@ export class PayPalStandIn {
     const p = url.pathname.replace(/^\/api-m\.sandbox\.paypal\.com(?=\/)/, "");
     if (method === "GET" && /^\/web-sdk\/v6\/core$/.test(p)) return { status: 200, body: this.sdk(), headers: { "content-type": "application/javascript" } };
     if (method === "GET" && p === "/checkoutnow") return this.approvalPage(url.searchParams.get("token") ?? "", url.searchParams.get("fundingSource") ?? "paypal");
-    if (method === "POST" && p === "/checkoutnow/approve") return this.approve(raw);
+    if (method === "POST" && p === "/checkoutnow/approve") return await this.approve(raw);
     if (method === "POST" && p === "/v1/oauth2/token") return this.oauth(headers, raw);
 
     const bearer = /^Bearer (.+)$/.exec(String(headers.authorization ?? ""))?.[1];
@@ -209,7 +209,7 @@ document.getElementById("cancel-link").addEventListener("click", (ev) => { ev.pr
     return { status: 200, body: html };
   }
 
-  private approve(raw: string): Answer {
+  private async approve(raw: string): Promise<Answer> {
     let token = "";
     try {
       token = JSON.parse(raw).token;
@@ -222,7 +222,8 @@ document.getElementById("cancel-link").addEventListener("click", (ev) => { ev.pr
     o.status = "APPROVED";
     o.update_time = now();
     o.payer = { name: { given_name: "Offline", surname: "Buyer" }, email_address: this.payerEmail, payer_id: "OFFLINEPAYER01", address: { country_code: "US" } };
-    this.emit("CHECKOUT.ORDER.APPROVED", "checkout-order", this.view(o), `An order has been approved by buyer.`);
+    // Approval comes before capture: the "approved" event reaches the shop before the buyer's page can ask to capture.
+    await this.emit("CHECKOUT.ORDER.APPROVED", "checkout-order", this.view(o), `An order has been approved by buyer.`, 0);
     return { status: 200, body: { payerId: "OFFLINEPAYER01" } };
   }
 
@@ -290,8 +291,8 @@ document.getElementById("cancel-link").addEventListener("click", (ev) => { ev.pr
     return crypto.createHmac("sha256", this.signingKey).update(`${id}|${time}|${webhookId}|${crc32(body)}`).digest("base64");
   }
 
-  /** Sends a signed event to the webhook address, a moment later, as PayPal does. */
-  private emit(eventType: string, resourceType: string, resource: unknown, summary: string) {
+  /** Sends a signed event to the webhook address, `delayMs` later (PayPal sends capture events a moment after the capture). */
+  private emit(eventType: string, resourceType: string, resource: unknown, summary: string, delayMs = 250): Promise<unknown> {
     const event = {
       id: `WH-${paypalId(17)}`,
       event_version: "1.0",
@@ -315,11 +316,12 @@ document.getElementById("cancel-link").addEventListener("click", (ev) => { ev.pr
       "paypal-transmission-time": time,
       "user-agent": "PayPal/AUHD-214.0-58358640 (Heistproof offline stand-in)",
     };
-    if (!this.webhookUrl) return;
+    if (!this.webhookUrl) return Promise.resolve(null);
     const target = this.webhookUrl;
-    const job = new Promise((r) => setTimeout(r, 250)).then(() => fetch(target, { method: "POST", headers, body }).catch(() => null));
+    const job = new Promise((r) => setTimeout(r, delayMs)).then(() => fetch(target, { method: "POST", headers, body }).catch(() => null));
     this.pending.add(job);
     job.finally(() => this.pending.delete(job));
+    return job;
   }
 
   private view(o: Order) {

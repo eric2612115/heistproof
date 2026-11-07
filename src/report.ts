@@ -55,6 +55,7 @@ export function renderReport(opts: { shopDir: string; rounds: Round[]; title?: s
     lines.push(`- Purchase: ${r.prove.verdict}`);
     if (r.prove.paypalOrderId) lines.push(`  - PayPal order \`${r.prove.paypalOrderId}\`, amount ${r.prove.paypalAmount ? `${r.prove.paypalAmount.currency} ${r.prove.paypalAmount.value}` : "?"} (bag total $${r.prove.bagTotal}), capture \`${r.prove.captureId ?? "none"}\` ${r.prove.captureStatus ?? ""}`);
     lines.push(`- Webhook: ${webhookLine(r)}`);
+    if (r.books) lines.push(`- Books: ${!r.books.matched ? "not matched (the back office shows no PayPal ids)" : r.books.mismatches.length ? `DO NOT MATCH PayPal's records: ${r.books.mismatches.map((m) => `order ${m.order}: ${m.problem}`).join("; ")}` : `${r.books.paid} paid order(s) checked against PayPal's records: each backed by a completed capture, none shipped more than once`}`);
     if (r.attacks.length) {
       lines.push("");
       lines.push("| Robbery | What it tries | Rules | Result | What happened |");

@@ -16,6 +16,9 @@ test("the checkout Heistproof's agent wrote blocks all ten robberies and is safe
   assert.deepEqual(robbedIds(round.attacks), []);
   for (const a of round.attacks) assert.equal(a.verdict, "held", `${a.id}: ${a.summary}`);
   assert.deepEqual(round.attacks.find((a) => a.id === "approved-not-captured")?.untested ?? [], [], "offline, PayPal's approved webhook always arrives, so both halves are tested");
+  assert.equal(round.books?.matched, true);
+  assert.deepEqual(round.books?.mismatches, [], "every paid order is backed by a completed capture, none shipped twice");
+  assert.ok((round.books?.paid ?? 0) >= 2, "the purchase and the double-captured order were checked");
   assert.equal(verdict, "safe");
 });
 
@@ -25,6 +28,7 @@ test("the hand-written afternoon checkout is robbed the same eight ways as in th
   const v = results(round.attacks);
   assert.equal(v["bad-bag"], "held");
   assert.equal(v["secret-leak"], "held");
+  assert.ok((round.books?.mismatches.length ?? 0) > 0, "its books do not match PayPal's: orders paid without a capture, parcels without payments");
   assert.equal(verdict, "unsafe");
 });
 

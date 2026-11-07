@@ -3,6 +3,7 @@ import { chromium, type BrowserContext, type Page } from "playwright";
 import { env, ROOT, sandboxBuyer, isOffline, pace, paypal } from "./config.ts";
 import { getOrder, orderAmount, orderCapture } from "./paypal/rest.ts";
 import { standInSdk } from "./paypal/stand-in-sdk.ts";
+import { itemList } from "./checkout-shape.ts";
 import { shopOrders, settledOrders, type ShopProcess } from "./shop-process.ts";
 import type { ShopOrder } from "./shop-profile.ts";
 import type { Run, Phase } from "./events.ts";
@@ -222,7 +223,7 @@ async function purchaseOnce(opts: PurchaseOptions): Promise<PurchaseResult> {
       } catch {
         /* not JSON */
       }
-      if (body && (Array.isArray(body.items) || Array.isArray(body.cart))) {
+      if (itemList(body)) {
         const tampered = opts.tamperCreate(body);
         run.emit(phase, "prove.tampered", { label, path: new URL(req.url()).pathname, body: tampered });
         return route.continue({ postData: JSON.stringify(tampered) });

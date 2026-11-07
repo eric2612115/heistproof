@@ -69,3 +69,9 @@ test("runs recorded before the reason was structured still read the old wording"
   const legacy = base({ prove: { ok: false, verdict: "PayPal's sandbox checkout page kept failing" } as Round["prove"] });
   assert.equal(verdictOf(legacy), "incomplete");
 });
+
+test("books that do not match PayPal's records make it unsafe, even with every robbery blocked", () => {
+  assert.equal(verdictOf(base({ books: { matched: true, orders: 3, paid: 2, mismatches: [] } })), "safe");
+  assert.equal(verdictOf(base({ books: { matched: true, orders: 3, paid: 2, mismatches: [{ order: "FOG-1", problem: "2 parcels for 1 completed capture(s)" }] } })), "unsafe");
+  assert.equal(verdictOf(base({ books: { matched: false, orders: 3, paid: 2, mismatches: [] } })), "safe", "books that cannot be matched do not decide");
+});

@@ -1,0 +1,14 @@
+# .github/workflows/heistproof.yml in your shop's repository: every pull request that touches the checkout is robbed
+# ten ways before it can merge. Offline by default: no PayPal account and no secrets.
+name: Heistproof
+on:
+  pull_request:
+    paths: ["shop/**"]
+jobs:
+  rob:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: eric2612115/heistproof@main
+        with:
+          shop: shop

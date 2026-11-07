@@ -30,3 +30,14 @@ jobs:
           if-no-files-found: ignore
       # The static console (recorded runs, no keys) must still build.
       - run: node scripts/build-site.mjs site
+
+  # Heistproof's own GitHub Action, used the way a shop's repository would use it.
+  action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - id: heistproof
+        uses: ./
+        with:
+          shop: shops/copper-kettle
+      - run: test "${{ steps.heistproof.outputs.verdict }}" = safe
