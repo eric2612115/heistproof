@@ -1,4 +1,11 @@
 // Heistproof console: renders one run's event log (live or recorded).
+// In the static build (data-static="1" on <html>) it reads recorded runs from plain files, so it can be hosted anywhere.
+const STATIC = document.documentElement.dataset.static === "1";
+const api = {
+  list: () => (STATIC ? "runs/index.json" : "/api/runs"),
+  run: (id) => (STATIC ? `runs/${id}/run.json` : `/api/runs/${id}`),
+  file: (id, f) => (STATIC ? `runs/${id}/${encodeURIComponent(f)}` : `/api/runs/${id}/file/${encodeURIComponent(f)}`),
+};
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -194,7 +201,7 @@ function addShots(files) {
   for (const f of files) {
     if (state.files.includes(f)) continue;
     state.files.push(f);
-    $("#shots").insertAdjacentHTML("beforeend", `<img src="/api/runs/${state.runId}/file/${encodeURIComponent(f)}" alt="${esc(f)}" title="${esc(f)}" />`);
+    $("#shots").insertAdjacentHTML("beforeend", `<img src="${api.file(state.runId, f)}" alt="${esc(f)}" title="${esc(f)}" />`);
   }
 }
 
@@ -205,16 +212,23 @@ async function open(runId) {
   clearTimeout(replayTimer);
   reset(runId);
   const params = new URLSearchParams(location.search);
-  history.replaceState(null, "", `/run/${runId}${location.search}`);
+  if (!STATIC) history.replaceState(null, "", `/run/${runId}${location.search}`);
+  else history.replaceState(null, "", `#${runId}`);
   const speed = Number(params.get("replay"));
   if (speed > 0) return replay(runId, speed, Number(params.get("maxgap") ?? 1500));
+  if (STATIC) {
+    // No live stream in the static build: show the recorded run as it ended.
+    const run = await (await fetch(api.run(runId))).json();
+    for (const e of run.events) onEvent(e);
+    return;
+  }
   source = new EventSource(`/api/runs/${runId}/stream`);
   source.onmessage = (m) => onEvent(JSON.parse(m.data));
 }
 
 /** Plays a recorded run back in order, with its real timing compressed (long waits are capped). */
 async function replay(runId, speed, maxGap) {
-  const run = await (await fetch(`/api/runs/${runId}`)).json();
+  const run = await (await fetch(api.run(runId))).json();
   const events = run.events.filter((e) => e.type !== "agent.tool_result");
   let i = 0;
   const step = () => {
@@ -230,9 +244,9 @@ async function replay(runId, speed, maxGap) {
 }
 
 async function main() {
-  const runs = await (await fetch("/api/runs")).json();
+  const runs = await (await fetch(api.list())).json();
   $("#run-select").innerHTML = runs.map((r) => `<option value="${esc(r.id)}">${esc(r.id)}${r.mode ? ` · ${esc(r.mode)}` : ""}${r.safe === true ? " · safe" : r.safe === false ? " · unsafe" : ""}</option>`).join("");
-  const fromUrl = location.pathname.startsWith("/run/") ? location.pathname.slice(5) : null;
+  const fromUrl = STATIC ? location.hash.slice(1) || null : location.pathname.startsWith("/run/") ? location.pathname.slice(5) : null;
   const first = fromUrl ?? runs[0]?.id;
   if (first) {
     $("#run-select").value = first;
