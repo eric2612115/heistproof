@@ -9,8 +9,23 @@ type Check = { name: string; ok: boolean | null; detail: string };
 const checks: Check[] = [];
 const add = (name: string, ok: boolean | null, detail: string) => checks.push({ name, ok, detail });
 
-const [major, minor] = process.versions.node.split(".").map(Number);
-add("Node.js 22.5 or newer", major > 22 || (major === 22 && minor >= 5), `found ${process.versions.node}`);
+/* Node.js: only lines that still get security fixes, at or above their latest security release.
+   October 21, 2026 security release (TLS hostname-check bypasses, a Brotli decoder RCE, DNS truncation):
+   https://nodejs.org/en/blog/vulnerability/october-2026-security-releases . Raise these after each new security release. */
+const PATCHED: Record<number, [number, number, number]> = { 22: [22, 23, 4], 24: [24, 22, 1], 26: [26, 12, 1] };
+const NODE_ADVISORY = "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases";
+const [major, minor, patch] = process.versions.node.split(".").map(Number);
+const floor = PATCHED[major];
+const atLeast = (a: number[], b: number[]) => a[0] !== b[0] ? a[0] > b[0] : a[1] !== b[1] ? a[1] > b[1] : a[2] >= b[2];
+add(
+  "Node.js with current security fixes",
+  floor ? atLeast([major, minor, patch], floor) : false,
+  floor
+    ? atLeast([major, minor, patch], floor)
+      ? `found ${process.versions.node}`
+      : `found ${process.versions.node}, which has known vulnerabilities; install ${floor.join(".")} or newer (${NODE_ADVISORY})`
+    : `found ${process.versions.node}, a line without security support; use the latest 22, 24 (tested) or 26 release`,
+);
 
 try {
   const v = execFileSync("cloudflared", ["--version"], { stdio: ["ignore", "pipe", "pipe"] }).toString().trim().split("\n")[0];

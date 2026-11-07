@@ -51,7 +51,7 @@ A shopper asks a small shop "Do you take Venmo?". Heistproof answers with a pull
 | Let Heistproof harden a naive PayPal checkout | a PayPal sandbox app + any AI key | `npm run heist -- fogline-naive --existing` |
 | The whole job on the card-only shop | a PayPal sandbox app + any AI key | `npm run heist -- fogline-express` |
 
-Setup, once:
+Setup, once. You need Node.js 24.22.1 or newer (tested), or 22.23.4+ / 26.12.1+: older releases are affected by the [October 2026 Node.js security release](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases), and 20.x, 23.x and 25.x no longer get security fixes. `npm run doctor` checks this. With nvm: `nvm install` (reads `.nvmrc`).
 
 ```bash
 git clone https://github.com/eric2612115/heistproof && cd heistproof

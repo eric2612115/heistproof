@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          check-latest: true
+          cache: npm
+      # The unit tests need no browser; skip the Playwright download in postinstall.
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+      # The static console (recorded runs, no keys) must still build.
+      - run: node scripts/build-site.mjs site
