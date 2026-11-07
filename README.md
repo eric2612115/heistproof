@@ -6,7 +6,7 @@
 
 A shopper asks a small shop "Do you take Venmo?". Heistproof answers with a pull request:
 
-1. **Add.** A coding agent (Claude Code with [APIMatic's PayPal Context Plugin](https://github.com/context-plugins/plugin-marketplace/tree/main/plugins/paypal)) reads the shop and adds JS SDK v6 buttons for PayPal, Venmo and Pay Later with Pay Later messaging, server-side Orders v2 create and capture through APIMatic's PayPal TypeScript SDK, and signature-verified webhooks wired into the shop's own fulfilment. Before it edits a file it writes `paypal-plan.md`, a contract sheet grounded in the SDK's own map.
+1. **Add.** A coding agent (Claude Code with [APIMatic's PayPal Context Plugin](https://github.com/context-plugins/plugin-marketplace/tree/main/plugins/paypal)) reads the shop and adds JS SDK v6 buttons for PayPal, Venmo and Pay Later with Pay Later messaging, server-side Orders v2 create and capture through APIMatic's PayPal TypeScript SDK, and signature-verified webhooks wired into the shop's own fulfilment. Before it writes any PayPal code it writes `paypal-plan.md`, a contract sheet grounded in the SDK's own map.
 2. **Buy.** A browser agent makes a real purchase in the PayPal sandbox, like a shopper. Before it approves, it checks that the amount PayPal will charge equals the bag total (a $49 hoodie must not become a $4,900 PayPal order).
 3. **Rob.** *Checkout Chaos* attacks the running shop in the sandbox: a $0.01 price, payment claimed for an order nobody approved, shipping on approval alone, forged and replayed webhooks, events out of order, a double-click capture, a card declined at capture (PayPal's own negative-testing header), bad bags and a hunt for the secret in the browser.
 4. **Fix.** Anything that works for the attacker goes back to the coding agent with the evidence, and the whole check runs again.
@@ -150,7 +150,7 @@ report + fix loop + branch with HEISTPROOF-REPORT.md
 
 ## APIMatic's PayPal Context Plugin
 
-The plugin (`paypal@context-plugins`, MIT) is a set of skills that point a coding agent at the SDK map shipped inside APIMatic's PayPal TypeScript SDK and make it plan before it codes. In every recorded run the agent loads `typescript-integrate-paypal` first, then the getting-started, error-handling, client-initialization, testing, calling-endpoints, authentication, models and configuration-resilience skills, writes `paypal-plan.md` and only then edits the shop. The project also enables the plugin for Claude Code in `.claude/settings.json`.
+The plugin (`paypal@context-plugins`, MIT) is a set of skills that point a coding agent at the SDK map shipped inside APIMatic's PayPal TypeScript SDK and make it plan before it codes. In every recorded run the agent loads `typescript-integrate-paypal` first, then the getting-started, error-handling, client-initialization, testing, calling-endpoints, authentication, models and configuration-resilience skills, installs the SDK, writes `paypal-plan.md`, and only then writes the PayPal code. The project also enables the plugin for Claude Code in `.claude/settings.json`.
 
 ## Limits
 

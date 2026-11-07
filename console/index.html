@@ -6,52 +6,77 @@
     <title>Heistproof</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="icon" href="logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="top">
-      <div class="brand"><span class="lock" aria-hidden="true"></span>Heistproof</div>
-      <select id="run-select" aria-label="Run"></select>
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs><mask id="hp-seam"><rect width="512" height="512" fill="#fff" /><rect x="232" y="0" width="48" height="216" fill="#000" /><rect x="232" y="296" width="48" height="216" fill="#000" /></mask></defs><circle cx="256" cy="256" r="192" fill="currentColor" mask="url(#hp-seam)" /></svg>
+        Heistproof
+      </div>
+      <label class="picker"><span>Run</span><select id="run-select" aria-label="Run"></select></label>
       <div class="engine" id="engine"></div>
     </header>
 
-    <section class="title">
-      <div>
-        <p class="eyebrow" id="eyebrow">Card-only shop</p>
+    <!-- What this run was, and how it ended. The verdict card is the first thing a new viewer should read. -->
+    <section class="hero">
+      <div class="hero-text">
+        <p class="eyebrow" id="eyebrow"></p>
         <h1 id="headline">Add PayPal. Then try to rob it.</h1>
+        <p class="story" id="story">Loading the run…</p>
       </div>
-      <div class="verdict pending" id="verdict">Running</div>
+      <aside class="verdict-card pending" id="verdict-card" aria-live="polite">
+        <p class="verdict-label">Verdict</p>
+        <p class="verdict"><span class="dot"></span><span id="verdict-text">Loading</span></p>
+        <p class="verdict-note" id="verdict-note"></p>
+        <div class="tally" id="tally"></div>
+      </aside>
     </section>
 
-    <nav class="rail" id="rail">
-      <div data-phase="migrate"><b>1</b>Add PayPal<small>coding agent</small></div>
-      <div data-phase="prove"><b>2</b>Buy it<small>real sandbox purchase</small></div>
-      <div data-phase="attack"><b>3</b>Rob it<small>Checkout Chaos</small></div>
-      <div data-phase="fix"><b>4</b>Fix it<small>agent patches, re-test</small></div>
-      <div data-phase="ship"><b>5</b>Ship it<small>pull request + evidence</small></div>
+    <!-- The five steps every run goes through -->
+    <nav class="rail" id="rail" aria-label="The five steps">
+      <div data-phase="migrate"><b>1</b><div><span class="name">Add PayPal</span><small id="note-migrate">AI coding agent</small></div></div>
+      <div data-phase="prove"><b>2</b><div><span class="name">Buy it</span><small id="note-prove">real sandbox purchase</small></div></div>
+      <div data-phase="attack"><b>3</b><div><span class="name">Rob it</span><small id="note-attack">10 robberies</small></div></div>
+      <div data-phase="fix"><b>4</b><div><span class="name">Fix it</span><small id="note-fix">agent fixes, check again</small></div></div>
+      <div data-phase="ship"><b>5</b><div><span class="name">Ship it</span><small id="note-ship">pull request + evidence</small></div></div>
     </nav>
 
     <main class="grid">
-      <section class="panel agent">
-        <header><h2>Coding agent</h2><span id="skill-count" class="chip"></span></header>
-        <ol id="agent-log"></ol>
+      <section class="panel happened">
+        <header><h2>What happened</h2><span id="skill-count" class="chip"></span></header>
+        <div class="scroll">
+          <ol id="timeline" class="tl"></ol>
+          <details id="log-box">
+            <summary>Full agent log <span id="log-count"></span></summary>
+            <ol id="agent-log"></ol>
+          </details>
+        </div>
       </section>
 
       <section class="panel board">
-        <header><h2>Heist board</h2><span id="board-score" class="chip"></span></header>
-        <div id="cards" class="cards"></div>
+        <header><h2>10 robberies</h2><span id="board-score" class="chip"></span></header>
+        <ol id="rows" class="rows"></ol>
       </section>
 
       <section class="panel proof">
-        <header><h2>Proof</h2><span id="proof-chip" class="chip"></span></header>
-        <div id="amount" class="amount" hidden></div>
-        <dl id="proof-facts" class="facts"></dl>
-        <div id="shots" class="shots"></div>
+        <header><h2>Proof from PayPal</h2><span class="chip">sandbox · no real money</span></header>
+        <div class="scroll">
+          <p class="empty" id="proof-empty">PayPal's answers appear here once the real purchase starts.</p>
+          <div id="amount" class="amount" hidden></div>
+          <div id="refusal" class="refusal" hidden></div>
+          <dl id="proof-facts" class="facts"></dl>
+          <div id="shots" class="shots"></div>
+        </div>
       </section>
     </main>
 
-    <dialog id="viewer"><img id="viewer-img" alt="" /><button id="viewer-close" type="button">Close</button></dialog>
+    <dialog id="viewer">
+      <figure><img id="viewer-img" alt="" /><figcaption id="viewer-caption"></figcaption></figure>
+      <button id="viewer-close" type="button">Close</button>
+    </dialog>
     <script type="module" src="/app.js"></script>
   </body>
 </html>
