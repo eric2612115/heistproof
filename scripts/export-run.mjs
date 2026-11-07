@@ -15,7 +15,10 @@ const dest = path.join(root, "runs", name);
 if (!fs.existsSync(path.join(src, "events.jsonl"))) throw new Error(`no run at ${src}`);
 
 const secrets = [];
-for (const file of [path.join(root, ".env.local"), path.join(os.homedir(), ".config", "paypal-hackathon", "sandbox.env")]) {
+// Scrub every secret value from .env.local and from the optional shared settings file it names.
+const local = path.join(root, ".env.local");
+const sharedFile = process.env.HEISTPROOF_SHARED_ENV ?? (fs.existsSync(local) ? /^HEISTPROOF_SHARED_ENV=(.*)$/m.exec(fs.readFileSync(local, "utf8"))?.[1]?.trim() : undefined);
+for (const file of [local, sharedFile].filter(Boolean)) {
   if (!fs.existsSync(file)) continue;
   for (const line of fs.readFileSync(file, "utf8").split("\n")) {
     const m = /^([A-Z0-9_]+)=(.*)$/.exec(line.trim());

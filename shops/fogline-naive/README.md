@@ -1,7 +1,7 @@
 # Fogline Supply Co. (naive PayPal checkout)
 
 **A test fixture with deliberate bugs.** This is the Fogline shop with a PayPal checkout written the quick way, so
-Heistproof has something to catch and fix. The mistakes are planted on purpose and are the ones we see most often:
+Heistproof has something to catch and fix. The mistakes are planted on purpose; they are well-known checkout bugs, not a measure of how common each one is:
 
 - the amount is sent to PayPal in cents, so a $49.00 bag becomes a $4,900.00 PayPal order;
 - the server accepts an `amount` and `currency` from the browser;

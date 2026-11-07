@@ -17,8 +17,9 @@ function readEnvFile(file: string): Record<string, string> {
 }
 
 const fileEnv = readEnvFile(path.join(ROOT, ".env.local"));
-// Optional machine-wide sandbox settings shared by several local projects (lowest priority).
-const sharedEnv = readEnvFile(process.env.HEISTPROOF_SHARED_ENV ?? path.join(process.env.HOME ?? "", ".config", "paypal-hackathon", "sandbox.env"));
+// Optional: a settings file shared by several local projects (lowest priority), only when HEISTPROOF_SHARED_ENV names it.
+const sharedPath = process.env.HEISTPROOF_SHARED_ENV ?? fileEnv.HEISTPROOF_SHARED_ENV;
+const sharedEnv = sharedPath ? readEnvFile(sharedPath) : {};
 export const env = (name: string, fallback?: string): string | undefined => process.env[name] ?? fileEnv[name] ?? sharedEnv[name] ?? fallback;
 for (const name of SECRET_NAMES) registerSecret(env(name));
 export const requireEnv = (name: string): string => {
@@ -35,8 +36,8 @@ export function sandboxBuyer(): { email: string; password: string | null } | nul
   const email = env("SANDBOX_BUYER_EMAIL");
   const password = env("SANDBOX_BUYER_PASSWORD");
   if (email && password) return { email, password };
-  const file = process.env.HEISTPROOF_BUYERS_FILE ?? path.join(process.env.HOME ?? "", ".config", "paypal-hackathon", "sandbox-buyers.json");
-  if (fs.existsSync(file)) {
+  const file = env("HEISTPROOF_BUYERS_FILE");
+  if (file && fs.existsSync(file)) {
     try {
       const buyers = (JSON.parse(fs.readFileSync(file, "utf8")).buyers ?? []) as Array<{ email?: string; password?: string }>;
       const pick = buyers.find((b) => b.email === email && b.password) ?? (email ? undefined : buyers.find((b) => b.email && b.password));
@@ -60,7 +61,6 @@ export const paypal = {
 export const PORTS = {
   console: 4410,
   shop: 4411,
-  shopBaseline: 4412,
   webhookTap: 4417,
   paypalProxy: 4418,
   probe: 4419,

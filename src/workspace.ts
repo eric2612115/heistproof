@@ -8,18 +8,41 @@ const sh = (cmd: string, args: string[], cwd: string) => execFileSync(cmd, args,
 
 export const WORK_ROOT = process.env.HEISTPROOF_WORK ?? path.join(os.homedir(), ".heistproof", "work");
 
-/** Copies a sample shop into a fresh git repo outside this project, so the agent never sees Heistproof's own files. */
+/**
+ * Prepares the shop in a work folder outside this project, so the agent never sees Heistproof's own files.
+ * A shop that is its own git repository is cloned with its history, and keeps its GitHub origin so the run can open a
+ * pull request (only committed files are used). A sample shop from shops/ is copied into a fresh repository.
+ */
 export function prepareShop(template: string, runId: string): string {
   const src = path.isAbsolute(template) ? template : path.join(ROOT, "shops", template);
   if (!fs.existsSync(path.join(src, "package.json"))) throw new Error(`no shop at ${src}`);
   const dest = path.join(WORK_ROOT, runId, "shop");
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.cpSync(src, dest, { recursive: true, filter: (p) => !/(^|\/)(node_modules|data|\.git)(\/|$)/.test(path.relative(src, p)) });
-  sh("git", ["init", "-q", "-b", "main"], dest);
-  sh("git", ["add", "-A"], dest);
-  sh("git", ["-c", "user.name=Fogline", "-c", "user.email=dev@fogline.example", "commit", "-q", "-m", "Shop before Heistproof"], dest);
+  if (fs.existsSync(path.join(src, ".git"))) {
+    sh("git", ["clone", "-q", "--no-hardlinks", src, dest], path.dirname(dest));
+    let origin = "";
+    try {
+      origin = sh("git", ["remote", "get-url", "origin"], src).trim();
+    } catch {}
+    if (origin) sh("git", ["remote", "set-url", "origin", origin], dest);
+    else sh("git", ["remote", "remove", "origin"], dest);
+  } else {
+    fs.cpSync(src, dest, { recursive: true, filter: (p) => !/(^|\/)(node_modules|data|\.git)(\/|$)/.test(path.relative(src, p)) });
+    sh("git", ["init", "-q", "-b", "main"], dest);
+    sh("git", ["add", "-A"], dest);
+    sh("git", ["-c", "user.name=Fogline", "-c", "user.email=dev@fogline.example", "commit", "-q", "-m", "Shop before Heistproof"], dest);
+  }
   sh("npm", ["install", "--no-audit", "--no-fund", "--silent"], dest);
   return dest;
+}
+
+/** The Heistproof commit a run was made with, so a recorded run can be matched to the code. */
+export function heistproofCommit(): string | null {
+  try {
+    return sh("git", ["rev-parse", "--short", "HEAD"], ROOT).trim();
+  } catch {
+    return null;
+  }
 }
 
 export function diff(shopDir: string): { stat: string; patch: string } {

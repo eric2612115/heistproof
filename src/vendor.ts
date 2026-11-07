@@ -19,19 +19,3 @@ export function ensureApimaticPlugin(): string {
   if (!fs.existsSync(`${pluginDir}/.claude-plugin/plugin.json`)) throw new Error("APIMatic PayPal plugin not found after checkout");
   return pluginDir;
 }
-
-export function pluginSkills(pluginDir: string): string[] {
-  const out: string[] = [];
-  const walk = (dir: string) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const p = `${dir}/${entry.name}`;
-      if (entry.isDirectory()) walk(p);
-      else if (entry.name === "SKILL.md") {
-        const m = /^name:\s*"?([^"\n]+)"?/m.exec(fs.readFileSync(p, "utf8"));
-        if (m) out.push(m[1]);
-      }
-    }
-  };
-  walk(`${pluginDir}/skills`);
-  return out.sort();
-}

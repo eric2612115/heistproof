@@ -12,10 +12,30 @@ export type PayPalError = { call: string; status: number; name: string | null; i
 export type WebhookStatus = "verified" | "refused" | "not-delivered";
 export type Round = { round: number; tests: boolean; prove: PurchaseResult; attacks: AttackOutcome[]; webhookVerified: boolean; webhook?: WebhookStatus; webhookEvent?: string | null; paypalErrors?: PayPalError[] };
 
-/** Ship only when the real purchase worked, no attack got through, and the shop never refused a genuine webhook. */
-export function isSafe(r: Round): boolean {
-  return r.tests && r.prove.ok && r.webhook !== "refused" && r.attacks.length > 0 && r.attacks.every((a) => a.verdict === "held" || a.verdict === "skipped");
+export type Verdict = "safe" | "unsafe" | "incomplete";
+
+/**
+ * safe: the tests pass, the real purchase worked, the shop accepted PayPal's genuine webhook, and every robbery that ran was blocked.
+ * unsafe: a robbery worked, the tests fail, the shop refused a genuine webhook, or the purchase failed because of the shop.
+ * incomplete: nothing got through, but some robberies were skipped or errored (for example, the sandbox never delivered a
+ * webhook they need), or a sandbox problem stopped the purchase. Run it again; an incomplete check is never "safe".
+ */
+export function verdictOf(r: Round): Verdict {
+  if (r.attacks.some((a) => a.verdict === "robbed") || !r.tests || r.webhook === "refused") return "unsafe";
+  if (!r.prove.ok) return environmentProblem(r) ? "incomplete" : "unsafe";
+  if (r.attacks.length === 0 || r.attacks.some((a) => a.verdict !== "held")) return "incomplete";
+  return "safe";
 }
+
+export function isSafe(r: Round): boolean {
+  return verdictOf(r) === "safe";
+}
+
+export const VERDICT_LINE: Record<Verdict, string> = {
+  safe: "SAFE TO SHIP",
+  unsafe: "DO NOT SHIP",
+  incomplete: "INCOMPLETE: nothing got through, but not every robbery could run; run the check again",
+};
 
 /** One full check of the shop as it is now: build, a real sandbox purchase, then every attack. */
 export async function checkShop(run: Run, shopDir: string, round: number, opts: { attacks?: string[]; skipAttacks?: boolean; method?: "paypal" | "venmo" | "paylater" } = {}): Promise<Round> {

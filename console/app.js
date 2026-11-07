@@ -51,7 +51,7 @@ const SHOPS = {
   "fogline-after": "Fogline, with the checkout Heistproof's agent wrote",
 };
 const MODES = { heistproof: "AI adds PayPal", check: "check only", existing: "AI fixes a checkout", baseline: "baseline" };
-const RAIL_DEFAULT = { migrate: "AI coding agent", prove: "real sandbox purchase", attack: "10 robberies", fix: "agent fixes, check again", ship: "pull request + evidence" };
+const RAIL_DEFAULT = { migrate: "AI coding agent", prove: "real sandbox purchase", attack: "10 robberies", fix: "agent fixes, check again", ship: "branch + evidence report" };
 
 let state;
 let source;
@@ -79,6 +79,7 @@ function reset(runId) {
     finished: false,
     safe: null,
     branchReady: false,
+    pr: null,
     shots: [],
     facts: new Map(),
     logCount: 0,
@@ -334,7 +335,7 @@ function render() {
   $("#verdict-text").textContent = { running: state.mode ? "Running" : "Loading", safe: "Safe to ship", unsafe: "Do not ship", partial: "Partial check" }[v];
   let vnote = "";
   if (v === "running") vnote = state.activity;
-  else if (v === "safe") vnote = [`all ${ATTACKS.length} blocked`, state.paid ? `paid ${state.paid.amount} once` : "", state.branchReady ? "pull request ready" : ""].filter(Boolean).join(" · ");
+  else if (v === "safe") vnote = [`all ${ATTACKS.length} blocked`, state.paid ? `paid ${state.paid.amount} once` : "", state.pr ? "pull request opened" : state.branchReady ? "branch ready" : ""].filter(Boolean).join(" · ");
   else if (v === "unsafe") vnote = c.robbed ? `${c.robbed} of ${robberies(c.ran)} worked` : state.mismatch ? "the purchase was stopped: wrong amount" : "the real purchase did not complete";
   else vnote = [c.notRun ? `only ${c.ran} of ${ATTACKS.length} robberies ran` : "", c.skipped ? `${c.skipped} skipped` : ""].filter(Boolean).join(" · ");
   $("#verdict-note").textContent = vnote;
@@ -635,7 +636,9 @@ function handle(e) {
     case "run.done": {
       state.finished = true;
       state.safe = e.safe;
-      state.branchReady = Boolean(e.branchReady);
+      // Older runs wrote branchReady; newer ones write the branch name and, when the shop is on GitHub, the pull request URL.
+      state.branchReady = Boolean(e.branchReady || e.branch);
+      state.pr = typeof e.pr === "string" && e.pr ? e.pr : null;
       const total = state.t0 ? Math.round((new Date(state.now) - new Date(state.t0)) / 1000) : 0;
       state.duration = total >= 60 ? `took ${Math.round(total / 60)} min` : total ? `took ${total} s` : "";
       if (e.rounds) state.rounds = e.rounds;
@@ -650,8 +653,8 @@ function handle(e) {
       const c = counts();
       const v = verdictOf(c);
       const verdict = { unsafe: "Do not ship", safe: "Safe to ship", partial: "Partial check" }[v];
-      step("verdict", v === "unsafe" ? "bad" : v === "safe" ? "ok" : "info", verdict, v === "safe" ? `every robbery blocked${e.branchReady ? " · branch and pull request ready" : ""}` : v === "partial" ? `${c.ran} of ${ATTACKS.length} robberies ran` : c.robbed ? `${c.robbed} robbed` : "the real purchase did not complete", state.lastRound);
-      note("ship", v === "safe" ? `safe${e.branchReady ? " · branch ready" : ""}` : verdict.toLowerCase());
+      step("verdict", v === "unsafe" ? "bad" : v === "safe" ? "ok" : "info", verdict, v === "safe" ? `every robbery blocked${state.pr ? " · pull request opened" : state.branchReady ? " · branch ready" : ""}` : v === "partial" ? `${c.ran} of ${ATTACKS.length} robberies ran` : c.robbed ? `${c.robbed} robbed` : "the real purchase did not complete", state.lastRound);
+      note("ship", v === "safe" ? `safe${state.pr ? " · pull request opened" : state.branchReady ? " · branch ready" : ""}` : verdict.toLowerCase());
       state.activity = "";
       paintRail();
       break;

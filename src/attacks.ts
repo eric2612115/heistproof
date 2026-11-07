@@ -18,7 +18,7 @@ export type AttackContext = {
   hoodie: Array<{ sku: string; qty: number }>;
 };
 
-type Attack = { id: string; title: string; rule: number[]; needsBuyer?: boolean; run: (ctx: AttackContext) => Promise<Omit<AttackOutcome, "id" | "title" | "rule">> };
+type Attack = { id: string; title: string; rule: number[]; run: (ctx: AttackContext) => Promise<Omit<AttackOutcome, "id" | "title" | "rule">> };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
@@ -354,7 +354,6 @@ export const ATTACKS: Attack[] = [
     id: "approved-not-captured",
     title: "Get it shipped on approval alone",
     rule: [4, 8],
-    needsBuyer: true,
     async run(ctx) {
       const before = await snapshot(ctx.shop);
       const p = await purchase({ run: ctx.run, phase: "attack", shop: ctx.shop, tap: ctx.tap, items: ctx.hoodie, label: "attack-approved-only", onBeforeCapture: async () => "abort", expectPaid: false });
@@ -400,7 +399,6 @@ export const ATTACKS: Attack[] = [
     id: "declined-capture",
     title: "Card declined at capture (PayPal negative testing)",
     rule: [5],
-    needsBuyer: true,
     async run(ctx) {
       const before = await snapshot(ctx.shop);
       const mark = ctx.proxy.calls.length;

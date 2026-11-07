@@ -2,7 +2,8 @@
 // Runs a migrated shop against the PayPal sandbox: one real purchase, then the attacks (and optional fix rounds).
 import path from "node:path";
 import { Run } from "../events.ts";
-import { checkShop, proveAndHarden, isSafe } from "../pipeline.ts";
+import { checkShop, proveAndHarden, verdictOf, VERDICT_LINE } from "../pipeline.ts";
+import { heistproofCommit } from "../workspace.ts";
 import { writeReport } from "../report.ts";
 
 const args = process.argv.slice(2);
@@ -18,11 +19,13 @@ run.onEvent((e) => {
   const detail = e.type === "attack.result" ? `${e.verdict} - ${e.summary}` : e.type === "agent.tool" ? `${e.name} ${String(e.input).slice(0, 120)}` : e.verdict ?? e.summary ?? "";
   console.log(`[${e.t.slice(11, 19)}] ${e.phase} ${e.type} ${String(detail).replace(/\s+/g, " ").slice(0, 220)}`);
 });
-run.emit("prepare", "run.start", { shop: shopDir, template: path.basename(shopDir), mode: "check" });
+run.emit("prepare", "run.start", { shop: shopDir, template: path.basename(shopDir), mode: "check", heistproofCommit: heistproofCommit(), node: process.versions.node });
 const rounds = fixes > 0 ? await proveAndHarden(run, shopDir, fixes) : [await checkShop(run, shopDir, 0, { attacks, skipAttacks: args.includes("--skip-attacks"), method })];
 const report = writeReport(run, { shopDir, rounds });
 const last = rounds.at(-1)!;
 const robbed = last.attacks.filter((a) => a.verdict === "robbed").length;
-const safe = isSafe(last);
-run.emit("ship", "run.done", { safe, robbed, rounds: rounds.length, shop: shopDir });
-console.log(`\nRun ${run.id}: ${safe ? "SAFE TO SHIP" : "DO NOT SHIP"}\nreport: ${report}`);
+const verdict = verdictOf(last);
+const safe = verdict === "safe";
+run.emit("ship", "run.done", { safe, verdict, robbed, rounds: rounds.length, shop: shopDir });
+console.log(`\nRun ${run.id}: ${VERDICT_LINE[verdict]}\nreport: ${report}`);
+process.exitCode = safe ? 0 : verdict === "incomplete" ? 2 : 1;

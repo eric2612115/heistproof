@@ -4,7 +4,7 @@
 
 All payments ran in the PayPal sandbox (no real money). Order and capture ids below are PayPal's own and can be looked up in the merchant's sandbox account.
 
-Coding agent: Claude Code (Meta Model API muse-wonder-1.0) with APIMatic's PayPal Context Plugin. Skills it loaded: none.
+Coding agent: Claude Code (Meta Model API muse-wonder-1.0) with APIMatic's PayPal Context Plugin. Skills it loaded: heistproof:checkout-hardening, heistproof:paypal-web-sdk-v6, paypal:typescript-models, paypal:typescript-error-handling, paypal:typescript-calling-endpoints, paypal:typescript-integrate-paypal, paypal:typescript-getting-started.
 
 ## Round 0: first check
 

@@ -1,6 +1,6 @@
 # Fogline Supply Co.
 
-A small Express storefront that takes cards only. It is the sample shop Heistproof works on.
+The Fogline shop after Heistproof's coding agent added PayPal, Venmo and Pay Later (from the recorded full run). `npm run check -- examples/fogline-after` buys and attacks it in the PayPal sandbox.
 
 - `server.js`: catalog API, card checkout, order status, back office.
 - `lib/cart.js`: prices the bag on the server from `lib/catalog.js`. Prices are integer cents.

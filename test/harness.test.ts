@@ -20,6 +20,7 @@ const purchase = (over: Partial<PurchaseResult> = {}): PurchaseResult => ({
     { method: "POST", path: "/api/paypal/orders/5O190127TN364715T/capture", body: {}, status: 200, response: { status: "fulfilled" } },
   ],
   screenshots: [],
+  consoleErrors: [],
   buttons: { paypal: true, venmo: true, paylater: true },
   payLaterMessage: "Pay in 4 interest-free payments of $12.25.",
   ...over,
