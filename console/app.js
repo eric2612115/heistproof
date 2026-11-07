@@ -6,12 +6,12 @@ const ATTACKS = [
   ["price-tamper", "Pay $0.01 for the $49 hoodie"],
   ["bad-bag", "Negative, fractional and fake items"],
   ["capture-unapproved", "Claim payment for an order nobody approved"],
-  ["forged-webhook", "Forge PayPal's 'payment completed' webhook"],
-  ["webhook-replay", "Replay a real webhook to ship twice"],
-  ["out-of-order", "Send 'approved' after 'completed'"],
   ["approved-not-captured", "Get it shipped on approval alone"],
   ["double-capture", "Double-click: capture twice at once"],
   ["declined-capture", "Card declined at capture (PayPal negative testing)"],
+  ["forged-webhook", "Forge PayPal's 'payment completed' webhook"],
+  ["webhook-replay", "Replay a real webhook to ship twice"],
+  ["out-of-order", "Send 'approved' after 'completed'"],
   ["secret-leak", "Find the PayPal secret in the browser"],
 ];
 
@@ -71,6 +71,8 @@ function shortInput(name, input) {
 
 function onEvent(e) {
   if (e.phase && !["prepare", "build"].includes(e.phase) && e.type !== "agent.tool_result") setPhase(e.phase === "fix" && e.type.startsWith("prove") ? "prove" : e.phase);
+  // Purchases made by attacks are shown on their cards; the Proof panel is about the shopper's own purchase.
+  if (e.type.startsWith("prove.") && String(e.label ?? "").startsWith("attack-")) return;
   switch (e.type) {
     case "run.start": {
       const name = e.template ?? String(e.shop ?? "shop").split("/").pop();
@@ -136,8 +138,20 @@ function onEvent(e) {
       if (e.shopOrder) fact("Shop order", e.shopOrder);
       if (!e.ok && String(e.label).includes("purchase")) state.bad.add("prove");
       break;
+    case "prove.paypal_errors": {
+      const real = (e.errors ?? []).filter((x) => !String(x.call).includes("/oauth2/"));
+      if (!real.length) break;
+      const box = $("#amount");
+      box.hidden = false;
+      box.className = "amount bad";
+      box.innerHTML = real
+        .map((x) => `<div class="row"><span>PayPal refused</span><span>HTTP ${esc(x.status)}</span></div><div class="big" style="font-size:20px">${esc(x.name ?? "")}</div><div class="row"><span>${esc(x.call)}</span></div><div class="verdict-line">debug id ${esc(x.debugId)}: the shop's tests passed, the real API said no</div>`)
+        .join("");
+      log("say", "paypal", `PayPal refused ${esc(real[0].call)}: ${esc(real[0].status)} ${esc(real[0].name ?? "")}`);
+      break;
+    }
     case "prove.webhook":
-      fact("Signed webhook", e.ok ? `${e.eventId} verified (HTTP ${e.shopStatus})` : "not accepted");
+      fact("Signed webhook", e.ok ? `${e.eventId} verified (HTTP ${e.shopStatus})` : e.status === "not-delivered" ? "not delivered by the sandbox yet" : `refused (HTTP ${e.shopStatus})`);
       break;
     case "attack.start": {
       const card = $(`#card-${e.id}`);
