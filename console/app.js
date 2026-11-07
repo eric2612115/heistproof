@@ -56,6 +56,7 @@ const SHOPS = {
   "fogline-naive": "a hand-written PayPal checkout",
   "fogline-afternoon": "a hand-written PayPal checkout",
   "fogline-after": "Fogline, with the checkout Heistproof's agent wrote",
+  "copper-kettle": "Copper Kettle, a second shop built differently on purpose",
 };
 const SHOP_WHY = {
   "fogline-afternoon": "takes the amount from the browser, ships whatever the capture returned and trusts every message that claims to be from PayPal",
