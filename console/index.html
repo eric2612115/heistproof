@@ -20,15 +20,17 @@
       <div class="engine" id="engine"></div>
     </header>
 
-    <!-- What this run was, and how it ended. The verdict card is the first thing a new viewer should read. -->
+    <!-- What this run was, in one sentence, and how it ended. The longer story sits behind "Read more". -->
     <section class="hero">
       <div class="hero-text">
         <p class="eyebrow" id="eyebrow"></p>
         <h1 id="headline">Add PayPal. Then try to rob it.</h1>
         <p class="story" id="story">Loading the run…</p>
+        <p class="story-more" id="story-more" hidden></p>
+        <button type="button" class="linkish" id="story-btn" data-fold aria-expanded="false" aria-controls="story-more" data-closed="Read more" data-open="Read less" hidden>Read more<span class="chev" aria-hidden="true"></span></button>
       </div>
       <aside class="verdict-card pending" id="verdict-card" aria-live="polite">
-        <p class="verdict-label">Verdict</p>
+        <p class="verdict-label">Verdict <button type="button" class="info-btn" aria-label="What the verdict means" aria-expanded="false" aria-controls="tip-verdict">i</button></p>
         <p class="verdict"><span class="dot"></span><span id="verdict-text">Loading</span></p>
         <p class="verdict-note" id="verdict-note"></p>
         <div class="tally" id="tally"></div>
@@ -45,33 +47,47 @@
     </nav>
 
     <main class="grid">
-      <section class="panel happened">
-        <header><h2>What happened</h2><span id="skill-count" class="chip"></span></header>
-        <div class="scroll">
-          <ol id="timeline" class="tl"></ol>
-          <details id="log-box">
-            <summary>Full agent log <span id="log-count"></span></summary>
-            <ol id="agent-log"></ol>
-          </details>
-        </div>
-      </section>
-
+      <!-- The ten robberies as a checklist; each row opens to show the result, PayPal's ids and the screenshots. -->
       <section class="panel board">
-        <header><h2>10 robberies</h2><span id="board-score" class="chip"></span></header>
+        <header><h2>10 robberies</h2><button type="button" class="info-btn" aria-label="What blocked and robbed mean" aria-expanded="false" aria-controls="tip-rows">i</button></header>
         <ol id="rows" class="rows"></ol>
       </section>
 
-      <section class="panel proof">
-        <header><h2>Proof from PayPal</h2><span class="chip">sandbox · no real money</span></header>
-        <div class="scroll">
-          <p class="empty" id="proof-empty">PayPal's answers appear here once the real purchase starts.</p>
-          <div id="amount" class="amount" hidden></div>
-          <div id="refusal" class="refusal" hidden></div>
-          <dl id="proof-facts" class="facts"></dl>
-          <div id="shots" class="shots"></div>
-        </div>
-      </section>
+      <div class="side">
+        <!-- PayPal's own answers: the amount check and three facts first, the rest behind "All evidence". -->
+        <section class="panel proof">
+          <header><h2>Proof from PayPal</h2><button type="button" class="info-btn" aria-label="What these PayPal terms mean" aria-expanded="false" aria-controls="tip-proof">i</button><span class="chip">sandbox · no real money</span></header>
+          <div class="scroll">
+            <p class="empty" id="proof-empty">PayPal's answers appear here once the real purchase starts.</p>
+            <div id="amount" class="amount" hidden></div>
+            <dl id="proof-facts" class="facts"></dl>
+            <button type="button" class="fold-btn" id="proof-btn" data-fold aria-expanded="false" aria-controls="proof-more" data-closed="All evidence" data-open="Less" hidden>All evidence<span class="chev" aria-hidden="true"></span></button>
+            <div id="proof-more" hidden>
+              <div id="refusal" class="refusal" hidden></div>
+              <dl id="proof-more-facts" class="facts"></dl>
+              <div id="shots" class="shots"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- The story, round by round, folded by default; the raw agent log is folded inside it. -->
+        <section class="panel happened">
+          <header><h2>What happened</h2><span id="tl-chip" class="chip"></span><button type="button" class="fold-btn" id="tl-btn" data-fold aria-expanded="false" aria-controls="tl-body" data-closed="Show timeline" data-open="Hide timeline">Show timeline<span class="chev" aria-hidden="true"></span></button></header>
+          <div class="scroll" id="tl-body" hidden>
+            <ol id="timeline" class="tl"></ol>
+            <details id="log-box">
+              <summary>Full agent log <span id="log-count"></span></summary>
+              <ol id="agent-log"></ol>
+            </details>
+          </div>
+        </section>
+      </div>
     </main>
+
+    <!-- Explanations behind the small "i" buttons -->
+    <div class="tip" id="tip-verdict" hidden><b>Safe to ship</b> means the real sandbox purchase went through once and all 10 robberies were blocked. <b>Do not ship</b> means at least one robbery worked, or the purchase itself failed. <b>Partial check</b> means not every robbery could run, so there is no verdict on the rest.</div>
+    <div class="tip" id="tip-rows" hidden>Each robbery is a real attempt on the shop through PayPal's sandbox, not a simulation. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Skipped</b>: it could not run on this shop. <b>Not run</b>: the run ended first. Open a row for the result and PayPal's own ids.</div>
+    <div class="tip" id="tip-proof" hidden>Everything here comes from PayPal's sandbox, so no real money moves. <b>PayPal order</b>: PayPal's id for the purchase. <b>Capture</b>: the moment PayPal actually took the money. <b>Signed webhook</b>: PayPal's own "payment completed" message, its signature checked with PayPal. <b>All evidence</b> adds the webhook id, the buttons that appeared, the shop's order number and the screenshots.</div>
 
     <dialog id="viewer">
       <figure><img id="viewer-img" alt="" /><figcaption id="viewer-caption"></figcaption></figure>

@@ -1,6 +1,8 @@
 // Heistproof console: renders one run's event log (live or recorded) for someone who has never seen Heistproof.
-// The top says what the run was and how it ended; "What happened" tells the story round by round, one line per purchase,
-// with the raw agent log folded away. Attack purchases (labels starting "attack-") stay on their robbery's row.
+// The first screen is the verdict, one sentence on the run, the five steps and the ten robberies as a checklist.
+// Everything else folds: a robbery row opens to its result, PayPal's ids and screenshots; "All evidence" opens the rest of
+// PayPal's answers; "Show timeline" opens the story round by round, with the raw agent log folded inside it.
+// Attack purchases (labels starting "attack-") stay on their robbery's row.
 // In the static build (data-static="1" on <html>) it reads recorded runs from plain files, so it can be hosted anywhere.
 const STATIC = document.documentElement.dataset.static === "1";
 const api = {
@@ -29,8 +31,11 @@ const ATTACKS = [
   ["secret-leak", "Secret in the browser", "Look for the PayPal secret in every page and script"],
 ];
 const ATTACK_NAME = Object.fromEntries(ATTACKS.map(([id, name]) => [id, name]));
+const ATTACK_WHAT = Object.fromEntries(ATTACKS.map(([id, , what]) => [id, what]));
 const STAMP = { waiting: "Waiting", running: "Trying…", held: "Blocked", robbed: "Robbed", skipped: "Skipped", error: "Error", notrun: "Not run" };
 const BUTTONS = { paypal: "PayPal", venmo: "Venmo", paylater: "Pay Later" };
+/* The three facts a viewer needs first; everything else PayPal said sits behind "All evidence". */
+const KEY_FACTS = ["PayPal order", "Capture", "Signed webhook"];
 
 /* Recorded runs that tell the story, in the order a judge should open them. */
 const FEATURED = {
@@ -75,10 +80,13 @@ function reset(runId) {
     safe: null,
     branchReady: false,
     shots: [],
+    facts: new Map(),
     logCount: 0,
     t0: null,
     now: null,
     activity: "",
+    latest: "",
+    duration: "",
     buy: {},
     attack: null,
   };
@@ -86,17 +94,72 @@ function reset(runId) {
   $("#agent-log").innerHTML = "";
   $("#log-box").hidden = true;
   $("#log-box").open = false;
-  $("#rows").innerHTML = ATTACKS.map(([id, name, what]) => `<li class="row waiting" id="row-${id}"><span class="stamp">${STAMP.waiting}</span><div><h3>${esc(name)}</h3> <span class="what">${esc(what)}</span><p class="said"></p><div class="ids"></div><div class="row-shots"></div></div></li>`).join("");
+  $("#rows").innerHTML = ATTACKS.map(
+    ([id, name, what]) =>
+      `<li class="row waiting" id="row-${id}"><button type="button" class="row-head" aria-expanded="false" aria-controls="row-${id}-body" disabled><span class="stamp">${STAMP.waiting}</span><span class="row-text"><span class="name">${esc(name)}</span><span class="what">${esc(what)}</span></span><span class="chev" aria-hidden="true"></span></button><div class="row-body" id="row-${id}-body" hidden><p class="said"></p><div class="ids"></div><div class="row-shots"></div></div></li>`,
+  ).join("");
   $("#proof-facts").innerHTML = "";
+  $("#proof-more-facts").innerHTML = "";
   $("#shots").innerHTML = "";
   $("#amount").hidden = true;
   $("#refusal").hidden = true;
-  $("#skill-count").textContent = "";
-  $("#board-score").textContent = "";
+  fold($("#proof-btn"), false);
+  fold($("#tl-btn"), false);
+  fold($("#story-btn"), false);
   $("#engine").innerHTML = "";
   for (const el of document.querySelectorAll("#rail > div")) el.className = "";
   for (const [phase, text] of Object.entries(RAIL_DEFAULT)) note(phase, text);
   render();
+}
+
+/* ---------- Folding: the "Read more", "All evidence" and "Show timeline" buttons, the robbery rows, the "i" tips ---------- */
+
+/** Opens or closes the block a fold button controls, and relabels the button. */
+function fold(btn, open) {
+  const target = document.getElementById(btn.getAttribute("aria-controls"));
+  btn.setAttribute("aria-expanded", String(open));
+  target.hidden = !open;
+  if (btn.dataset.open) btn.firstChild.textContent = open ? btn.dataset.open : btn.dataset.closed;
+  btn.closest(".panel")?.classList.toggle("open", open);
+}
+
+/** Opens or closes one robbery row; an open row scrolls into view inside the list. */
+function toggleRow(head, open = head.getAttribute("aria-expanded") !== "true") {
+  head.setAttribute("aria-expanded", String(open));
+  document.getElementById(head.getAttribute("aria-controls")).hidden = !open;
+  if (open) head.parentElement.scrollIntoView({ block: "nearest" });
+}
+
+/** Clears a robbery row's folded part and closes it; the row has nothing to show until its result arrives. */
+function clearRow(row, what) {
+  const head = row.querySelector(".row-head");
+  head.disabled = true;
+  toggleRow(head, false);
+  row.querySelector(".what").textContent = what;
+  row.querySelector(".said").textContent = "";
+  row.querySelector(".ids").textContent = "";
+  row.querySelector(".row-shots").innerHTML = "";
+}
+
+function closeTips() {
+  for (const b of document.querySelectorAll('.info-btn[aria-expanded="true"]')) {
+    b.setAttribute("aria-expanded", "false");
+    document.getElementById(b.getAttribute("aria-controls")).hidden = true;
+  }
+}
+
+/** Shows the explanation under an "i" button, kept inside the window. */
+function toggleTip(btn) {
+  const wasOpen = btn.getAttribute("aria-expanded") === "true";
+  closeTips();
+  if (wasOpen) return;
+  const tip = document.getElementById(btn.getAttribute("aria-controls"));
+  const r = btn.getBoundingClientRect();
+  tip.hidden = false;
+  btn.setAttribute("aria-expanded", "true");
+  const w = tip.offsetWidth;
+  tip.style.top = `${Math.round(r.bottom + 8)}px`;
+  tip.style.left = `${Math.round(Math.max(16, Math.min(r.left - 8, window.innerWidth - w - 16)))}px`;
 }
 
 /* ---------- Rail ---------- */
@@ -159,6 +222,7 @@ function step(key, kind, title, detail = "", r = state.round) {
   state.lastRound = r;
   li.className = kind;
   li.innerHTML = `<span class="dot"></span><div><b>${title}</b>${detail ? `<small>${detail}</small>` : ""}</div><time>${li.dataset.at}</time>`;
+  state.latest = li.querySelector("b").textContent; // shown on the folded panel while the run goes on
 }
 
 /** The purchase of this round is one line that changes as the purchase goes on. */
@@ -215,49 +279,62 @@ function verdictOf(c) {
   return "partial";
 }
 
+/** What this run was, in one sentence (the lede), and the rest of the story behind "Read more". */
+function story(c, shop) {
+  const running = !state.finished;
+  const robbing = state.tried.size > 0; // the robberies have begun
+  const refusal = state.refusals[0];
+  const tried = state.finished && c.ran < ATTACKS.length ? `ran ${c.ran} of the ${ATTACKS.length} robberies` : `${running ? "is trying" : "tried"} ${robberies(ATTACKS.length)}`;
+  let lede = "";
+  const more = [];
+  if (state.mode === "heistproof") {
+    if (running && state.phase === "migrate") lede = `An AI coding agent is adding PayPal, Venmo and Pay Later to ${shop}. Heistproof will then buy a hoodie for real in PayPal's sandbox and try ${robberies(ATTACKS.length)} on the shop.`;
+    else if (running && !robbing) lede = `An AI coding agent added PayPal, Venmo and Pay Later to ${shop}. Heistproof is now buying a hoodie for real in PayPal's sandbox, before trying ${robberies(ATTACKS.length)} on the shop.`;
+    else lede = `An AI coding agent added PayPal, Venmo and Pay Later to ${shop}. Heistproof then bought a hoodie for real in PayPal's sandbox and ${tried} on the shop.`;
+    if (state.plugin) more.push("The agent worked from APIMatic's PayPal Context Plugin: its skills and the SDK's own map of PayPal's API.");
+    if (refusal && state.paid) more.push(`The first purchase failed (PayPal answered ${refusal.status} ${refusal.name ?? ""}); the error went back to the agent, which fixed it, and everything ran again.`);
+    else if (refusal) more.push(`The first purchase failed (PayPal answered ${refusal.status} ${refusal.name ?? ""}); the error went back to the agent${state.phase === "fix" ? ", which is fixing it now" : state.round > 0 ? ", which made a fix; the purchase runs again" : ""}.`);
+  } else if (state.mode === "check") {
+    if (running && !robbing) lede = `Heistproof is buying a hoodie for real in PayPal's sandbox on ${shop}, as it is, before trying ${robberies(ATTACKS.length)} on it. No AI changes any code in this run.`;
+    else lede = `Heistproof bought a hoodie for real in PayPal's sandbox on ${shop}, as it is, and ${tried} on it. No AI changed any code in this run.`;
+  } else if (state.mode === "existing") {
+    if (running) lede = `Heistproof is checking ${shop} with a real sandbox purchase and ${robberies(ATTACKS.length)}; an AI coding agent fixes every problem it finds, and it checks again.`;
+    else lede = `Heistproof checked ${shop} with a real sandbox purchase and ${robberies(ATTACKS.length)}; an AI coding agent fixed every problem it found, and it checked again.`;
+    if (state.plugin) more.push("The agent worked from APIMatic's PayPal Context Plugin: its skills and the SDK's own map of PayPal's API.");
+  }
+  if (state.mismatch) more.push(`It stopped one purchase before any money moved: PayPal would have charged ${money(state.mismatch.paypal)} for a ${money(state.mismatch.bag)} bag.`);
+  if (state.finished) {
+    if (c.robbed) more.push(c.robbed < c.ran ? `${c.robbed} of the ${c.ran} robberies worked.` : c.ran === 1 ? "The one robbery that ran worked." : `All ${c.ran} robberies that ran worked.`);
+    else if (c.tried === ATTACKS.length) more.push(`All ${ATTACKS.length} were blocked.`);
+    else if (c.ran === ATTACKS.length) more.push(`${c.blocked} were blocked and ${c.skipped} could not run, so this is only a partial check.`);
+    else if (c.ran) more.push(`Only ${c.ran} of the ${ATTACKS.length} ran (${c.blocked} blocked${c.skipped ? `, ${c.skipped} skipped` : ""}); the other ${c.notRun} did not, so this is only a partial check.`);
+    else more.push("No robbery ran.");
+    if (!c.robbed && state.safe === false && state.bad.has("prove")) more.push("The real purchase did not complete, so it is not safe to ship.");
+  }
+  return { lede, more: more.join(" ") };
+}
+
 function render() {
   const c = counts();
   const shop = SHOPS[state.template] ?? (state.template ? state.template : "the shop");
-  $("#eyebrow").textContent = state.mode ? `${shop} · ${MODES[state.mode] ?? state.mode}${state.rounds > 1 ? ` · ${state.rounds} rounds` : ""}` : "";
+  $("#eyebrow").textContent = state.mode ? `${shop} · ${MODES[state.mode] ?? state.mode}${state.rounds > 1 ? ` · ${state.rounds} rounds` : ""}${state.plugin ? " · APIMatic plugin" : ""}` : "";
   $("#headline").textContent = state.mode === "check" ? "Try to rob a PayPal checkout." : state.mode === "existing" ? "Fix a PayPal checkout. Then try to rob it." : "Add PayPal. Then try to rob it.";
 
-  const parts = [];
-  const refusal = state.refusals[0];
-  const guided = state.plugin ? ", guided by APIMatic's PayPal Context Plugin" : "";
-  const running = !state.finished;
-  const robbing = state.tried.size > 0; // the robberies have begun
-  const tried = state.finished && c.ran < ATTACKS.length ? `ran ${c.ran} of the ${ATTACKS.length} robberies` : `${running ? "is trying" : "tried"} ${robberies(ATTACKS.length)}`;
-  if (state.mode === "heistproof") {
-    if (running && state.phase === "migrate") parts.push(`An AI coding agent is adding PayPal, Venmo and Pay Later to ${shop}${guided}. Heistproof will then buy a hoodie for real in PayPal's sandbox and try ${robberies(ATTACKS.length)} on the shop.`);
-    else if (running && !robbing) parts.push(`An AI coding agent added PayPal, Venmo and Pay Later to ${shop}${guided}. Heistproof is now buying a hoodie for real in PayPal's sandbox, before trying ${robberies(ATTACKS.length)} on the shop.`);
-    else parts.push(`An AI coding agent added PayPal, Venmo and Pay Later to ${shop}${guided}. Heistproof then bought a hoodie for real in PayPal's sandbox and ${tried} on the shop.`);
-    if (refusal && state.paid) parts.push(`The first purchase failed (PayPal answered ${refusal.status} ${refusal.name ?? ""}); the error went back to the agent, which fixed it, and everything ran again.`);
-    else if (refusal) parts.push(`The first purchase failed (PayPal answered ${refusal.status} ${refusal.name ?? ""}); the error went back to the agent${state.phase === "fix" ? ", which is fixing it now" : state.round > 0 ? ", which made a fix; the purchase runs again" : ""}.`);
-  } else if (state.mode === "check") {
-    if (running && !robbing) parts.push(`Heistproof is buying a hoodie for real in PayPal's sandbox on ${shop}, as it is, before trying ${robberies(ATTACKS.length)} on it. No AI changes any code in this run.`);
-    else parts.push(`Heistproof bought a hoodie for real in PayPal's sandbox on ${shop}, as it is, and ${tried} on it. No AI changed any code in this run.`);
-  } else if (state.mode === "existing") {
-    if (running) parts.push(`Heistproof is checking ${shop} with a real sandbox purchase and ${robberies(ATTACKS.length)}; every problem it finds goes to an AI coding agent${guided}, and it checks again after each fix.`);
-    else parts.push(`Heistproof checked ${shop} with a real sandbox purchase and ${robberies(ATTACKS.length)}, sent every problem it found to an AI coding agent${guided}, and checked again after each fix.`);
-  }
-  if (state.mismatch) parts.push(`It stopped one purchase before any money moved: PayPal would have charged ${money(state.mismatch.paypal)} for a ${money(state.mismatch.bag)} bag.`);
-  if (state.finished) {
-    if (c.robbed) parts.push(c.robbed < c.ran ? `${c.robbed} of the ${c.ran} robberies worked.` : c.ran === 1 ? "The one robbery that ran worked." : `All ${c.ran} robberies that ran worked.`);
-    else if (c.tried === ATTACKS.length) parts.push(`All ${ATTACKS.length} were blocked.`);
-    else if (c.ran === ATTACKS.length) parts.push(`${c.blocked} were blocked and ${c.skipped} could not run, so this is only a partial check.`);
-    else if (c.ran) parts.push(`Only ${c.ran} of the ${ATTACKS.length} ran (${c.blocked} blocked${c.skipped ? `, ${c.skipped} skipped` : ""}); the other ${c.notRun} did not, so this is only a partial check.`);
-    else parts.push("No robbery ran.");
-    if (!c.robbed && state.safe === false && state.bad.has("prove")) parts.push("The real purchase did not complete, so it is not safe to ship.");
-  }
-  $("#story").textContent = parts.join(" ") || "Loading the run…";
-  $("#proof-empty").hidden = $("#proof-facts").children.length > 0 || !$("#amount").hidden || !$("#refusal").hidden;
+  const { lede, more } = story(c, shop);
+  $("#story").textContent = lede || "Loading the run…";
+  $("#story-more").textContent = more;
+  $("#story-btn").hidden = !more;
+  if (!more) fold($("#story-btn"), false);
+
+  $("#proof-empty").hidden = state.facts.size > 0 || !$("#amount").hidden || !$("#refusal").hidden;
+  $("#proof-btn").hidden = !($("#proof-more-facts").children.length || $("#shots").children.length || !$("#refusal").hidden);
 
   const v = verdictOf(c);
   $("#verdict-card").className = `verdict-card ${v === "running" ? "pending" : v}`;
   $("#verdict-text").textContent = { running: state.mode ? "Running" : "Loading", safe: "Safe to ship", unsafe: "Do not ship", partial: "Partial check" }[v];
   let vnote = "";
   if (v === "running") vnote = state.activity;
-  else if (v === "safe") vnote = ["every robbery blocked", state.paid ? `paid ${state.paid.amount} once` : "", state.branchReady ? "branch and pull request ready" : ""].filter(Boolean).join(" · ");
+  else if (v === "safe") vnote = [`all ${ATTACKS.length} blocked`, state.paid ? `paid ${state.paid.amount} once` : "", state.branchReady ? "pull request ready" : ""].filter(Boolean).join(" · ");
   else if (v === "unsafe") vnote = c.robbed ? `${c.robbed} of ${robberies(c.ran)} worked` : state.mismatch ? "the purchase was stopped: wrong amount" : "the real purchase did not complete";
   else vnote = [c.notRun ? `only ${c.ran} of ${ATTACKS.length} robberies ran` : "", c.skipped ? `${c.skipped} skipped` : ""].filter(Boolean).join(" · ");
   $("#verdict-note").textContent = vnote;
@@ -270,7 +347,9 @@ function render() {
     if (state.finished && c.notRun) cells.push(`<div class="other"><b>${c.notRun}</b><span>not run</span></div>`);
   }
   $("#tally").innerHTML = cells.join("");
-  $("#board-score").textContent = c.ran ? `${c.blocked} blocked · ${c.robbed} robbed${c.skipped ? ` · ${c.skipped} skipped` : ""}${state.finished && c.notRun ? ` · ${c.notRun} not run` : ""}` : "";
+
+  // The folded timeline shows the latest line while the run goes on, then how long the whole run took.
+  $("#tl-chip").textContent = state.finished ? [state.rounds > 1 ? `${state.rounds} rounds` : "", state.duration].filter(Boolean).join(" · ") : state.latest;
 }
 
 /* ---------- Events ---------- */
@@ -294,13 +373,13 @@ function onEvent(e) {
 function attackProgress(e) {
   const row = state.attack && $(`#row-${state.attack}`);
   if (!row || !row.classList.contains("running")) return;
-  const said = row.querySelector(".said");
-  if (e.type === "prove.buttons") said.textContent = "Starting a real purchase in the sandbox…";
-  else if (e.type === "prove.tampered") said.textContent = `The thief's browser sends ${e.body?.total ? money(e.body.total) : "a tampered amount"} for the bag…`;
-  else if (e.type === "prove.amount_check" && e.paypalAmount) said.textContent = e.ok ? `PayPal order created for ${money(e.paypalAmount.value)}…` : `PayPal order created for ${money(e.paypalAmount.value)} on a ${money(e.bagTotal)} bag…`;
-  else if (e.type === "prove.approved") said.textContent = "Buyer approved; now the capture…";
-  else if (e.type === "prove.sandbox_retry") said.textContent = "PayPal's sandbox page failed, trying again…";
-  else if (e.type === "prove.result" && e.verdict) said.textContent = e.verdict;
+  const what = row.querySelector(".what");
+  if (e.type === "prove.buttons") what.textContent = "Starting a real purchase in the sandbox…";
+  else if (e.type === "prove.tampered") what.textContent = `The thief's browser sends ${e.body?.total ? money(e.body.total) : "a tampered amount"} for the bag…`;
+  else if (e.type === "prove.amount_check" && e.paypalAmount) what.textContent = e.ok ? `PayPal order created for ${money(e.paypalAmount.value)}…` : `PayPal order created for ${money(e.paypalAmount.value)} on a ${money(e.bagTotal)} bag…`;
+  else if (e.type === "prove.approved") what.textContent = "Buyer approved; now the capture…";
+  else if (e.type === "prove.sandbox_retry") what.textContent = "PayPal's sandbox page failed, trying again…";
+  else if (e.type === "prove.result" && e.verdict) what.textContent = e.verdict;
 }
 
 function handle(e) {
@@ -348,10 +427,6 @@ function handle(e) {
           skill = JSON.parse(e.input).skill;
         } catch {}
         inRound(state.skills).add(skill);
-        const all = [...state.skills.values()].flatMap((s) => [...s]);
-        const apimaticAll = new Set(all.filter((s) => !s.startsWith("heistproof:")));
-        const oursAll = new Set(all.filter((s) => s.startsWith("heistproof:")));
-        $("#skill-count").textContent = `${plural(apimaticAll.size, "APIMatic skill")}${oursAll.size ? ` · ${plural(oursAll.size, "Heistproof skill")}` : ""}`;
         const now = [...state.skills.get(r)];
         const ap = now.filter((s) => !s.startsWith("heistproof:"));
         const ours = now.filter((s) => s.startsWith("heistproof:"));
@@ -504,7 +579,7 @@ function handle(e) {
       break;
     }
     case "prove.webhook":
-      fact("Signed webhook", e.ok ? `${e.eventId} verified (HTTP ${e.shopStatus})` : e.status === "not-delivered" ? "not delivered by the sandbox yet" : `refused (HTTP ${e.shopStatus})`);
+      fact("Signed webhook", e.ok ? `verified (HTTP ${e.shopStatus}) · ${e.eventId}` : e.status === "not-delivered" ? "not delivered by the sandbox yet" : `refused (HTTP ${e.shopStatus})`);
       if (e.ok) step(`webhook-${r}`, "ok", "PayPal's signed webhook verified", `event <code>${esc(e.eventId)}</code>`);
       break;
     case "attack.start": {
@@ -515,8 +590,7 @@ function handle(e) {
       if (row) {
         row.className = "row running";
         row.querySelector(".stamp").textContent = STAMP.running;
-        row.querySelector(".said").textContent = "";
-        row.querySelector(".ids").textContent = "";
+        clearRow(row, ATTACK_WHAT[e.id] ?? e.title ?? "");
       }
       const n = state.tried.get(r).size;
       note("attack", `trying ${n} of ${ATTACKS.length}…`);
@@ -529,10 +603,12 @@ function handle(e) {
       if (row) {
         row.className = `row ${e.verdict}`;
         row.querySelector(".stamp").textContent = STAMP[e.verdict] ?? e.verdict;
+        row.querySelector(".what").textContent = ATTACK_WHAT[e.id] ?? e.title ?? "";
         row.querySelector(".said").textContent = e.summary ?? "";
         row.querySelector(".ids").textContent = evidenceIds(e.evidence).join(" · ");
         const shots = e.evidence?.screenshots ?? [];
         row.querySelector(".row-shots").innerHTML = shots.map((f) => `<img src="${api.file(state.runId, f)}" alt="${esc(f)}" title="${esc(f)}" data-view loading="lazy" />`).join("");
+        row.querySelector(".row-head").disabled = false;
       }
       if (e.verdict === "robbed") state.bad.add("attack");
       const inThis = [...(state.tried.get(r) ?? [])].map((id) => state.results.get(id));
@@ -560,12 +636,15 @@ function handle(e) {
       state.finished = true;
       state.safe = e.safe;
       state.branchReady = Boolean(e.branchReady);
+      const total = state.t0 ? Math.round((new Date(state.now) - new Date(state.t0)) / 1000) : 0;
+      state.duration = total >= 60 ? `took ${Math.round(total / 60)} min` : total ? `took ${total} s` : "";
       if (e.rounds) state.rounds = e.rounds;
       setPhase("ship");
       state.done.add("ship");
       for (const row of document.querySelectorAll(".row.waiting, .row.running")) {
         row.className = "row notrun";
         row.querySelector(".stamp").textContent = STAMP.notrun;
+        clearRow(row, ATTACK_WHAT[row.id.slice(4)] ?? "");
       }
       if (state.mode !== "check" && !state.sentBack) note("fix", "nothing to fix");
       const c = counts();
@@ -592,10 +671,12 @@ function evidenceIds(ev = {}) {
   return ids;
 }
 
+/** One thing PayPal said. The three key facts stay in sight, in a fixed order; the rest go behind "All evidence". */
 function fact(label, value) {
-  const existing = [...document.querySelectorAll("#proof-facts dt")].find((d) => d.textContent === label);
-  if (existing) existing.nextElementSibling.textContent = value;
-  else $("#proof-facts").insertAdjacentHTML("beforeend", `<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`);
+  state.facts.set(label, value);
+  const list = (keys) => keys.map((k) => `<dt>${esc(k)}</dt><dd>${esc(state.facts.get(k))}</dd>`).join("");
+  $("#proof-facts").innerHTML = list(KEY_FACTS.filter((k) => state.facts.has(k)));
+  $("#proof-more-facts").innerHTML = list([...state.facts.keys()].filter((k) => !KEY_FACTS.includes(k)));
 }
 
 /** The shopper's screenshots, grouped by purchase ("round0-purchase-3-review.png" -> Round 1 purchase · review). */
@@ -679,11 +760,27 @@ async function main() {
   $("#run-select").addEventListener("change", (e) => open(e.target.value));
   document.addEventListener("click", (e) => {
     const img = e.target.closest("img[data-view]");
-    if (!img) return;
-    $("#viewer-img").src = img.src;
-    $("#viewer-caption").textContent = img.alt;
-    $("#viewer").showModal();
+    if (img) {
+      $("#viewer-img").src = img.src;
+      $("#viewer-caption").textContent = img.alt;
+      $("#viewer").showModal();
+      return;
+    }
+    const info = e.target.closest(".info-btn");
+    if (info) return toggleTip(info);
+    if (e.target.closest(".tip")) return;
+    closeTips();
+    const head = e.target.closest(".row-head");
+    if (head) return head.disabled ? undefined : toggleRow(head);
+    const btn = e.target.closest("[data-fold]");
+    if (btn) return fold(btn, btn.getAttribute("aria-expanded") !== "true");
+    if (e.target.closest(".happened > header")) fold($("#tl-btn"), $("#tl-btn").getAttribute("aria-expanded") !== "true"); // the whole header opens the timeline
   });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeTips();
+  });
+  window.addEventListener("resize", closeTips);
+  document.addEventListener("scroll", closeTips, true);
   $("#viewer-close").addEventListener("click", () => $("#viewer").close());
   $("#viewer").addEventListener("click", (e) => {
     if (e.target === e.currentTarget) e.currentTarget.close();

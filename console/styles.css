@@ -1,6 +1,7 @@
 /* Heistproof console. Same look as the film: the shop's off-white canvas, white cards in thin rounded frames,
    brass for Heistproof itself and for work in progress, green only for what was blocked or paid, red only for what
-   was robbed or refused. Everything else is neutral, so the colour tells the story at a glance. */
+   was robbed or refused. Everything else is neutral, so the colour tells the story at a glance.
+   The first screen shows only the verdict, one sentence, the five steps and the ten robberies; everything else is folded. */
 :root {
   --base: #f0eee9;
   --surface: #ffffff;
@@ -23,10 +24,12 @@
   --lift: 0 1px 2px rgba(0, 0, 0, 0.05), 0 10px 28px rgba(0, 0, 0, 0.06);
   --radius: 16px;
   --gutter: 24px;
+  --side: 440px;
   --sans: "Inter", system-ui, -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { height: 100%; }
 body {
   margin: 0;
@@ -40,6 +43,20 @@ body {
 }
 code { font-family: var(--mono); font-size: 0.92em; }
 h1, h2, h3, p, dl, ol, figure { margin: 0; }
+button { font: inherit; color: inherit; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+/* ---------- Small shared parts: the chevron on anything that opens, the "i" that explains a label ---------- */
+.chev { display: inline-block; flex-shrink: 0; width: 7px; height: 7px; margin-top: -4px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); transition: transform 0.2s ease, margin 0.2s ease; }
+[aria-expanded="true"] > .chev { margin-top: 3px; transform: rotate(225deg); }
+.fold-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0; background: none; border: 0; font-size: 12.5px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text2); white-space: nowrap; cursor: pointer; }
+.fold-btn:hover { color: var(--text); }
+.linkish { display: inline-flex; align-items: center; gap: 7px; margin-top: 8px; padding: 0; background: none; border: 0; font-size: 13px; font-weight: 600; color: var(--brass); cursor: pointer; }
+.linkish:hover { text-decoration: underline; }
+.info-btn { display: inline-grid; place-items: center; width: 16px; height: 16px; padding: 0; border-radius: 50%; border: 1px solid var(--frame); background: var(--surface); color: var(--text3); font: 600 10px/1 var(--sans); letter-spacing: 0; text-transform: none; vertical-align: 1px; cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease; }
+.info-btn:hover, .info-btn[aria-expanded="true"] { color: var(--brass); border-color: var(--brass); }
+.tip { position: fixed; z-index: 30; width: min(340px, calc(100vw - 32px)); padding: 10px 13px; border-radius: 12px; border: 1px solid var(--frame); background: var(--surface); box-shadow: var(--lift); font-size: 12.5px; line-height: 1.5; color: var(--text2); }
+.tip b { color: var(--text); font-weight: 600; }
 
 /* ---------- Top bar ---------- */
 .top { display: flex; align-items: center; gap: 20px; height: 56px; padding: 0 var(--gutter); border-bottom: 1px solid var(--line); }
@@ -50,18 +67,19 @@ h1, h2, h3, p, dl, ol, figure { margin: 0; }
 .engine { margin-left: auto; font-size: 12.5px; color: var(--text2); white-space: nowrap; }
 .engine b { color: var(--text); font-weight: 600; }
 
-/* ---------- Hero: what the run was, and the verdict ---------- */
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: start; padding: 20px var(--gutter) 14px; }
+/* ---------- Hero: one sentence on the run, and the verdict ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) var(--side); gap: 32px; align-items: start; padding: 16px var(--gutter) 14px; }
 .eyebrow { margin-bottom: 6px; min-height: 16px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
 h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 600; }
-.story { margin-top: 10px; max-width: 940px; font-size: 15px; line-height: 1.55; color: var(--text2); }
+.story { margin-top: 10px; max-width: 900px; font-size: 15px; line-height: 1.55; color: var(--text2); }
+.story-more { margin-top: 8px; max-width: 900px; font-size: 14px; line-height: 1.55; color: var(--text2); }
 
-.verdict-card { width: 400px; padding: 14px 18px 16px; background: var(--surface); border: 1px solid var(--frame); border-radius: var(--radius); box-shadow: var(--lift); transition: background 0.4s ease, border-color 0.4s ease; }
-.verdict-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+.verdict-card { padding: 12px 18px 14px; background: var(--surface); border: 1px solid var(--frame); border-radius: var(--radius); box-shadow: var(--lift); transition: background 0.4s ease, border-color 0.4s ease; }
+.verdict-label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
 .verdict { display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: 26px; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; }
 .verdict .dot { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%; background: currentColor; }
-.verdict-note { margin-top: 4px; min-height: 20px; font-size: 13px; line-height: 1.5; color: var(--text2); }
-.tally { display: flex; gap: 26px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.verdict-note { margin-top: 4px; min-height: 20px; font-size: 13px; line-height: 1.5; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tally { display: flex; gap: 26px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
 .tally:empty { display: none; }
 .tally div { display: flex; flex-direction: column; }
 .tally b { font-size: 24px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
@@ -97,13 +115,76 @@ h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 
 .rail .bad small { color: var(--red); }
 .rail .unused { opacity: 0.45; }
 
-/* ---------- Three panels ---------- */
-.grid { display: grid; grid-template-columns: minmax(360px, 1.1fr) minmax(0, 1.3fr) minmax(300px, 0.85fr); gap: 16px; min-height: 0; padding: 0 var(--gutter) 20px; }
+/* ---------- Main area: the robberies wide on the left, PayPal's proof and the folded story on the right ---------- */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--side); gap: 16px; min-height: 0; padding: 0 var(--gutter) 20px; }
 .panel { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border: 1px solid var(--frame); border-radius: var(--radius); box-shadow: var(--lift); overflow: hidden; }
-.panel > header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 44px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+.panel > header { flex-shrink: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; border-bottom: 1px solid var(--line); }
 .panel h2 { font-size: 11.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text2); white-space: nowrap; }
-.chip { min-width: 0; font-size: 12px; color: var(--text3); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip { flex: 1; min-width: 0; font-size: 12px; color: var(--text3); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
 .scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.side { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.side .proof { flex: 0 1 auto; }
+.side .happened { flex: 0 0 auto; }
+.side .happened.open { flex: 1 1 0; min-height: 45%; }
+.happened > header { cursor: pointer; }
+
+/* ---------- The ten robberies: a checklist; a row opens to its result, PayPal's ids and the screenshots ---------- */
+.rows { flex: 1; min-height: 0; overflow-y: auto; list-style: none; padding: 0; display: flex; flex-direction: column; }
+.row { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid var(--line); animation: rise 0.25s ease; transition: background 0.3s ease; } /* spare height is shared, so a tall screen stays balanced */
+.row:last-child { border-bottom: 0; }
+.row-head { display: grid; grid-template-columns: 78px minmax(0, 1fr) 16px; gap: 12px; align-items: start; width: 100%; padding: 6px 16px; background: none; border: 0; text-align: left; cursor: pointer; }
+.row-head:disabled { cursor: default; }
+.row-head:not(:disabled):hover { background: var(--surface-2); }
+.row.robbed .row-head:not(:disabled):hover { background: var(--red-tint); }
+.row-head:focus-visible { outline-offset: -2px; }
+.row-head .chev { margin-top: 8px; margin-left: 2px; color: var(--text3); }
+.row-head:disabled .chev { visibility: hidden; }
+.stamp { display: inline-flex; align-items: center; margin-top: 3px; padding: 3px 8px; border-radius: 999px; background: #ecebe6; color: var(--text3); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.row-text { min-width: 0; }
+.row .name { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+.row .what { display: block; font-size: 12.5px; line-height: 1.35; color: var(--text2); }
+.row-body { padding: 2px 16px 12px 106px; }
+.row .said { font-size: 13px; line-height: 1.5; }
+.row .said:empty, .row .ids:empty, .row .row-shots:empty { display: none; }
+.row .ids { margin-top: 4px; font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--text3); overflow-wrap: anywhere; }
+.row-shots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.row-shots img { display: block; width: 96px; height: 64px; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid var(--frame); background: var(--surface-2); cursor: zoom-in; }
+.row.running .stamp { background: var(--brass-tint); color: var(--brass); }
+.row.running .what { color: var(--brass); }
+.row.held .stamp { background: var(--green-tint); color: var(--green); }
+.row.robbed { background: var(--red-soft); }
+.row.robbed .stamp { background: var(--red-tint); color: var(--red); }
+.row.robbed .name { color: var(--red); }
+.row.skipped .stamp, .row.error .stamp { color: var(--text2); }
+.row.waiting .name, .row.notrun .name { color: var(--text2); }
+.row.waiting .what, .row.notrun .what { color: var(--text3); }
+
+/* ---------- Proof from PayPal ---------- */
+.empty { padding: 36px 24px; text-align: center; font-size: 12.5px; line-height: 1.5; color: var(--text3); }
+.amount { margin: 14px 16px 0; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--frame); }
+.amount .labels, .amount .big { display: flex; justify-content: space-between; gap: 12px; }
+.amount .labels { font-size: 12px; color: var(--text2); }
+.amount-round { margin-bottom: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
+.amount .big { margin-top: 2px; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.amount .verdict-line { margin-top: 6px; font-size: 12.5px; font-weight: 600; }
+.amount.good .verdict-line { color: var(--green); }
+.amount.bad { border-color: var(--red-frame); background: var(--red-soft); }
+.amount.bad .verdict-line { color: var(--red); }
+.amount.bad .big span:last-child { color: var(--red); }
+.refusal { margin: 10px 16px 0; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--red-frame); background: var(--red-soft); font-size: 12.5px; line-height: 1.5; color: var(--text2); }
+.refusal b { display: block; font-size: 13px; color: var(--red); }
+.refusal code { font-size: 11px; color: var(--text); }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; padding: 12px 16px 4px; font-size: 12.5px; }
+.facts:empty { display: none; }
+.facts dt { color: var(--text2); }
+.facts dd { padding-top: 1px; font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
+#proof-btn { margin: 8px 16px 12px; }
+.shots { padding: 6px 16px 16px; }
+.shots:empty { display: none; }
+.shots-title { margin: 10px 0 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
+.shots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.shots-grid img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; border-radius: 8px; border: 1px solid var(--frame); background: var(--surface-2); cursor: zoom-in; }
+.shots-grid figcaption { margin-top: 3px; font-size: 11px; color: var(--text3); }
 
 /* ---------- What happened: the story, round by round, with the raw log folded away ---------- */
 .tl { list-style: none; padding: 6px 16px 8px; }
@@ -137,52 +218,6 @@ h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 
 .tag.apimatic { background: var(--brass); color: #fff; }
 .tag.ours { background: #e7e4dd; color: var(--text); }
 
-/* ---------- The ten robberies: one row each, so all ten read as a checklist ---------- */
-.rows { flex: 1; min-height: 0; overflow-y: auto; list-style: none; padding: 0; }
-.row { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 12px; align-items: start; padding: 9px 16px; border-bottom: 1px solid var(--line); animation: rise 0.25s ease; transition: background 0.3s ease; }
-.row:last-child { border-bottom: 0; }
-.stamp { display: inline-flex; align-items: center; margin-top: 2px; padding: 3px 8px; border-radius: 999px; background: #ecebe6; color: var(--text3); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
-.row h3 { display: inline; font-size: 13.5px; font-weight: 600; line-height: 1.4; }
-.row .what { font-size: 12.5px; color: var(--text2); }
-.row .what::before { content: "— "; color: var(--text3); }
-.row .said { margin-top: 2px; font-size: 12.5px; line-height: 1.45; }
-.row .said:empty, .row .ids:empty, .row .row-shots:empty { display: none; }
-.row .ids { margin-top: 2px; font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--text3); overflow-wrap: anywhere; }
-.row-shots { display: flex; gap: 4px; margin-top: 6px; }
-.row-shots img { display: block; width: 60px; height: 40px; object-fit: cover; object-position: top; border-radius: 4px; border: 1px solid var(--frame); background: var(--surface-2); cursor: zoom-in; }
-.row.running .stamp { background: var(--brass-tint); color: var(--brass); }
-.row.held .stamp { background: var(--green-tint); color: var(--green); }
-.row.robbed { background: var(--red-soft); }
-.row.robbed .stamp { background: var(--red-tint); color: var(--red); }
-.row.robbed h3 { color: var(--red); }
-.row.skipped .stamp, .row.error .stamp { color: var(--text2); }
-.row.waiting h3, .row.notrun h3 { color: var(--text2); }
-.row.waiting .what, .row.notrun .what { color: var(--text3); }
-
-/* ---------- Proof from PayPal ---------- */
-.empty { padding: 36px 24px; text-align: center; font-size: 12.5px; line-height: 1.5; color: var(--text3); }
-.amount { margin: 14px 16px 0; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--frame); }
-.amount .labels, .amount .big { display: flex; justify-content: space-between; gap: 12px; }
-.amount .labels { font-size: 12px; color: var(--text2); }
-.amount-round { margin-bottom: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
-.amount .big { margin-top: 2px; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.amount .verdict-line { margin-top: 6px; font-size: 12.5px; font-weight: 600; }
-.amount.good .verdict-line { color: var(--green); }
-.amount.bad { border-color: var(--red-frame); background: var(--red-soft); }
-.amount.bad .verdict-line { color: var(--red); }
-.amount.bad .big span:last-child { color: var(--red); }
-.refusal { margin: 10px 16px 0; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--red-frame); background: var(--red-soft); font-size: 12.5px; line-height: 1.5; color: var(--text2); }
-.refusal b { display: block; font-size: 13px; color: var(--red); }
-.refusal code { font-size: 11px; color: var(--text); }
-.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; padding: 12px 16px 4px; font-size: 12.5px; }
-.facts dt { color: var(--text2); }
-.facts dd { padding-top: 1px; font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
-.shots { padding: 6px 16px 16px; }
-.shots-title { margin: 10px 0 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
-.shots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.shots-grid img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; border-radius: 8px; border: 1px solid var(--frame); background: var(--surface-2); cursor: zoom-in; }
-.shots-grid figcaption { margin-top: 3px; font-size: 11px; color: var(--text3); }
-
 /* ---------- Screenshot viewer ---------- */
 dialog { border: 0; padding: 0; background: transparent; max-width: 92vw; }
 dialog img { display: block; max-width: 92vw; max-height: 82vh; border-radius: 12px; background: #fff; }
@@ -195,6 +230,7 @@ dialog::backdrop { background: rgba(22, 22, 26, 0.6); }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) {
   .rail .active::after, .verdict-card.pending .dot, .round li.run .dot, .round li, .row { animation: none; }
+  .chev { transition: none; }
 }
 
 /* ---------- Narrow screens: one column, the page scrolls, the verdict comes first ---------- */
@@ -213,10 +249,17 @@ dialog::backdrop { background: rgba(22, 22, 26, 0.6); }
   .rail > div { padding: 10px 14px; border-left: 0; border-top: 1px solid var(--line); }
   .rail > div:first-child { border-top: 0; }
   .grid { grid-template-columns: 1fr; }
-  .panel { max-height: 78vh; }
+  .panel { min-height: auto; }
+  .scroll, .rows { flex: none; overflow: visible; }
+  .side .happened.open { flex: none; min-height: 0; }
 }
 @media (max-width: 480px) {
-  .row { grid-template-columns: 1fr; gap: 4px; }
-  .stamp { margin-top: 0; }
+  .row-head { grid-template-columns: 66px minmax(0, 1fr) 16px; gap: 10px; padding: 8px 14px; }
+  .stamp { padding: 3px 6px; font-size: 10px; }
+  .row-body { padding: 0 14px 12px 90px; }
+  .row-shots img { width: 80px; height: 54px; }
   .shots-grid { grid-template-columns: 1fr; }
+  .panel > header { padding: 0 14px; }
+  #tl-chip { display: none; }
+  .verdict-card { padding: 12px 16px 14px; }
 }
