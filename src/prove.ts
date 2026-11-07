@@ -33,6 +33,8 @@ export async function browser(): Promise<BrowserContext> {
   context = await chromium.launchPersistentContext(path.join(ROOT, ".heistproof", "browser-profile"), {
     headless,
     viewport: { width: 1440, height: 900 },
+    // Film mode: sharper screenshots for zooming in.
+    deviceScaleFactor: env("HEISTPROOF_FILM") === "1" ? 2 : 1,
     locale: "en-US",
     timezoneId: "America/Los_Angeles",
   });

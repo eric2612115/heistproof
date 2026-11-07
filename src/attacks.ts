@@ -91,10 +91,39 @@ async function snapshot(shop: ShopProcess) {
 // What PayPal should charge: the bag total the shopper saw (the shop's own PayPal amount may be the bug).
 const expectedValue = (ctx: AttackContext) => ctx.legit.bagTotal ?? ctx.legit.paypalAmount?.value ?? "49.00";
 
-/** A genuine, signed PAYMENT.CAPTURE.COMPLETED delivery from this run. The sandbox can take a while to send one. */
-async function genuineCompleted(ctx: AttackContext): Promise<Delivery | null> {
+/** The ids a PayPal event names: its resource, the order the resource belongs to, and the shop's own references. */
+function eventIds(d: Delivery): string[] {
+  let r: any = {};
+  try {
+    r = JSON.parse(d.rawBody)?.resource ?? {};
+  } catch {
+    r = {};
+  }
+  return [r.id, r.custom_id, r.invoice_id, r.supplementary_data?.related_ids?.order_id].filter((x): x is string => typeof x === "string" && x.length >= 6);
+}
+
+/**
+ * The shop order a PayPal event is about, or null. One sandbox app can serve several shops, and every webhook
+ * registered on the app receives every event, so events about other shops' orders arrive here too.
+ */
+function shopOrderFor(d: Delivery, orders: any[], ctx: AttackContext): any | null {
+  const ids = eventIds(d);
+  const legitId = ctx.legit.shopOrder?.id;
+  if (legitId && ids.some((id) => id === ctx.legit.captureId || id === ctx.legit.paypalOrderId)) return orders.find((o) => o.id === legitId) ?? { id: legitId };
+  return orders.find((o) => ids.some((id) => JSON.stringify(o).includes(id))) ?? null;
+}
+
+/**
+ * A genuine, signed PAYMENT.CAPTURE.COMPLETED delivery from this run. With `ours`, only one about this shop's own
+ * orders (a replay needs one); without, any will do as a template. The sandbox can take a while to send one.
+ */
+async function genuineCompleted(ctx: AttackContext, ours = true): Promise<Delivery | null> {
   const have = ctx.tap.genuine("PAYMENT.CAPTURE.COMPLETED");
-  return have.find((d) => d.resourceId === ctx.legit.captureId) ?? have[0] ?? (await ctx.tap.waitFor((d) => d.eventType === "PAYMENT.CAPTURE.COMPLETED", 90_000));
+  const legit = have.find((d) => d.resourceId === ctx.legit.captureId);
+  if (legit) return legit;
+  const orders = await shopOrders(ctx.shop).catch(() => [] as any[]);
+  const fits = (d: Delivery) => d.eventType === "PAYMENT.CAPTURE.COMPLETED" && (!ours || shopOrderFor(d, orders, ctx) !== null);
+  return have.find(fits) ?? (await ctx.tap.waitFor(fits, 90_000));
 }
 
 /** Webhook attacks go last, so PayPal's slower deliveries have arrived by then. */
@@ -235,7 +264,7 @@ export const ATTACKS: Attack[] = [
     rule: [6],
     async run(ctx) {
       const { create } = learnRoutes(ctx.legit);
-      const genuine = await genuineCompleted(ctx);
+      const genuine = await genuineCompleted(ctx, false);
       if (!create || !genuine) return { verdict: "skipped", summary: "PayPal's sandbox delivered no PAYMENT.CAPTURE.COMPLETED webhook in time to forge from.", evidence: {} };
       const made = await post(ctx.shop, create.path, create.body);
       const target = paypalIdFrom(made.body);
@@ -267,17 +296,22 @@ export const ATTACKS: Attack[] = [
     rule: [7, 8],
     async run(ctx) {
       const genuine = await genuineCompleted(ctx);
-      if (!genuine) return { verdict: "skipped", summary: "PayPal's sandbox delivered no PAYMENT.CAPTURE.COMPLETED webhook in time to replay.", evidence: {} };
+      if (!genuine) return { verdict: "skipped", summary: "PayPal's sandbox delivered no PAYMENT.CAPTURE.COMPLETED webhook about this shop's orders in time to replay.", evidence: {} };
       const before = await snapshot(ctx.shop);
+      const target = shopOrderFor(genuine, before.orders, ctx);
       const answers = [];
       for (let i = 0; i < 3; i++) answers.push((await ctx.tap.forward("attacker", genuine.headers, genuine.rawBody)).shopStatus);
       await sleep(1500);
       const after = await snapshot(ctx.shop);
       const robbed = after.labels > before.labels;
+      const labelsOf = (s: typeof before) => s.orders.find((o) => o.id === target?.id)?.shipments ?? null;
+      const order = target?.id ? ` for order ${target.id}` : "";
       return {
         verdict: robbed ? "robbed" : "held",
-        summary: robbed ? `Replaying event ${genuine.eventId} printed ${after.labels - before.labels} extra shipping label(s).` : `Event ${genuine.eventId} replayed 3 times byte for byte: still one label.`,
-        evidence: { eventId: genuine.eventId, answers, labelsBefore: before.labels, labelsAfter: after.labels },
+        summary: robbed
+          ? `Replaying event ${genuine.eventId}${order} printed ${after.labels - before.labels} extra shipping label(s).`
+          : `Event ${genuine.eventId}${order} replayed 3 times byte for byte: no extra label.`,
+        evidence: { eventId: genuine.eventId, targetShopOrder: target?.id ?? null, answers, labelsBefore: before.labels, labelsAfter: after.labels, orderLabelsBefore: labelsOf(before), orderLabelsAfter: labelsOf(after) },
       };
     },
   },
@@ -286,26 +320,33 @@ export const ATTACKS: Attack[] = [
     title: "Send 'approved' after 'completed'",
     rule: [9],
     async run(ctx) {
-      // The purchase's own "approved" event; PayPal's sandbox may still be on its way with it.
-      const approved =
-        ctx.tap.genuine("CHECKOUT.ORDER.APPROVED").find((d) => d.resourceId === ctx.legit.paypalOrderId) ??
-        (await ctx.tap.waitFor((d) => d.eventType === "CHECKOUT.ORDER.APPROVED" && d.resourceId === ctx.legit.paypalOrderId, 60_000));
-      if (!approved) return { verdict: "skipped", summary: "PayPal sent no CHECKOUT.ORDER.APPROVED event for the real purchase.", evidence: {} };
+      // A genuine "approved" event for an order of this shop that has since been paid: the real purchase's own, or
+      // one from an earlier attack's order. PayPal's sandbox may still be on its way with them.
+      const paidOrders = async () => (await snapshot(ctx.shop)).orders.filter((o) => ["paid", "fulfilled"].includes(o.status));
+      const forPaidOrder = (d: Delivery, paid: any[]) => d.eventType === "CHECKOUT.ORDER.APPROVED" && !!d.resourceId && paid.some((o) => JSON.stringify(o).includes(d.resourceId!));
+      let paid = await paidOrders();
+      const have = ctx.tap.genuine("CHECKOUT.ORDER.APPROVED");
+      let approved = have.find((d) => d.resourceId === ctx.legit.paypalOrderId) ?? have.find((d) => forPaidOrder(d, paid)) ?? null;
+      if (!approved) {
+        approved = await ctx.tap.waitFor((d) => d.eventType === "CHECKOUT.ORDER.APPROVED" && (d.resourceId === ctx.legit.paypalOrderId || forPaidOrder(d, paid)), 120_000);
+        paid = await paidOrders();
+      }
+      if (!approved) return { verdict: "skipped", summary: "PayPal sent no CHECKOUT.ORDER.APPROVED event for any paid order of this shop.", evidence: {} };
       const before = await snapshot(ctx.shop);
-      const legitBefore = before.orders.find((o) => o.id === ctx.legit.shopOrder?.id);
+      const target = before.orders.find((o) => JSON.stringify(o).includes(approved!.resourceId!)) ?? before.orders.find((o) => o.id === ctx.legit.shopOrder?.id);
       const r = await ctx.tap.forward("attacker", approved.headers, approved.rawBody);
       await sleep(1500);
       const after = await snapshot(ctx.shop);
-      const legitAfter = after.orders.find((o) => o.id === ctx.legit.shopOrder?.id);
-      const robbed = legitAfter?.status !== legitBefore?.status || after.labels > before.labels;
+      const targetAfter = after.orders.find((o) => o.id === target?.id);
+      const robbed = targetAfter?.status !== target?.status || after.labels > before.labels;
       return {
         verdict: robbed ? "robbed" : "held",
         summary: robbed
-          ? legitAfter?.status !== legitBefore?.status
-            ? `The late event moved order ${legitAfter?.id} from ${legitBefore?.status} to ${legitAfter?.status}.`
-            : `The late 'approved' event printed ${after.labels - before.labels} more shipping label(s) for order ${legitAfter?.id}.`
-          : `Order ${legitAfter?.id} stayed ${legitAfter?.status} after a late 'approved' event.`,
-        evidence: { eventId: approved.eventId, shopAnswer: r.shopStatus, before: legitBefore?.status, after: legitAfter?.status },
+          ? targetAfter?.status !== target?.status
+            ? `The late event moved order ${target?.id} from ${target?.status} to ${targetAfter?.status}.`
+            : `The late 'approved' event printed ${after.labels - before.labels} more shipping label(s) for order ${target?.id}.`
+          : `Order ${target?.id} stayed ${targetAfter?.status} after a late 'approved' event.`,
+        evidence: { eventId: approved.eventId, targetShopOrder: target?.id ?? null, targetPayPalOrder: approved.resourceId, shopAnswer: r.shopStatus, before: target?.status, after: targetAfter?.status, labelsBefore: before.labels, labelsAfter: after.labels },
       };
     },
   },
@@ -404,6 +445,35 @@ export const ATTACKS: Attack[] = [
   },
 ];
 
+
+/** A picture of the shop owner's back office after an attack, with the orders it touched outlined. */
+async function backOfficeShot(ctx: AttackContext, id: string, highlight: Array<string | null | undefined>): Promise<string | null> {
+  const page = await (await browser()).newPage();
+  try {
+    await page.goto(`${ctx.shop.url}/admin?key=${encodeURIComponent(ctx.shop.adminKey)}`);
+    await page.waitForTimeout(2600);
+    // The table may show a capture id or a shop order id rather than PayPal's order id: map through the back office API.
+    const ids = highlight.filter((h): h is string => Boolean(h));
+    const orders = await shopOrders(ctx.shop).catch(() => [] as any[]);
+    const marks = [...ids, ...orders.filter((o) => ids.some((id) => JSON.stringify(o).includes(id))).map((o) => o.id as string)];
+    await page.evaluate((needles) => {
+      for (const tr of Array.from(document.querySelectorAll("tr"))) {
+        if (needles.some((n) => tr.textContent?.includes(n))) {
+          (tr as HTMLElement).style.outline = "4px solid #ffb547";
+          (tr as HTMLElement).style.background = "rgba(255,181,71,0.14)";
+        }
+      }
+    }, marks);
+    const file = `attack-${id}-backoffice.png`;
+    await page.screenshot({ path: ctx.run.file(file) });
+    return file;
+  } catch {
+    return null;
+  } finally {
+    await page.close();
+  }
+}
+
 export async function runAttacks(ctx: AttackContext, only?: string[]): Promise<AttackOutcome[]> {
   const out: AttackOutcome[] = [];
   await discoverCaptureRoute(ctx.shop, ctx.legit).catch(() => {});
@@ -416,6 +486,11 @@ export async function runAttacks(ctx: AttackContext, only?: string[]): Promise<A
       outcome = { id: a.id, title: a.title, rule: a.rule, ...(await a.run(ctx)) };
     } catch (err) {
       outcome = { id: a.id, title: a.title, rule: a.rule, verdict: "error", summary: String((err as Error).message ?? err).slice(0, 300), evidence: {} };
+    }
+    if (outcome.verdict !== "skipped" && a.id !== "secret-leak") {
+      const ev = outcome.evidence as any;
+      const shot = await backOfficeShot(ctx, a.id, [ev?.paypalOrderId, ev?.targetShopOrder, ev?.targetPayPalOrder, ev?.followThrough?.paypalOrderId, ev?.followThrough?.shopOrder]);
+      if (shot) outcome.evidence = { ...ev, screenshots: [...(ev?.screenshots ?? []), shot] };
     }
     ctx.run.emit("attack", "attack.result", outcome);
     out.push(outcome);

@@ -108,6 +108,10 @@ The agent harness is always Claude Code, because that is where APIMatic's plugin
 
 The rules the agent is asked to meet are in [`plugin/skills/checkout-hardening`](plugin/skills/checkout-hardening/SKILL.md); the attacks are in [`src/attacks.ts`](src/attacks.ts).
 
+### Isn't this PayPal's job?
+
+None of these attacks is a hole in PayPal. PayPal charges what the merchant's server asks it to charge, and it cannot know what a hoodie should cost. For every attack above PayPal already provides the safeguard: orders created and priced on the server (Orders v2), capture status, `PayPal-Request-Id`, `verify-webhook-signature`, and negative testing with `PayPal-Mock-Response`. Whether a shop uses them correctly lives in the shop's own code, and more and more of that code is written by AI agents. Generic security scanners do not test payment logic like this, and doing it by hand is a penetration test. Heistproof runs the attacks with real sandbox transactions on every change, and the report ties each result to the rule it tests and to PayPal's own ids.
+
 ## How it works
 
 ```
@@ -139,6 +143,8 @@ The plugin (`paypal@context-plugins`, MIT) is a set of skills that point a codin
 
 - The sample shops are small Express apps. Other stacks need their own templates; the attacks only need the shop to run.
 - `cloudflared` quick tunnels are for testing; they change address every run, and Heistproof re-points the sandbox webhook each time.
+- PayPal delivers every event of a sandbox app to every webhook registered on it. If your app also serves other projects, their events reach Heistproof's tap too; the replay and late-event attacks only use events about the shop's own orders.
+- The sandbox can take minutes to deliver a webhook, or skip one. An attack that needs an event that never arrived is reported as skipped, never as held.
 - PayPal's sandbox login page can change; the browser agent's selectors are in `src/prove.ts`.
 - A model that ignores the plugin still gets attacked; the attacks, not the model's summary, decide whether it ships.
 
