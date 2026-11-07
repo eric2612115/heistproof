@@ -1,6 +1,7 @@
 // A local bridge that lets Claude Code (which speaks the Anthropic Messages protocol) drive any model behind an
 // OpenAI-compatible Chat Completions endpoint: OpenAI, Gemini, OpenRouter, Groq, Together, Baseten and others.
 import http from "node:http";
+import { authorized, newToken } from "./relay.ts";
 import { randomUUID } from "node:crypto";
 
 type Block = Record<string, any>;
@@ -15,7 +16,7 @@ type AnthropicRequest = {
   stop_sequences?: string[];
 };
 
-export type BridgeOptions = { baseUrl: string; apiKey: string; maxOutputTokens?: number; extraHeaders?: Record<string, string> };
+export type BridgeOptions = { baseUrl: string; apiKey: string; maxOutputTokens?: number; extraHeaders?: Record<string, string>; token?: string };
 
 const textOf = (content: unknown): string => {
   if (typeof content === "string") return content;
@@ -180,10 +181,16 @@ async function pipeStream(upstream: Response, res: http.ServerResponse, model: s
 }
 
 /** Starts the bridge on a free local port; Claude Code is pointed at it with ANTHROPIC_BASE_URL. */
-export async function startBridge(opts: BridgeOptions): Promise<{ url: string; close: () => Promise<void> }> {
+export async function startBridge(opts: BridgeOptions): Promise<{ url: string; token: string; close: () => Promise<void> }> {
   const base = opts.baseUrl.replace(/\/+$/, "");
   const maxOut = opts.maxOutputTokens ?? 16_000;
+  // Only the run that started the bridge may use it (Claude Code sends the token as its API key).
+  const token = opts.token ?? newToken();
   const server = http.createServer(async (req, res) => {
+    if (!authorized(req, token)) {
+      res.writeHead(401, { "content-type": "application/json" });
+      return res.end(JSON.stringify({ type: "error", error: { type: "authentication_error", message: "This bridge only serves the Heistproof run that started it." } }));
+    }
     const chunks: Buffer[] = [];
     for await (const c of req) chunks.push(c as Buffer);
     const path = (req.url ?? "").split("?")[0];
@@ -226,5 +233,5 @@ export async function startBridge(opts: BridgeOptions): Promise<{ url: string; c
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = (server.address() as { port: number }).port;
-  return { url: `http://127.0.0.1:${port}`, close: () => new Promise((r) => server.close(() => r())) };
+  return { url: `http://127.0.0.1:${port}`, token, close: () => new Promise((r) => server.close(() => r())) };
 }

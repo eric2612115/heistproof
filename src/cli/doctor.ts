@@ -31,7 +31,7 @@ try {
   const v = execFileSync("cloudflared", ["--version"], { stdio: ["ignore", "pipe", "pipe"] }).toString().trim().split("\n")[0];
   add("cloudflared (public webhook address)", true, v);
 } catch {
-  add("cloudflared (public webhook address)", env("HEISTPROOF_PUBLIC_URL") ? true : false, env("HEISTPROOF_PUBLIC_URL") ? `using HEISTPROOF_PUBLIC_URL` : "not found: brew install cloudflared (macOS), or see README; webhook attacks need it");
+  add("cloudflared (public webhook address)", env("HEISTPROOF_PUBLIC_URL") ? true : null, env("HEISTPROOF_PUBLIC_URL") ? `using HEISTPROOF_PUBLIC_URL` : "not found: brew install cloudflared (macOS), or see README; only sandbox runs need it");
 }
 
 const chromium = fs.existsSync(path.join(process.env.HOME ?? "", "Library", "Caches", "ms-playwright")) || fs.existsSync(path.join(process.env.HOME ?? "", ".cache", "ms-playwright"));
@@ -39,7 +39,7 @@ add("Playwright Chromium", chromium, chromium ? "installed" : "run: npx playwrig
 
 const clientId = env("PAYPAL_CLIENT_ID");
 const secret = env("PAYPAL_CLIENT_SECRET");
-if (!clientId || !secret) add("PayPal sandbox app", false, "set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET (npm run setup)");
+if (!clientId || !secret) add("PayPal sandbox app", null, "not set: offline runs need none; for the real sandbox set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET (npm run setup)");
 else {
   const res = await fetch(`${env("PAYPAL_API_BASE", "https://api-m.sandbox.paypal.com")}/v1/oauth2/token`, {
     method: "POST",
@@ -62,4 +62,19 @@ add("APIMatic plugin cache", fs.existsSync(path.join(ROOT, ".heistproof", "vendo
 
 for (const c of checks) console.log(`${c.ok === true ? "ok  " : c.ok === false ? "FIX " : "note"}  ${c.name}: ${c.detail}`);
 console.log(`\nSupported model keys: ${PROVIDERS.map((p) => `${p.keys[0]} (${p.label})`).join(", ")}, or HEISTPROOF_BASE_URL + HEISTPROOF_API_KEY + HEISTPROOF_MODEL for any other endpoint.`);
-process.exitCode = checks.some((c) => c.ok === false) ? 1 : 0;
+
+// What you can run right now.
+const is = (name: string) => checks.find((c) => c.name === name)?.ok === true;
+const base = is("Node.js with current security fixes") && is("Playwright Chromium");
+const sandbox = base && is("PayPal sandbox app") && is("cloudflared (public webhook address)");
+const model = checks.find((c) => c.name === "AI model for the coding agent")?.ok === true;
+const modes: Array<[string, boolean, string]> = [
+  ["npm run demo", base, "the ten robberies against two checkouts, offline (no keys)"],
+  ["npm run check -- <shop> --offline", base, "any shop, offline"],
+  ["npm run check -- <shop>", sandbox, "any shop, against the real PayPal sandbox"],
+  ["npm run heist -- --offline", base && model, "the coding agent adds PayPal, then the robberies, offline"],
+  ["npm run heist", sandbox && model, "the whole job against the real PayPal sandbox"],
+];
+console.log("\nReady to run:");
+for (const [cmd, ok, what] of modes) console.log(`  ${ok ? "yes" : "no "}  ${cmd.padEnd(36)} ${what}`);
+process.exitCode = base ? 0 : 1;

@@ -12,7 +12,7 @@ Source: PayPal's official v6 sample integration (github.com/paypal-examples/v6-w
 ```html
 <script async src="https://www.sandbox.paypal.com/web-sdk/v6/core" onload="onPayPalWebSdkLoaded()"></script>
 ```
-Production uses `https://www.paypal.com/web-sdk/v6/core`. Pick the URL from server config, never hard-code the environment twice.
+Production uses `https://www.paypal.com/web-sdk/v6/core`. Pick the URL from server config, never hard-code the environment twice, and decide sandbox or live from an explicit setting (PAYPAL_ENV), not from the shape of the API base URL: a proxy or a test harness may sit at that address. A sandbox client id with the live script renders no buttons and logs nothing.
 
 ## 2. Create one SDK instance
 

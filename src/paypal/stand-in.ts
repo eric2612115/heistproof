@@ -95,7 +95,7 @@ export class PayPalStandIn {
       this.server!.once("error", reject);
       this.server!.listen(port, "127.0.0.1", resolve);
     });
-    this.url = `http://127.0.0.1:${port}`;
+    this.url = `http://127.0.0.1:${(this.server.address() as { port: number }).port}`;
     return this.url;
   }
 

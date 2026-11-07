@@ -8,15 +8,25 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           check-latest: true
           cache: npm
-      # The unit tests need no browser; skip the Playwright download in postinstall.
+      # Chromium is installed below, with the system libraries it needs.
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
+      # The ten robberies for real, in a real browser, against three checkouts, with Heistproof's offline PayPal
+      # stand-in: no PayPal account, no AI key, no secrets in CI.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:attacks
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: offline-runs
+          path: .heistproof/runs/
+          if-no-files-found: ignore
       # The static console (recorded runs, no keys) must still build.
       - run: node scripts/build-site.mjs site

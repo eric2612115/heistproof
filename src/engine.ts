@@ -3,6 +3,7 @@
 // OpenAI-protocol providers go through the local bridge in bridge.ts.
 import { env } from "./config.ts";
 import { startBridge } from "./bridge.ts";
+import { startRelay } from "./relay.ts";
 
 export type ProviderSpec = {
   id: string;
@@ -65,7 +66,10 @@ async function newestOf(spec: ProviderSpec, key: string): Promise<string | null>
 
 export type Engine = { provider: string; label: string; protocol: string; model: string; bridged: boolean; env: Record<string, string>; close: () => Promise<void> };
 
-/** Everything Claude Code needs to talk to the chosen model. The returned env holds the key: never log it. */
+/**
+ * Everything Claude Code needs to talk to the chosen model. The model key stays in this process: Claude Code (and every
+ * command the agent runs) gets a local relay or bridge address and a per-run token that only that relay accepts.
+ */
 export async function openEngine(): Promise<Engine> {
   const { spec, key, model: forcedModel } = chooseEngine();
   const model = forcedModel ?? (await newestOf(spec, key)) ?? spec.model;
@@ -73,14 +77,15 @@ export async function openEngine(): Promise<Engine> {
   const models = { ANTHROPIC_MODEL: model, ANTHROPIC_DEFAULT_OPUS_MODEL: model, ANTHROPIC_DEFAULT_SONNET_MODEL: model, ANTHROPIC_DEFAULT_HAIKU_MODEL: small };
   if (spec.protocol === "anthropic") {
     const direct = spec.id === "anthropic" && !env("HEISTPROOF_BASE_URL");
+    const relay = await startRelay({ baseUrl: spec.base, apiKey: key, keyHeader: direct ? "x-api-key" : "bearer" });
     return {
       provider: spec.id,
       label: spec.label,
       protocol: "anthropic",
       model,
       bridged: false,
-      env: direct ? { ANTHROPIC_API_KEY: key, ...models } : { ANTHROPIC_BASE_URL: spec.base, ANTHROPIC_AUTH_TOKEN: key, ...models },
-      close: async () => {},
+      env: { ANTHROPIC_BASE_URL: relay.url, ANTHROPIC_AUTH_TOKEN: relay.token, ...models },
+      close: relay.close,
     };
   }
   const bridge = await startBridge({ baseUrl: spec.base, apiKey: key, maxOutputTokens: Number(env("HEISTPROOF_MAX_OUTPUT_TOKENS", "16000")) });
@@ -90,7 +95,7 @@ export async function openEngine(): Promise<Engine> {
     protocol: "openai",
     model,
     bridged: true,
-    env: { ANTHROPIC_BASE_URL: bridge.url, ANTHROPIC_AUTH_TOKEN: "heistproof-bridge", ...models },
+    env: { ANTHROPIC_BASE_URL: bridge.url, ANTHROPIC_AUTH_TOKEN: bridge.token, ...models },
     close: bridge.close,
   };
 }

@@ -9,6 +9,7 @@ Use your skills, in this order:
 
 Contract with the test harness (keep these names exactly):
 - The server reads PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET and PAYPAL_WEBHOOK_ID from the environment, and the PayPal REST base URL from PAYPAL_API_BASE (default https://api-m.sandbox.paypal.com). Every PayPal REST call, including the OAuth token and webhook verification, goes to PAYPAL_API_BASE; pass it to the SDK as its base URL override.
+- PAYPAL_ENV is "sandbox" or "live". Choose the browser script from it (https://www.sandbox.paypal.com/web-sdk/v6/core in sandbox, https://www.paypal.com/web-sdk/v6/core in live). Never infer the environment from PAYPAL_API_BASE: the harness points it at a local recording proxy.
 - In sandbox the browser gets testBuyerCountry from PAYPAL_TEST_BUYER_COUNTRY (unset means do not send it).
 - PayPal webhooks arrive at POST /api/paypal/webhooks.
 - No PayPal credentials exist while you build, so make no live PayPal calls; the harness runs the shop against the PayPal sandbox after you finish.
@@ -22,7 +23,7 @@ export const BASELINE_PROMPT = `A customer just asked this shop: "Do you take Ve
 
 Add PayPal checkout to this shop so shoppers can pay with PayPal, Venmo or Pay Later next to the existing card form.
 
-Contract with the test harness (keep these names exactly): the server reads PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET and PAYPAL_WEBHOOK_ID from the environment and sends every PayPal REST call to PAYPAL_API_BASE (default https://api-m.sandbox.paypal.com); in sandbox the browser gets testBuyerCountry from PAYPAL_TEST_BUYER_COUNTRY; PayPal webhooks arrive at POST /api/paypal/webhooks. No PayPal credentials exist while you build, so make no live PayPal calls. Keep the card checkout working. Do not commit.
+Contract with the test harness (keep these names exactly): the server reads PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET and PAYPAL_WEBHOOK_ID from the environment and sends every PayPal REST call to PAYPAL_API_BASE (default https://api-m.sandbox.paypal.com); PAYPAL_ENV is "sandbox" or "live" (choose the browser script from it, never from PAYPAL_API_BASE, which the harness points at a local recording proxy); in sandbox the browser gets testBuyerCountry from PAYPAL_TEST_BUYER_COUNTRY; PayPal webhooks arrive at POST /api/paypal/webhooks. No PayPal credentials exist while you build, so make no live PayPal calls. Keep the card checkout working. Do not commit.
 
 Finish with a short summary of what you changed.`;
 

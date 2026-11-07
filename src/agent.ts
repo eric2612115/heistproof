@@ -18,26 +18,71 @@ export type AgentResult = {
   provider: string;
 };
 
-/** Keeps the agent inside its work folder and away from secrets. */
-function guard(cwd: string): HookCallback {
-  const secretFiles = [path.join(ROOT, ".env"), "/.ssh/", "/.aws/", "/.config/gcloud"];
+/** Documentation and package hosts the agent may fetch from (PayPal's docs and samples, APIMatic, GitHub, npm). */
+const DOC_HOSTS = [/(^|\.)paypal\.com$/, /(^|\.)paypalobjects\.com$/, /(^|\.)github\.com$/, /(^|\.)githubusercontent\.com$/, /(^|\.)apimatic\.io$/, /(^|\.)npmjs\.(com|org)$/, /(^|\.)nodejs\.org$/, /(^|\.)mozilla\.org$/];
+const docHost = (url: string) => {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && DOC_HOSTS.some((h) => h.test(u.hostname));
+  } catch {
+    return false;
+  }
+};
+
+// Top-level folders that hold other people's files and secrets; system tool folders are fine.
+const PRIVATE_ROOTS = /^\/(Users|home|root|etc|var|private|Library|System|Volumes|opt|mnt|proc|sys|srv|media|Applications|cores|dev)(\/|$)/;
+const SYSTEM_OK = /^\/(usr|bin|sbin|opt\/homebrew|dev\/(null|stdout|stderr|tty)|tmp|private\/tmp|var\/folders|private\/var\/folders)(\/|$)/;
+
+const inside = (p: string, dir: string) => p === dir || p.startsWith(dir.endsWith(path.sep) ? dir : dir + path.sep);
+
+/**
+ * The guard's decision for one tool call: a reason to refuse, or null to allow. Best effort, in layers: the agent's
+ * environment holds no keys at all (see engine.ts), file tools stay inside the shop folder (the plugins' folders are
+ * readable), shell commands may not name other folders, home, parent folders or the environment, and fetches go only
+ * to documentation hosts. For strict isolation run Heistproof in a container.
+ */
+export function guardDecision(cwd: string, readable: string[], tool: string, input: Record<string, unknown>): string | null {
+  const writes = ["Write", "Edit", "NotebookEdit"].includes(tool);
+  for (const key of ["file_path", "path", "notebook_path"]) {
+    const p = input?.[key];
+    if (typeof p !== "string" || !p) continue;
+    const abs = path.resolve(cwd, p.replace(/^~(?=\/|$)/, "/__home__"));
+    if (inside(abs, cwd)) continue;
+    if (!writes && readable.some((d) => inside(abs, d))) continue;
+    return `Stay inside the shop folder (${cwd}).`;
+  }
+  if (tool === "WebFetch") {
+    const url = String(input?.url ?? "");
+    if (!docHost(url)) return "Fetching is limited to PayPal's, APIMatic's, GitHub's and npm's documentation over https.";
+  }
+  if (tool === "Bash") {
+    const cmd = String(input?.command ?? "");
+    if (/(^|[;&|(]\s*)(env|printenv|set|export|declare\s+-x|compgen\s+-v)\s*($|[;&|)])/.test(cmd) || /\bprintenv\b|\/proc\/[^\s]*environ|\bprocess\.env\b(?![.[])/.test(cmd)) return "Listing the environment is not allowed.";
+    if (/\bsudo\b|\brm\s+-[a-z]*r[a-z]*f?\s+[~/]|\b(curl|wget)\b[^|]*\|\s*(ba|z)?sh\b|\bgit\s+(push|commit)\b/.test(cmd)) return "That command is not allowed here. Do not commit or push; the harness does.";
+    if (/(^|[\s;&|(])(nc|ncat|netcat|ssh|scp|sftp|telnet|ftp|rsync)(\s|$)/.test(cmd)) return "Network tools other than package managers and documentation fetches are not allowed.";
+    if (/(^|[\s'"=:(])~(\/|$|[\s'"])|\$\{?HOME\}?|\$\{?CLAUDE_CONFIG_DIR\}?/.test(cmd)) return "Stay inside the shop folder: no home folder.";
+    if (/(^|[\s'"=:(\/])\.\.(\/|$|[\s'"])/.test(cmd)) return "Stay inside the shop folder: no parent folders.";
+    if (/(^|\s)\/(\s|$)/.test(cmd)) return "Stay inside the shop folder: not the root folder.";
+    const bare = cmd.replace(/\b[a-z][a-z0-9+.-]*:\/\/[^\s'"]+/gi, " ");
+    for (const m of bare.matchAll(/(?:^|[\s'"=:(>])(\/[^\s'";|&)<>]+)/g)) {
+      const p = m[1];
+      if (inside(p, cwd) || SYSTEM_OK.test(p) || readable.some((d) => inside(p, d))) continue;
+      if (PRIVATE_ROOTS.test(p)) return `Stay inside the shop folder (${cwd}): ${p} is outside it.`;
+    }
+    for (const m of cmd.matchAll(/\b(curl|wget|git\s+clone)\b[^;&|]*?\b(https?:\/\/[^\s'"]+)/g)) {
+      if (!docHost(m[2])) return "Downloads are limited to PayPal's, APIMatic's, GitHub's and npm's hosts over https.";
+    }
+  }
+  return null;
+}
+
+/** Keeps the agent inside its work folder and away from secrets (see guardDecision). */
+function guard(cwd: string, readable: string[]): HookCallback {
   return async (input) => {
     if (input.hook_event_name !== "PreToolUse") return {};
-    const text = JSON.stringify(input.tool_input ?? {});
-    const deny = (reason: string) => ({ hookSpecificOutput: { hookEventName: "PreToolUse" as const, permissionDecision: "deny" as const, permissionDecisionReason: reason } });
-    if (secretFiles.some((f) => text.includes(f))) return deny("Secrets are not available to the coding agent. Read configuration from process.env in code; the harness supplies it at run time.");
-    if (input.tool_name === "Bash") {
-      const cmd = String((input.tool_input as { command?: string })?.command ?? "");
-      if (/(^|[;&|]\s*)(env|printenv|set|export)\s*($|[;&|])/.test(cmd) || /\bprintenv\b/.test(cmd)) return deny("Listing the environment is not allowed; it holds the harness's keys.");
-      if (/\bsudo\b|rm\s+-rf\s+[~/]|\bcurl\b[^|]*\|\s*(ba)?sh|git\s+push|git\s+commit/.test(cmd)) return deny("That command is not allowed here. Do not commit or push; the harness does.");
-    }
-    for (const key of ["file_path", "path", "notebook_path"]) {
-      const p = (input.tool_input as Record<string, unknown>)?.[key];
-      if (typeof p === "string" && path.isAbsolute(p) && !path.resolve(p).startsWith(cwd) && !path.resolve(p).includes(`${path.sep}.heistproof${path.sep}vendor${path.sep}`)) {
-        return deny(`Stay inside the shop folder (${cwd}).`);
-      }
-    }
-    return {};
+    const reason = guardDecision(cwd, readable, input.tool_name, (input.tool_input ?? {}) as Record<string, unknown>);
+    if (!reason) return {};
+    return { hookSpecificOutput: { hookEventName: "PreToolUse" as const, permissionDecision: "deny" as const, permissionDecisionReason: reason } };
   };
 }
 
@@ -102,7 +147,7 @@ export async function runCodingAgent(opts: { run: Run; phase: Phase; cwd: string
           "You are Heistproof's migration agent. You change a real shop's code so it can take PayPal, Venmo and Pay Later safely. " +
           "Work only inside the current folder. Never print, read or ask for secrets. Do not run git commit or push.",
       },
-      hooks: { PreToolUse: [{ hooks: [guard(path.resolve(cwd))] }] },
+      hooks: { PreToolUse: [{ hooks: [guard(path.resolve(cwd), [path.resolve(apimaticDir), path.resolve(HEISTPROOF_PLUGIN_DIR), configDir])] }] },
     },
   });
 

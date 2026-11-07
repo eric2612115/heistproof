@@ -57,7 +57,9 @@ test("streams text and tool calls as Anthropic server-sent events", async () => 
   await new Promise<void>((r) => upstream.listen(0, "127.0.0.1", r));
   const bridge = await startBridge({ baseUrl: `http://127.0.0.1:${(upstream.address() as any).port}`, apiKey: "k" });
   try {
-    const res = await fetch(`${bridge.url}/v1/messages`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ model: "m", max_tokens: 100, stream: true, messages: [{ role: "user", content: "hi" }] }) });
+    const refused = await fetch(`${bridge.url}/v1/messages`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+    assert.equal(refused.status, 401, "no token, no model");
+    const res = await fetch(`${bridge.url}/v1/messages`, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${bridge.token}` }, body: JSON.stringify({ model: "m", max_tokens: 100, stream: true, messages: [{ role: "user", content: "hi" }] }) });
     const events = (await res.text()).split("\n\n").filter(Boolean).map((block) => JSON.parse(block.split("\ndata: ")[1]));
     const types = events.map((e) => e.type);
     assert.deepEqual(types, ["message_start", "content_block_start", "content_block_delta", "content_block_delta", "content_block_stop", "content_block_start", "content_block_delta", "content_block_delta", "content_block_stop", "message_delta", "message_stop"]);

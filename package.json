@@ -11,11 +11,13 @@
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "doctor": "tsx src/cli/doctor.ts",
+    "demo": "tsx src/cli/demo.ts",
     "heist": "tsx src/cli/run.ts",
-    "migrate": "tsx src/cli/migrate.ts",
     "check": "tsx src/cli/check.ts",
+    "migrate": "tsx src/cli/migrate.ts",
     "console": "tsx src/console/server.ts",
-    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "test": "node --import tsx --test \"test/*.test.ts\"",
+    "test:attacks": "node --import tsx --test --test-concurrency=1 \"test/attacks/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json",
     "postinstall": "playwright install chromium"
   },
