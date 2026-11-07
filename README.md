@@ -110,7 +110,20 @@ The rules the agent is asked to meet are in [`plugin/skills/checkout-hardening`]
 
 ### Isn't this PayPal's job?
 
-None of these attacks is a hole in PayPal. PayPal charges what the merchant's server asks it to charge, and it cannot know what a hoodie should cost. For every attack above PayPal already provides the safeguard: orders created and priced on the server (Orders v2), capture status, `PayPal-Request-Id`, `verify-webhook-signature`, and negative testing with `PayPal-Mock-Response`. Whether a shop uses them correctly lives in the shop's own code, and more and more of that code is written by AI agents. Generic security scanners do not test payment logic like this, and doing it by hand is a penetration test. Heistproof runs the attacks with real sandbox transactions on every change, and the report ties each result to the rule it tests and to PayPal's own ids.
+None of these attacks is a hole in PayPal. PayPal charges what the merchant's server asks it to charge, and it cannot know what a hoodie should cost. For every attack above PayPal already provides the safeguard: orders created and priced on the server (Orders v2), capture status, `PayPal-Request-Id`, `verify-webhook-signature`, and negative testing with `PayPal-Mock-Response`. Whether a shop uses them correctly lives in the shop's own code, and more and more of that code is written by AI agents. Classic scanners test endpoints one at a time and rarely follow a checkout from the cart to the shipping label; doing that by hand is a penetration test. Heistproof runs the attacks with real sandbox transactions on every change, and the report ties each result to the rule it tests and to PayPal's own ids.
+
+### Hasn't someone built this already?
+
+Not the attacks. Price tampering, unverified or replayed webhooks and double fulfilment are well-known checkout bugs, and bug bounty hunters still find price manipulation in e-commerce programs ([Intigriti](https://www.intigriti.com/blog/news/top-5-price-manipulation-vulnerabilities-ecommerce)). AI agents that probe business logic exist too: Ethiack's [Hackian](https://ethiack.com/news/product/hackian-ghosts-in-business-logic) maps flows such as add to cart, discount and checkout on a running application, and [Escape](https://docs.escape.tech/documentation/validate/business-logic-agent/) tests running applications for business logic flaws.
+
+Heistproof differs in where and how it runs:
+
+- **When PayPal is added, not after launch.** It runs at the moment a coding agent integrates PayPal, and its verdict gates the branch and the pull request.
+- **Real PayPal sandbox transactions.** A buyer approves on PayPal's own pages, the capture is real, PayPal's signed webhooks are replayed byte for byte, and declines come from PayPal's negative-testing header. Results are read from the shop's back office and PayPal's own order records.
+- **A fix loop with the coding agent.** Every attack that works goes back to the agent with PayPal's evidence (status, issue name, debug id), and the whole check runs again.
+- **One PayPal rule per attack.** Each attack tests one safeguard PayPal already provides, so the report names the rule that broke.
+
+We have not measured how often real shops get these wrong. The hand-written checkout in our recordings is a sample with planted mistakes, not a survey. AI-written code is a known risk in general: Veracode's 2025 study found security flaws in AI-generated code for 45% of its coding tasks ([SD Times](https://sdtimes.com/security/ai-generated-code-poses-major-security-risks-in-nearly-half-of-all-development-tasks-veracode-research-reveals/)).
 
 ## How it works
 
