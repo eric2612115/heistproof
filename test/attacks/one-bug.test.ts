@@ -8,6 +8,8 @@ import os from "node:os";
 import path from "node:path";
 import { checkOffline } from "../../src/offline-check.ts";
 
+const FIXTURES = path.join(import.meta.dirname, "..", "fixtures");
+
 const SHOP = path.join(import.meta.dirname, "..", "..", "shops", "copper-kettle");
 type Patch = { file: string; from: string; to: string };
 
@@ -68,17 +70,33 @@ const BUGS: Record<string, { mistake: string; patches: Patch[] }> = {
   },
 };
 
-function buggyCopy(id: string): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `heistproof-${id}-`));
+/**
+ * A mistake none of the ten scripted robberies can see: the capture route lets a field in its request body choose which
+ * shop order a payment pays for, so one payment can pay for two orders. The AI thief found it on its own (its plans,
+ * recorded from that run, are in test/fixtures/thief-plans-binding.json); the books catch it.
+ */
+const BEYOND_THE_TEN: Patch[] = [
+  { file: "server.js", from: "  async function capture(order) {\n    if (order.state !== \"awaiting_payment\") return { status: 200, body: { ref: order.ref, state: order.state } };\n    const r = await paypal.captureOrder(order.paypal_order, order.ref);", to: "  async function capture(order, paypalId = order.paypal_order) {\n    if (order.state !== \"awaiting_payment\") return { status: 200, body: { ref: order.ref, state: order.state } };\n    const r = await paypal.captureOrder(paypalId, order.ref);" },
+  { file: "server.js", from: "    if (r.status === 422 && issue === \"ORDER_ALREADY_CAPTURED\") found = (await paypal.getOrder(order.paypal_order))", to: "    if (r.status === 422 && issue === \"ORDER_ALREADY_CAPTURED\") found = (await paypal.getOrder(paypalId))" },
+  { file: "server.js", from: "          const order = store.byPayPal(decodeURIComponent(m[1]));\n          if (!order) return send(res, 404, { error: \"unknown order\" });\n          if (!inflight.has(order.ref)) inflight.set(order.ref, capture(order).finally(() => inflight.delete(order.ref)));", to: "          const order = (body.ref && store.byRef(body.ref)) || store.byPayPal(decodeURIComponent(m[1]));\n          if (!order) return send(res, 404, { error: \"unknown order\" });\n          if (!inflight.has(order.ref)) inflight.set(order.ref, capture(order, decodeURIComponent(m[1])).finally(() => inflight.delete(order.ref)));" },
+];
+
+function patched(name: string, patches: Patch[]): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `heistproof-${name}-`));
   fs.cpSync(SHOP, dir, { recursive: true, filter: (p) => !/(^|\/)(node_modules|data)(\/|$)/.test(path.relative(SHOP, p)) });
-  for (const p of BUGS[id].patches) {
+  for (const p of patches) {
     const file = path.join(dir, p.file);
     const text = fs.readFileSync(file, "utf8");
-    assert.equal(text.split(p.from).length - 1, 1, `${id}: the edit must match exactly once in ${p.file}: ${p.from.slice(0, 60)}`);
+    assert.equal(text.split(p.from).length - 1, 1, `${name}: the edit must match exactly once in ${p.file}: ${p.from.slice(0, 60)}`);
     fs.writeFileSync(file, text.replace(p.from, p.to));
   }
   return dir;
 }
+
+function buggyCopy(id: string): string {
+  return patched(id, BUGS[id].patches);
+}
+
 
 test("the careful shop, unchanged, blocks all ten robberies", { timeout: 240_000 }, async () => {
   const { round, verdict } = await checkOffline(SHOP, { label: "copper-kettle" });
@@ -105,3 +123,27 @@ for (const [id, bug] of Object.entries(BUGS)) {
     }
   });
 }
+
+test("a mistake outside the ten: the scripted robberies all pass it, the AI thief's own robbery does not", { timeout: 300_000 }, async () => {
+  const dir = patched("binding", BEYOND_THE_TEN);
+  try {
+    const { round, verdict } = await checkOffline(dir, { label: "copper-kettle-bug-binding", thief: { plansFile: path.join(FIXTURES, "thief-plans-binding.json") } });
+    for (const a of round.attacks) assert.equal(a.verdict, "held", `${a.id} cannot see this mistake: ${a.summary}`);
+    const caught = round.thief?.plans.filter((p) => p.verdict === "robbed") ?? [];
+    assert.ok(caught.length >= 1, `the AI thief's plans got through: ${JSON.stringify(round.thief?.plans.map((p) => [p.name, p.verdict]))}`);
+    assert.ok(caught.some((p) => p.mismatches.some((m) => /already pays for order/.test(m.problem))), "the books show one payment paying for two orders");
+    assert.equal(verdict, "unsafe");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the AI thief's recorded plans get nothing out of the careful shop or the agent-written one", { timeout: 300_000 }, async () => {
+  const kettle = await checkOffline(SHOP, { label: "copper-kettle", thief: { plansFile: path.join(FIXTURES, "thief-plans-binding.json") } });
+  assert.ok(kettle.round.thief?.ran && kettle.round.thief.plans.length > 0);
+  for (const p of kettle.round.thief!.plans) assert.equal(p.verdict, "held", `${p.name}: ${p.summary}`);
+  const after = await checkOffline(path.join(import.meta.dirname, "..", "..", "examples", "fogline-after"), { label: "fogline-after", thief: { plansFile: path.join(FIXTURES, "thief-plans-after.json") } });
+  for (const p of after.round.thief!.plans) assert.equal(p.verdict, "held", `${p.name}: ${p.summary}`);
+  assert.equal(after.verdict, "safe");
+});
+

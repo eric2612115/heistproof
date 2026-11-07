@@ -18,7 +18,7 @@ export type ShopProfile = {
   /** The back office: an orders list (JSON, read with the admin key in a header) and the page to photograph. */
   admin: { orders: string; keyHeader: string; page: string };
   /** Field names in that orders list, and the statuses that mean the shop considers an order paid. */
-  orders: { id: string; status: string; paid: string[]; shipments: string; reference: string };
+  orders: { id: string; status: string; paid: string[]; shipments: string; reference: string; total?: string; totalUnit?: "cents" | "dollars" };
   /** Where the shop receives PayPal's webhooks. */
   webhooks: string;
 };
@@ -29,7 +29,7 @@ export const FOGLINE: ShopProfile = {
   product: { sku: "FOG-HOODIE", qty: 1 },
   bag: { storageKey: "fogline.bag", open: "#bag-button", total: "#bag-total" },
   admin: { orders: "/api/admin/orders", keyHeader: "x-admin-key", page: "/admin?key={key}" },
-  orders: { id: "id", status: "status", paid: ["paid", "fulfilled"], shipments: "shipments", reference: "payment_reference" },
+  orders: { id: "id", status: "status", paid: ["paid", "fulfilled"], shipments: "shipments", reference: "payment_reference", total: "total_cents", totalUnit: "cents" },
   webhooks: "/api/paypal/webhooks",
 };
 
@@ -50,10 +50,11 @@ export function loadProfile(dir: string): ShopProfile {
 }
 
 /** A shop order as the attacks read it: the shop's own record, plus its id, status, paid flag, shipments and payment reference. */
-export type ShopOrder = Record<string, any> & { id: string; status: string; paid: boolean; shipments: number; payment_reference: string | null };
+export type ShopOrder = Record<string, any> & { id: string; status: string; paid: boolean; shipments: number; payment_reference: string | null; total_cents?: number | null };
 
 export function normalizeOrder(raw: Record<string, any>, p: ShopProfile): ShopOrder {
   const status = String(raw[p.orders.status] ?? "");
+  const total = p.orders.total ? Number(raw[p.orders.total]) : NaN;
   return {
     ...raw,
     id: String(raw[p.orders.id] ?? ""),
@@ -61,5 +62,6 @@ export function normalizeOrder(raw: Record<string, any>, p: ShopProfile): ShopOr
     paid: p.orders.paid.includes(status),
     shipments: Number(raw[p.orders.shipments] ?? 0) || 0,
     payment_reference: raw[p.orders.reference] ?? null,
+    total_cents: Number.isFinite(total) ? Math.round(p.orders.totalUnit === "dollars" ? total * 100 : total) : null,
   };
 }

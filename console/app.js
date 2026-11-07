@@ -209,6 +209,23 @@ function renderChips() {
    One run: state
    ====================================================================================== */
 
+/** The AI thief's robberies: what it guessed, and what the books said. */
+function renderThief() {
+  const t = state.thief;
+  if (!t) return;
+  const plans = [...t.plans.values()];
+  const robbed = plans.filter((p) => p.verdict === "robbed").length;
+  const held = plans.filter((p) => p.verdict === "held").length;
+  $("#thief").hidden = false;
+  $("#thief-chip").textContent = t.skipped ? "not run" : robbed ? `${robbed} got through` : held ? `${held} of ${plans.length} blocked` : `${plans.length} invented`;
+  $("#thief-note").textContent = t.skipped
+    ? `Not run in this recording: ${t.skipped}.`
+    : `${t.source === "replay" ? "Robberies an AI thief invented in an earlier run, replayed here." : `An AI model${t.model ? ` (${t.model})` : ""} played a dishonest shopper.`} It saw only what any visitor can see (the storefront's code, the page's own requests) and invented these robberies itself. The shop's books against PayPal's own records decide each one, not the model.`;
+  $("#thief-rows").innerHTML = plans
+    .map((p) => `<li class="row ${esc(p.verdict)}"><span class="stamp">${esc(STAMP[p.verdict] ?? (p.verdict === "running" ? "Trying…" : "Waiting"))}</span><div class="thief-text"><b class="name">${esc(p.name)}</b><span class="what">${esc(p.idea)}</span>${p.summary ? `<span class="thief-summary">${esc(p.summary)}</span>` : ""}</div></li>`)
+    .join("");
+}
+
 function reset(runId) {
   state = {
     runId,
@@ -226,6 +243,8 @@ function reset(runId) {
     R: [], // per round: tests, the purchase, the robberies, the agent's work, the webhook
     skills: new Map(),
     files_: new Map(),
+    thief: null, // the AI thief's robberies: { source, model, provider, skipped, plans: Map(index -> plan) }
+    books: null, // the latest books.reconciled event
     results: new Map(), // attack id -> latest verdict
     history: new Map(), // attack id -> [{ round, verdict }]
     names: new Map(), // attack id -> { name, what }
@@ -259,6 +278,9 @@ function reset(runId) {
   $("#rows").innerHTML = "";
   for (const [id, name, what] of ATTACKS) ensureRow(id, name, what);
   $("#notrun-note").hidden = true;
+  $("#thief").hidden = true;
+  $("#thief-rows").innerHTML = "";
+  $("#books-line").hidden = true;
   $("#proof-facts").innerHTML = "";
   $("#proof-more-facts").innerHTML = "";
   $("#proof-links").innerHTML = "";
@@ -945,6 +967,40 @@ function handle(e) {
       const n = R().attacks.size;
       note("attack", `trying ${n} of ${totalAttacks()}…`);
       state.activity = `Robbery ${n} of ${totalAttacks()}: ${name}…`;
+      break;
+    }
+    case "thief.start": {
+      state.thief = { source: e.source, model: e.model, provider: e.provider, skipped: null, plans: new Map((e.plans ?? []).map((p, i) => [i, { ...p, verdict: "waiting", summary: "" }])) };
+      renderThief();
+      break;
+    }
+    case "thief.skipped": {
+      state.thief = { ...(state.thief ?? { plans: new Map() }), skipped: e.reason };
+      renderThief();
+      break;
+    }
+    case "thief.plan": {
+      if (!state.thief) state.thief = { plans: new Map() };
+      state.thief.plans.set(e.index, { name: e.name, idea: e.idea, verdict: "running", summary: "" });
+      state.activity = `AI thief: trying "${e.name}"`;
+      renderThief();
+      break;
+    }
+    case "thief.result": {
+      if (!state.thief) state.thief = { plans: new Map() };
+      state.thief.plans.set(e.index, { name: e.name, idea: e.idea, verdict: e.verdict, summary: e.summary });
+      if (e.verdict === "robbed") state.bad.add("attack");
+      renderThief();
+      break;
+    }
+    case "books.reconciled": {
+      state.books = e;
+      const line = $("#books-line");
+      line.hidden = !e.matched;
+      line.className = `books-line ${e.mismatches?.length ? "bad" : "ok"}`;
+      line.textContent = e.mismatches?.length
+        ? `The shop's books do not match PayPal's: ${e.mismatches.map((m) => `order ${m.order} ${m.problem}`).join("; ")}.`
+        : `Books: ${e.paid} PayPal order${e.paid === 1 ? "" : "s"} the shop calls paid, each backed by a completed PayPal capture that covers it; none shipped more than once.`;
       break;
     }
     case "attack.result": {

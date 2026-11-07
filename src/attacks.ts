@@ -68,7 +68,7 @@ export async function discoverCaptureRoute(shop: ShopProcess, legit: PurchaseRes
 }
 
 /** Every same-origin script the storefront loads, following module imports (what an attacker can read). */
-async function shopScripts(shop: ShopProcess, limit = 40): Promise<Array<{ path: string; text: string }>> {
+export async function shopScripts(shop: ShopProcess, limit = 40): Promise<Array<{ path: string; text: string }>> {
   const html = await (await fetch(shop.url)).text();
   const queue = [...html.matchAll(/<script[^>]*\ssrc=["']([^"']+)["']/g), ...html.matchAll(/<link[^>]*rel=["']modulepreload["'][^>]*href=["']([^"']+)["']/g)].map((m) => m[1]);
   const seen = new Set<string>();

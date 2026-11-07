@@ -2,6 +2,7 @@
 // --existing: the shop already takes PayPal; skip the migration and go straight to buy, rob and fix.
 // --baseline: the same agent without APIMatic's plugin or Heistproof's skills, to measure what they are worth.
 // --offline: PayPal is Heistproof's local stand-in (a model key is still needed for the agent).
+// --no-thief: skip the AI thief (by default it invents robberies of its own after the ten, in every round).
 // The whole job: copy the card-only shop, let the coding agent add PayPal, prove it with a real purchase, attack it,
 // hand failures back to the agent, and ship a branch (with a pull request only when every robbery is blocked).
 import fs from "node:fs";
@@ -55,7 +56,7 @@ await main(run, async () => {
     run.emit("build", "migrate.done", { skillsLoaded: agent.skillsLoaded, turns: agent.turns, durationMs: agent.durationMs });
   }
 
-  const rounds = await proveAndHarden(run, shopDir, fixes);
+  const rounds = await proveAndHarden(run, shopDir, fixes, args.includes("--no-thief") ? false : {});
   const last = rounds.at(-1)!;
   const robbed = last.attacks.filter((a) => a.verdict === "robbed").length;
   const verdict = verdictOf(last);

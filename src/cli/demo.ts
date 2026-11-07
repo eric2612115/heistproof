@@ -16,9 +16,12 @@ const rows: string[] = [];
 try {
   for (const s of shops) {
     console.log(`Checking: ${s.label} ...`);
-    const { run, round, verdict } = await checkOffline(s.dir, { label: path.basename(s.dir) });
+    // The AI thief joins when a model key is set; without one the demo still needs no keys at all.
+    const { run, round, verdict } = await checkOffline(s.dir, { label: path.basename(s.dir), thief: {} });
     const robbed = round.attacks.filter((a) => a.verdict === "robbed");
     for (const a of round.attacks) console.log(`  ${a.verdict === "robbed" ? "ROBBED " : a.verdict === "held" ? "blocked" : a.verdict.padEnd(7)}  ${a.title}: ${a.summary.slice(0, 110)}`);
+    if (round.thief?.ran) for (const p of round.thief.plans) console.log(`  ${p.verdict === "robbed" ? "ROBBED " : p.verdict === "held" ? "blocked" : "error  "}  AI thief: ${p.name}: ${p.summary.slice(0, 100)}`);
+    else console.log(`  (AI thief not run: ${round.thief?.reason ?? "no model key"}; set any model key to let an AI invent robberies of its own)`);
     rows.push(`${String(robbed.length).padStart(2)} of 10 robbed   ${verdict === "safe" ? "SAFE TO SHIP" : verdict === "unsafe" ? "DO NOT SHIP " : "INCOMPLETE  "}  ${s.label}   (run ${run.id})`);
     console.log("");
   }

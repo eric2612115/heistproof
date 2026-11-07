@@ -40,10 +40,11 @@ runs:
         echo "verdict=$v" >> "$GITHUB_OUTPUT"
         report=$(ls -t .heistproof/runs/*/REPORT.md 2>/dev/null | head -1)
         [ -n "$report" ] && cat "$report" >> "$GITHUB_STEP_SUMMARY"
+        echo "runs=$(pwd -P)/.heistproof/runs" >> "$GITHUB_OUTPUT"
         exit $code
     - if: always()
       uses: actions/upload-artifact@v7
       with:
         name: heistproof-run
-        path: ${{ github.action_path }}/.heistproof/runs/
+        path: ${{ steps.check.outputs.runs }}
         if-no-files-found: ignore
