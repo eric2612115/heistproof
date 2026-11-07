@@ -1,0 +1,181 @@
+{
+  "round": 0,
+  "tests": true,
+  "prove": {
+    "ok": false,
+    "method": "paypal",
+    "verdict": "PayPal would charge $4900.00 for a $49.00 bag.",
+    "bagTotal": "49.00",
+    "paypalOrderId": "51C7658002134043V",
+    "paypalAmount": {
+      "value": "4900.00",
+      "currency": "USD"
+    },
+    "captureId": null,
+    "captureStatus": null,
+    "shopOrder": null,
+    "calls": [
+      {
+        "method": "POST",
+        "path": "/api/paypal/orders",
+        "body": {
+          "items": [
+            {
+              "sku": "FOG-HOODIE",
+              "qty": 1
+            }
+          ]
+        },
+        "status": 200,
+        "response": {
+          "id": "51C7658002134043V",
+          "orderId": "FOG-981FC1"
+        }
+      }
+    ],
+    "screenshots": [
+      "round0-purchase-1-checkout.png",
+      "round0-purchase-2-paypal.png"
+    ],
+    "buttons": {
+      "paypal": true,
+      "venmo": false,
+      "paylater": false
+    },
+    "payLaterMessage": null
+  },
+  "attacks": [
+    {
+      "id": "price-tamper",
+      "title": "Pay $0.01 for the $49 hoodie",
+      "rule": [
+        1,
+        2
+      ],
+      "verdict": "robbed",
+      "summary": "The shop asked PayPal for USD 0.01 (order 54F25238NB109791R) after the browser said so.",
+      "evidence": {
+        "request": "/api/paypal/orders",
+        "expected": "USD 4900.00",
+        "tries": [
+          {
+            "variant": "total fields set to one cent",
+            "shopStatus": 200,
+            "paypalOrderId": "54F25238NB109791R",
+            "paypalAmount": {
+              "value": "0.01",
+              "currency": "USD"
+            },
+            "debugId": "f3026811a5916"
+          },
+          {
+            "variant": "item prices set to one cent",
+            "shopStatus": 200,
+            "paypalOrderId": "8203500873391524G",
+            "paypalAmount": {
+              "value": "4900.00",
+              "currency": "USD"
+            },
+            "debugId": "f569229289e1e"
+          },
+          {
+            "variant": "currency switched to yen",
+            "shopStatus": 200,
+            "paypalOrderId": "2EB122201G543350E",
+            "paypalAmount": {
+              "value": "4900",
+              "currency": "JPY"
+            },
+            "debugId": "f753918567551"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bad-bag",
+      "title": "Negative, fractional and fake items",
+      "rule": [
+        11
+      ],
+      "verdict": "held",
+      "summary": "All five bad bags were refused before any PayPal order was created.",
+      "evidence": {
+        "tries": [
+          {
+            "bag": "quantity -1",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          },
+          {
+            "bag": "quantity 0.5",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          },
+          {
+            "bag": "quantity 1000",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          },
+          {
+            "bag": "unknown product",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          },
+          {
+            "bag": "empty bag",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          }
+        ],
+        "paypalOrdersCreated": []
+      }
+    },
+    {
+      "id": "capture-unapproved",
+      "title": "Claim payment for an order nobody approved",
+      "rule": [
+        4
+      ],
+      "verdict": "robbed",
+      "summary": "The shop marked order 4KS28861CW3680153 paid although PayPal says CREATED.",
+      "evidence": {
+        "paypalOrderId": "4KS28861CW3680153",
+        "paypalStatus": "CREATED",
+        "captureRequest": "/api/paypal/orders/4KS28861CW3680153/capture",
+        "shopAnswer": {
+          "status": 200,
+          "body": {
+            "orderId": "FOG-995D55"
+          }
+        },
+        "paidBefore": 0,
+        "paidAfter": 1,
+        "labelsBefore": 0,
+        "labelsAfter": 1
+      }
+    },
+    {
+      "id": "secret-leak",
+      "title": "Find the PayPal secret in the browser",
+      "rule": [
+        12
+      ],
+      "verdict": "held",
+      "summary": "Checked 5 pages and scripts: only the client id is public.",
+      "evidence": {
+        "checked": [
+          "/",
+          "/app.js",
+          "/admin",
+          "/api/paypal/config",
+          "/paypal.js"
+        ],
+        "leakedAt": []
+      }
+    }
+  ],
+  "webhookVerified": false,
+  "webhook": "not-delivered",
+  "webhookEvent": null,
+  "paypalErrors": []
+}

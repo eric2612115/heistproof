@@ -14,6 +14,22 @@ A shopper asks a small shop "Do you take Venmo?". Heistproof answers with a pull
 
 > All money is PayPal sandbox money. The shop is a sample shop. See [Sandbox vs production](#sandbox-vs-production).
 
+## What happened in the recorded run
+
+[`runs/2026-11-07-full-run`](runs/2026-11-07-full-run/REPORT.md), one command on the card-only Fogline shop, model `muse-wonder-1.0` on the Meta Model API, everything in the PayPal sandbox:
+
+1. The agent loaded APIMatic's `typescript-integrate-paypal` skill first, then eight more of the plugin's skills and Heistproof's two, wrote `paypal-plan.md`, and added the buttons, the server routes and the webhook handler. 8 minutes, 76 turns, 23 tests passing.
+2. The first real purchase failed: the buyer approved, then PayPal answered the shop's capture with **415 UNSUPPORTED_MEDIA_TYPE**. Capture's body is optional in the API, and the SDK's own map says that leaving it out sends no `Content-Type` at all; the sandbox refuses that. The agent had followed the plugin's rule to leave unrequired optional fields out, and its tests used a fake PayPal, so they could not see it.
+3. Heistproof handed PayPal's answer and debug id back to the agent. It sent `body: {}`, added a regression test and updated the contract sheet, in about a minute and a half.
+4. The second purchase was captured (`5UD433706B768933M`), shipped once, and PayPal's signed `PAYMENT.CAPTURE.COMPLETED` webhook was verified. All 10 attacks held, including a real `422 INSTRUMENT_DECLINED` injected at capture. Verdict: safe to ship.
+
+### A checkout written in an afternoon
+
+[`shops/fogline-naive`](shops/fogline-naive/README.md) is the same shop with a quick PayPal checkout and planted mistakes. Heistproof on it, also recorded:
+
+- [`runs/2026-11-07-naive-penny-heist`](runs/2026-11-07-naive-penny-heist/REPORT.md): before any money moved, PayPal's own review page showed **$4,900.00** for the $49.00 bag (cents sent as dollars), so the purchase was stopped. Then the attacker edited the page's create-order request in the shopper's browser, the sandbox buyer paid **USD 0.01**, and the shop's back office marked the $49 hoodie paid and printed a shipping label.
+- [`runs/2026-11-07-naive-hardened`](runs/2026-11-07-naive-hardened/REPORT.md): `--existing` mode handed each failure to the coding agent. Round 0 found the $4,900 order, the one-cent order and payment claimed for an unapproved order; the agent's fix then broke the PayPal button, which the next real purchase caught; round 2 paid, shipped once and held all 10 attacks.
+
 ## Try it
 
 | What you want | What you need | Command |

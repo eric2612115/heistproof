@@ -1,0 +1,565 @@
+[
+  {
+    "round": 0,
+    "tests": true,
+    "prove": {
+      "ok": false,
+      "method": "paypal",
+      "verdict": "PayPal would charge $4900.00 for a $49.00 bag.",
+      "bagTotal": "49.00",
+      "paypalOrderId": "51C7658002134043V",
+      "paypalAmount": {
+        "value": "4900.00",
+        "currency": "USD"
+      },
+      "captureId": null,
+      "captureStatus": null,
+      "shopOrder": null,
+      "calls": [
+        {
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "status": 200,
+          "response": {
+            "id": "51C7658002134043V",
+            "orderId": "FOG-981FC1"
+          }
+        }
+      ],
+      "screenshots": [
+        "round0-purchase-1-checkout.png",
+        "round0-purchase-2-paypal.png"
+      ],
+      "buttons": {
+        "paypal": true,
+        "venmo": false,
+        "paylater": false
+      },
+      "payLaterMessage": null
+    },
+    "attacks": [
+      {
+        "id": "price-tamper",
+        "title": "Pay $0.01 for the $49 hoodie",
+        "rule": [
+          1,
+          2
+        ],
+        "verdict": "robbed",
+        "summary": "The shop asked PayPal for USD 0.01 (order 54F25238NB109791R) after the browser said so.",
+        "evidence": {
+          "request": "/api/paypal/orders",
+          "expected": "USD 4900.00",
+          "tries": [
+            {
+              "variant": "total fields set to one cent",
+              "shopStatus": 200,
+              "paypalOrderId": "54F25238NB109791R",
+              "paypalAmount": {
+                "value": "0.01",
+                "currency": "USD"
+              },
+              "debugId": "f3026811a5916"
+            },
+            {
+              "variant": "item prices set to one cent",
+              "shopStatus": 200,
+              "paypalOrderId": "8203500873391524G",
+              "paypalAmount": {
+                "value": "4900.00",
+                "currency": "USD"
+              },
+              "debugId": "f569229289e1e"
+            },
+            {
+              "variant": "currency switched to yen",
+              "shopStatus": 200,
+              "paypalOrderId": "2EB122201G543350E",
+              "paypalAmount": {
+                "value": "4900",
+                "currency": "JPY"
+              },
+              "debugId": "f753918567551"
+            }
+          ]
+        }
+      },
+      {
+        "id": "bad-bag",
+        "title": "Negative, fractional and fake items",
+        "rule": [
+          11
+        ],
+        "verdict": "held",
+        "summary": "All five bad bags were refused before any PayPal order was created.",
+        "evidence": {
+          "tries": [
+            {
+              "bag": "quantity -1",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            },
+            {
+              "bag": "quantity 0.5",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            },
+            {
+              "bag": "quantity 1000",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            },
+            {
+              "bag": "unknown product",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            },
+            {
+              "bag": "empty bag",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            }
+          ],
+          "paypalOrdersCreated": []
+        }
+      },
+      {
+        "id": "capture-unapproved",
+        "title": "Claim payment for an order nobody approved",
+        "rule": [
+          4
+        ],
+        "verdict": "robbed",
+        "summary": "The shop marked order 4KS28861CW3680153 paid although PayPal says CREATED.",
+        "evidence": {
+          "paypalOrderId": "4KS28861CW3680153",
+          "paypalStatus": "CREATED",
+          "captureRequest": "/api/paypal/orders/4KS28861CW3680153/capture",
+          "shopAnswer": {
+            "status": 200,
+            "body": {
+              "orderId": "FOG-995D55"
+            }
+          },
+          "paidBefore": 0,
+          "paidAfter": 1,
+          "labelsBefore": 0,
+          "labelsAfter": 1
+        }
+      },
+      {
+        "id": "secret-leak",
+        "title": "Find the PayPal secret in the browser",
+        "rule": [
+          12
+        ],
+        "verdict": "held",
+        "summary": "Checked 5 pages and scripts: only the client id is public.",
+        "evidence": {
+          "checked": [
+            "/",
+            "/app.js",
+            "/admin",
+            "/api/paypal/config",
+            "/paypal.js"
+          ],
+          "leakedAt": []
+        }
+      }
+    ],
+    "webhookVerified": false,
+    "webhook": "not-delivered",
+    "webhookEvent": null,
+    "paypalErrors": []
+  },
+  {
+    "round": 1,
+    "tests": true,
+    "prove": {
+      "ok": false,
+      "method": "paypal",
+      "verdict": "The paypal button never appeared.",
+      "bagTotal": "49.00",
+      "paypalOrderId": null,
+      "paypalAmount": null,
+      "captureId": null,
+      "captureStatus": null,
+      "shopOrder": null,
+      "calls": [],
+      "screenshots": [
+        "round1-purchase-1-checkout.png"
+      ],
+      "buttons": {
+        "paypal": false,
+        "venmo": false,
+        "paylater": false
+      },
+      "payLaterMessage": ""
+    },
+    "attacks": [],
+    "webhookVerified": false,
+    "webhook": "not-delivered",
+    "webhookEvent": null,
+    "paypalErrors": []
+  },
+  {
+    "round": 2,
+    "tests": true,
+    "prove": {
+      "ok": true,
+      "method": "paypal",
+      "verdict": "Paid $49.00: capture 8F3084201X897211V COMPLETED, shop order FOG-D165BA fulfilled, 1 label.",
+      "bagTotal": "49.00",
+      "paypalOrderId": "2G484248VG757532D",
+      "paypalAmount": {
+        "value": "49.00",
+        "currency": "USD"
+      },
+      "captureId": "8F3084201X897211V",
+      "captureStatus": "COMPLETED",
+      "shopOrder": {
+        "id": "FOG-D165BA",
+        "created_at": "2026-11-06T22:37:41.157Z",
+        "email": null,
+        "items_json": "[{\"sku\":\"FOG-HOODIE\",\"name\":\"Fogline Hoodie\",\"qty\":1,\"unitCents\":4900,\"lineCents\":4900}]",
+        "total_cents": 4900,
+        "currency": "USD",
+        "status": "fulfilled",
+        "payment_method": "paypal",
+        "payment_reference": "2G484248VG757532D",
+        "paid_cents": 4900,
+        "paid_at": "2026-11-06T22:37:59.863Z",
+        "failure": null,
+        "items": [
+          {
+            "sku": "FOG-HOODIE",
+            "name": "Fogline Hoodie",
+            "qty": 1,
+            "unitCents": 4900,
+            "lineCents": 4900
+          }
+        ],
+        "shipments": 1
+      },
+      "calls": [
+        {
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "status": 200,
+          "response": {
+            "id": "2G484248VG757532D",
+            "orderId": "FOG-D165BA"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/paypal/orders/2G484248VG757532D/capture",
+          "body": null,
+          "status": 200,
+          "response": {
+            "orderId": "FOG-D165BA",
+            "status": "fulfilled"
+          }
+        }
+      ],
+      "screenshots": [
+        "round2-purchase-1-checkout.png",
+        "round2-purchase-2-paypal.png",
+        "round2-purchase-3-review.png",
+        "round2-purchase-4-after.png"
+      ],
+      "buttons": {
+        "paypal": true,
+        "venmo": true,
+        "paylater": true
+      },
+      "payLaterMessage": "Buy now, pay later. Learn more"
+    },
+    "attacks": [
+      {
+        "id": "price-tamper",
+        "title": "Pay $0.01 for the $49 hoodie",
+        "rule": [
+          1,
+          2
+        ],
+        "verdict": "held",
+        "summary": "Every tampered request still produced a $49.00 USD PayPal order (or none).",
+        "evidence": {
+          "request": "/api/paypal/orders",
+          "expected": "USD 49.00",
+          "tries": [
+            {
+              "variant": "total fields set to one cent",
+              "shopStatus": 200,
+              "paypalOrderId": "9K193076L4273201C",
+              "paypalAmount": {
+                "value": "49.00",
+                "currency": "USD"
+              },
+              "debugId": "f81246590625a"
+            },
+            {
+              "variant": "item prices set to one cent",
+              "shopStatus": 200,
+              "paypalOrderId": "1MR76303CA649092D",
+              "paypalAmount": {
+                "value": "49.00",
+                "currency": "USD"
+              },
+              "debugId": "f420592629112"
+            },
+            {
+              "variant": "currency switched to yen",
+              "shopStatus": 200,
+              "paypalOrderId": "2Y1981771P7892836",
+              "paypalAmount": {
+                "value": "49.00",
+                "currency": "USD"
+              },
+              "debugId": "f357448b3726f"
+            }
+          ]
+        }
+      },
+      {
+        "id": "bad-bag",
+        "title": "Negative, fractional and fake items",
+        "rule": [
+          11
+        ],
+        "verdict": "held",
+        "summary": "All five bad bags were refused before any PayPal order was created.",
+        "evidence": {
+          "tries": [
+            {
+              "bag": "quantity -1",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            },
+            {
+              "bag": "quantity 0.5",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            },
+            {
+              "bag": "quantity 1000",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            },
+            {
+              "bag": "unknown product",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            },
+            {
+              "bag": "empty bag",
+              "shopStatus": 400,
+              "paypalOrderId": null
+            }
+          ],
+          "paypalOrdersCreated": []
+        }
+      },
+      {
+        "id": "capture-unapproved",
+        "title": "Claim payment for an order nobody approved",
+        "rule": [
+          4
+        ],
+        "verdict": "held",
+        "summary": "PayPal refused the capture (order 9H87196400504274W is CREATED); the shop stayed unpaid.",
+        "evidence": {
+          "paypalOrderId": "9H87196400504274W",
+          "paypalStatus": "CREATED",
+          "captureRequest": "/api/paypal/orders/9H87196400504274W/capture",
+          "shopAnswer": {
+            "status": 422,
+            "body": {
+              "error": "Payer has not yet approved the Order for payment. Please redirect the payer to the 'rel':'approve' url returned as part of the HATEOAS links within the Create Order call or provide a valid payment_source in the request.",
+              "issue": "ORDER_NOT_APPROVED",
+              "code": "ORDER_NOT_APPROVED",
+              "debugId": "f2578877cac46",
+              "orderId": "FOG-125802",
+              "status": "pending"
+            }
+          },
+          "paidBefore": 1,
+          "paidAfter": 1,
+          "labelsBefore": 1,
+          "labelsAfter": 1
+        }
+      },
+      {
+        "id": "approved-not-captured",
+        "title": "Get it shipped on approval alone",
+        "rule": [
+          4,
+          8
+        ],
+        "verdict": "held",
+        "summary": "Buyer approved order 5VG3590075819573B, the capture was blocked and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped.",
+        "evidence": {
+          "paypalOrderId": "5VG3590075819573B",
+          "approvedWebhook": "WH-71P64094K42939252-9WU78555T5700490Y",
+          "approvedWebhookAnswer": 200,
+          "paidBefore": 1,
+          "paidAfter": 1,
+          "labelsBefore": 1,
+          "labelsAfter": 1,
+          "screenshots": [
+            "attack-approved-only-1-checkout.png",
+            "attack-approved-only-2-paypal.png",
+            "attack-approved-only-3-review.png",
+            "attack-approved-only-4-after.png"
+          ]
+        }
+      },
+      {
+        "id": "double-capture",
+        "title": "Double-click: capture twice at once",
+        "rule": [
+          8,
+          10
+        ],
+        "verdict": "held",
+        "summary": "Two simultaneous captures: PayPal captured 1, the shop printed 1 label.",
+        "evidence": {
+          "paypalOrderId": "5VG3590075819573B",
+          "shopAnswers": [
+            200,
+            200
+          ],
+          "paypalCaptures": [
+            {
+              "id": "23774580J5638742C",
+              "status": "COMPLETED",
+              "amount": {
+                "currency_code": "USD",
+                "value": "49.00"
+              }
+            }
+          ],
+          "labelsAdded": 1
+        }
+      },
+      {
+        "id": "declined-capture",
+        "title": "Card declined at capture (PayPal negative testing)",
+        "rule": [
+          5
+        ],
+        "verdict": "held",
+        "summary": "PayPal answered 422 INSTRUMENT_DECLINED (debug id f79355891f87e); the shop kept the order unpaid.",
+        "evidence": {
+          "paypalOrderId": "89V015805H357544W",
+          "injected": {
+            "status": 422,
+            "debugId": "f79355891f87e",
+            "issue": "INSTRUMENT_DECLINED"
+          },
+          "shopAnswer": 422,
+          "paidBefore": 2,
+          "paidAfter": 2,
+          "screenshots": [
+            "attack-declined-1-checkout.png",
+            "attack-declined-2-paypal.png",
+            "attack-declined-3-review.png",
+            "attack-declined-4-after.png"
+          ]
+        }
+      },
+      {
+        "id": "forged-webhook",
+        "title": "Forge PayPal's 'payment completed' webhook",
+        "rule": [
+          6
+        ],
+        "verdict": "held",
+        "summary": "Forged events were refused (HTTP 400 unsigned, 400 with stolen headers); nothing changed.",
+        "evidence": {
+          "targetShopOrder": "FOG-C456C8",
+          "targetPayPalOrder": "4V8768130Y933942E",
+          "unsignedAnswer": 400,
+          "stolenHeadersAnswer": 400,
+          "paidBefore": 2,
+          "paidAfter": 2
+        }
+      },
+      {
+        "id": "webhook-replay",
+        "title": "Replay a real webhook to ship twice",
+        "rule": [
+          7,
+          8
+        ],
+        "verdict": "held",
+        "summary": "Event WH-70A16648HR241483R-76J82141NL261002P replayed 3 times byte for byte: still one label.",
+        "evidence": {
+          "eventId": "WH-70A16648HR241483R-76J82141NL261002P",
+          "answers": [
+            200,
+            200,
+            200
+          ],
+          "labelsBefore": 2,
+          "labelsAfter": 2
+        }
+      },
+      {
+        "id": "out-of-order",
+        "title": "Send 'approved' after 'completed'",
+        "rule": [
+          9
+        ],
+        "verdict": "held",
+        "summary": "Order FOG-D165BA stayed fulfilled after a late 'approved' event.",
+        "evidence": {
+          "eventId": "WH-51J012885M3277248-94M665691N384822T",
+          "shopAnswer": 200,
+          "before": "fulfilled",
+          "after": "fulfilled"
+        }
+      },
+      {
+        "id": "secret-leak",
+        "title": "Find the PayPal secret in the browser",
+        "rule": [
+          12
+        ],
+        "verdict": "held",
+        "summary": "Checked 5 pages and scripts: only the client id is public.",
+        "evidence": {
+          "checked": [
+            "/",
+            "/app.js",
+            "/admin",
+            "/api/paypal/config",
+            "/paypal.js"
+          ],
+          "leakedAt": []
+        }
+      }
+    ],
+    "webhookVerified": true,
+    "webhook": "verified",
+    "webhookEvent": "WH-70A16648HR241483R-76J82141NL261002P",
+    "paypalErrors": []
+  }
+]

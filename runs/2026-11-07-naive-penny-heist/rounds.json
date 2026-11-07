@@ -1,0 +1,122 @@
+[
+  {
+    "round": 0,
+    "tests": true,
+    "prove": {
+      "ok": false,
+      "method": "paypal",
+      "verdict": "PayPal would charge $4900.00 for a $49.00 bag.",
+      "bagTotal": "49.00",
+      "paypalOrderId": "69F35835DG0710354",
+      "paypalAmount": {
+        "value": "4900.00",
+        "currency": "USD"
+      },
+      "captureId": null,
+      "captureStatus": null,
+      "shopOrder": null,
+      "calls": [
+        {
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "status": 200,
+          "response": {
+            "id": "69F35835DG0710354",
+            "orderId": "FOG-FF9A15"
+          }
+        }
+      ],
+      "screenshots": [
+        "round0-purchase-1-checkout.png",
+        "round0-purchase-2-paypal.png",
+        "round0-purchase-2b-paypal-wrong-amount.png"
+      ],
+      "buttons": {
+        "paypal": true,
+        "venmo": false,
+        "paylater": false
+      },
+      "payLaterMessage": null,
+      "consoleErrors": []
+    },
+    "attacks": [
+      {
+        "id": "price-tamper",
+        "title": "Pay $0.01 for the $49 hoodie",
+        "rule": [
+          1,
+          2
+        ],
+        "verdict": "robbed",
+        "summary": "Shipped the $49.00 hoodie after PayPal captured USD 0.01 (order 0MB647230C444021W); the shop's back office says fulfilled.",
+        "evidence": {
+          "request": "/api/paypal/orders",
+          "expected": "USD 49.00",
+          "tries": [
+            {
+              "variant": "total fields set to one cent",
+              "shopStatus": 200,
+              "paypalOrderId": "76V64696ND123492D",
+              "paypalAmount": {
+                "value": "0.01",
+                "currency": "USD"
+              },
+              "debugId": "f6188891c8fd1"
+            },
+            {
+              "variant": "item prices set to one cent",
+              "shopStatus": 200,
+              "paypalOrderId": "6EJ095053N4466432",
+              "paypalAmount": {
+                "value": "4900.00",
+                "currency": "USD"
+              },
+              "debugId": "f814448023c19"
+            },
+            {
+              "variant": "currency switched to yen",
+              "shopStatus": 200,
+              "paypalOrderId": "77N042941L952002R",
+              "paypalAmount": {
+                "value": "4900",
+                "currency": "JPY"
+              },
+              "debugId": "f5548352d32fc"
+            }
+          ],
+          "followThrough": {
+            "paypalOrderId": "0MB647230C444021W",
+            "captured": {
+              "currency_code": "USD",
+              "value": "0.01"
+            },
+            "shopOrder": "FOG-2E8451",
+            "shopStatus": "fulfilled",
+            "shopPaidCents": 4900,
+            "labelsAdded": 1
+          },
+          "screenshots": [
+            "attack-penny-1-checkout.png",
+            "attack-penny-2-paypal.png",
+            "attack-penny-3-review.png",
+            "attack-penny-4-after.png",
+            "attack-penny-5-backoffice.png"
+          ],
+          "paypalOrderId": "0MB647230C444021W"
+        }
+      }
+    ],
+    "webhookVerified": false,
+    "webhook": "not-delivered",
+    "webhookEvent": null,
+    "paypalErrors": []
+  }
+]

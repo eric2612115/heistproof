@@ -1,0 +1,227 @@
+{
+  "round": 0,
+  "tests": true,
+  "prove": {
+    "ok": false,
+    "method": "paypal",
+    "verdict": "Capture APPROVED; shop order FOG-E3D3FA is pending with 0 labels.",
+    "bagTotal": "49.00",
+    "paypalOrderId": "0KV683486E973004T",
+    "paypalAmount": {
+      "value": "49.00",
+      "currency": "USD"
+    },
+    "captureId": null,
+    "captureStatus": "APPROVED",
+    "shopOrder": {
+      "id": "FOG-E3D3FA",
+      "created_at": "2026-11-06T22:15:20.383Z",
+      "email": null,
+      "items_json": "[{\"sku\":\"FOG-HOODIE\",\"name\":\"Fogline Hoodie\",\"qty\":1,\"unitCents\":4900,\"lineCents\":4900}]",
+      "total_cents": 4900,
+      "currency": "usd",
+      "status": "pending",
+      "payment_method": "paypal",
+      "payment_reference": null,
+      "paid_cents": null,
+      "paid_at": null,
+      "failure": null,
+      "paypal_order_id": "0KV683486E973004T",
+      "items": [
+        {
+          "sku": "FOG-HOODIE",
+          "name": "Fogline Hoodie",
+          "qty": 1,
+          "unitCents": 4900,
+          "lineCents": 4900
+        }
+      ],
+      "shipments": 0
+    },
+    "calls": [
+      {
+        "method": "POST",
+        "path": "/api/paypal/orders",
+        "body": {
+          "items": [
+            {
+              "sku": "FOG-HOODIE",
+              "qty": 1
+            }
+          ]
+        },
+        "status": 200,
+        "response": {
+          "id": "0KV683486E973004T",
+          "orderId": "FOG-E3D3FA",
+          "status": "pending"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/paypal/orders/0KV683486E973004T/capture",
+        "body": {},
+        "status": 415,
+        "response": {
+          "error": "The request payload is not supported",
+          "orderId": "FOG-E3D3FA"
+        }
+      }
+    ],
+    "screenshots": [
+      "round0-purchase-1-checkout.png",
+      "round0-purchase-2-paypal.png",
+      "round0-purchase-3-review.png",
+      "round0-purchase-4-after.png"
+    ],
+    "buttons": {
+      "paypal": true,
+      "venmo": true,
+      "paylater": true
+    },
+    "payLaterMessage": "Buy now, pay later. Learn more"
+  },
+  "attacks": [
+    {
+      "id": "price-tamper",
+      "title": "Pay $0.01 for the $49 hoodie",
+      "rule": [
+        1,
+        2
+      ],
+      "verdict": "held",
+      "summary": "Every tampered request still produced a $49.00 USD PayPal order (or none).",
+      "evidence": {
+        "request": "/api/paypal/orders",
+        "expected": "USD 49.00",
+        "tries": [
+          {
+            "variant": "total fields set to one cent",
+            "shopStatus": 200,
+            "paypalOrderId": "6H897297UU798425K",
+            "paypalAmount": {
+              "value": "49.00",
+              "currency": "USD"
+            },
+            "debugId": "ca56775526f59"
+          },
+          {
+            "variant": "item prices set to one cent",
+            "shopStatus": 200,
+            "paypalOrderId": "2S844289PF846670V",
+            "paypalAmount": {
+              "value": "49.00",
+              "currency": "USD"
+            },
+            "debugId": "ca5677559b96c"
+          },
+          {
+            "variant": "currency switched to yen",
+            "shopStatus": 200,
+            "paypalOrderId": "10933456W3780603A",
+            "paypalAmount": {
+              "value": "49.00",
+              "currency": "USD"
+            },
+            "debugId": "ca567755f49ac"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bad-bag",
+      "title": "Negative, fractional and fake items",
+      "rule": [
+        11
+      ],
+      "verdict": "held",
+      "summary": "All five bad bags were refused before any PayPal order was created.",
+      "evidence": {
+        "tries": [
+          {
+            "bag": "quantity -1",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          },
+          {
+            "bag": "quantity 0.5",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          },
+          {
+            "bag": "quantity 1000",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          },
+          {
+            "bag": "unknown product",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          },
+          {
+            "bag": "empty bag",
+            "shopStatus": 400,
+            "paypalOrderId": null
+          }
+        ],
+        "paypalOrdersCreated": []
+      }
+    },
+    {
+      "id": "capture-unapproved",
+      "title": "Claim payment for an order nobody approved",
+      "rule": [
+        4
+      ],
+      "verdict": "held",
+      "summary": "PayPal refused the capture (order 412020574M1160000 is CREATED); the shop stayed unpaid.",
+      "evidence": {
+        "paypalOrderId": "412020574M1160000",
+        "paypalStatus": "CREATED",
+        "captureRequest": "/api/paypal/orders/412020574M1160000/capture",
+        "shopAnswer": {
+          "status": 415,
+          "body": {
+            "error": "The request payload is not supported",
+            "orderId": "FOG-510513"
+          }
+        },
+        "paidBefore": 0,
+        "paidAfter": 0,
+        "labelsBefore": 0,
+        "labelsAfter": 0
+      }
+    },
+    {
+      "id": "secret-leak",
+      "title": "Find the PayPal secret in the browser",
+      "rule": [
+        12
+      ],
+      "verdict": "held",
+      "summary": "Checked 4 pages and scripts: only the client id is public.",
+      "evidence": {
+        "checked": [
+          "/",
+          "/app.js",
+          "/admin",
+          "/api/paypal/config"
+        ],
+        "leakedAt": []
+      }
+    }
+  ],
+  "webhookVerified": false,
+  "webhook": "not-delivered",
+  "webhookEvent": null,
+  "paypalErrors": [
+    {
+      "call": "POST /v2/checkout/orders/0KV683486E973004T/capture",
+      "status": 415,
+      "name": "UNSUPPORTED_MEDIA_TYPE",
+      "issue": null,
+      "message": "The request payload is not supported",
+      "debugId": "ca56775236e7a"
+    }
+  ]
+}
