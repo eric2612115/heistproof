@@ -15,8 +15,14 @@ export type ProxiedCall = {
 };
 
 /**
- * Sits between the shop and the PayPal sandbox. It forwards every call unchanged, records it as evidence,
- * and when a fault is armed it adds PayPal's negative-testing header (PayPal-Mock-Response) to the matching call.
+ * Its address carries PayPal's sandbox host name as a path prefix (http://127.0.0.1:4418/api-m.sandbox.paypal.com), so
+ * shop code that tells sandbox from live by looking at PAYPAL_API_BASE still sees the sandbox. The prefix is optional.
+ */
+export const SANDBOX_PREFIX = "/api-m.sandbox.paypal.com";
+
+/**
+ * Sits between the shop and PayPal (the sandbox, or the offline stand-in). It forwards every call unchanged, records it
+ * as evidence, and when a fault is armed it adds PayPal's negative-testing header (PayPal-Mock-Response) to the matching call.
  */
 export class PayPalProxy {
   readonly calls: ProxiedCall[] = [];
@@ -37,7 +43,8 @@ export class PayPalProxy {
       const chunks: Buffer[] = [];
       for await (const c of req) chunks.push(c as Buffer);
       const raw = Buffer.concat(chunks);
-      const path = req.url ?? "/";
+      const asked = req.url ?? "/";
+      const path = asked.startsWith(`${SANDBOX_PREFIX}/`) ? asked.slice(SANDBOX_PREFIX.length) : asked;
       const headers: Record<string, string> = {};
       for (const [k, v] of Object.entries(req.headers)) {
         if (["host", "connection", "content-length", "accept-encoding"].includes(k) || v === undefined) continue;
@@ -71,13 +78,16 @@ export class PayPalProxy {
         res.writeHead(upstreamRes.status, out);
         res.end(body);
       } catch (err) {
-        this.calls.push({ at: new Date().toISOString(), method: req.method ?? "GET", path, status: 0, debugId: null, responseBody: String(err) });
+        this.calls.push({ at: new Date().toISOString(), method: req.method ?? "GET", path: path.split("?")[0], status: 0, debugId: null, responseBody: String(err) });
         res.writeHead(502, { "content-type": "application/json" });
         res.end(JSON.stringify({ name: "PROXY_ERROR", message: String(err) }));
       }
     });
-    await new Promise<void>((resolve) => this.server!.listen(port, "127.0.0.1", resolve));
-    return `http://127.0.0.1:${port}`;
+    await new Promise<void>((resolve, reject) => {
+      this.server!.once("error", reject);
+      this.server!.listen(port, "127.0.0.1", resolve);
+    });
+    return `http://127.0.0.1:${port}${SANDBOX_PREFIX}`;
   }
 
   async stop() {

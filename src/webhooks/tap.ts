@@ -2,7 +2,10 @@ import http from "node:http";
 
 export type Delivery = {
   at: string;
-  source: "paypal" | "attacker";
+  /** paypal: arrived with PayPal's signature headers and an event; attacker: sent by an attack; unknown: anything else. */
+  source: "paypal" | "attacker" | "unknown";
+  /** PayPal's own answer to verify-webhook-signature for this delivery (null when not asked). */
+  paypalVerified?: boolean | null;
   eventId: string | null;
   eventType: string | null;
   resourceId: string | null;
@@ -23,6 +26,9 @@ export class WebhookTap {
   private server: http.Server | null = null;
   private waiters: Array<{ match: (d: Delivery) => boolean; resolve: (d: Delivery) => void }> = [];
 
+  /** Set once the webhook id is known: asks PayPal whether a delivery is genuine (recorded as evidence). */
+  verifier: ((headers: Record<string, string>, rawBody: string) => Promise<boolean>) | null = null;
+
   constructor(private shopWebhookUrl: string) {}
 
   async start(port: number) {
@@ -35,11 +41,22 @@ export class WebhookTap {
         const v = req.headers[h];
         if (typeof v === "string") headers[h] = v;
       }
-      const delivery = await this.forward("paypal", headers, rawBody);
+      // Anything can reach a public address; only a signed PayPal event counts as PayPal's.
+      let eventType: unknown = null;
+      try {
+        eventType = JSON.parse(rawBody)?.event_type;
+      } catch {
+        /* not JSON */
+      }
+      const signed = PAYPAL_HEADERS.every((h) => headers[h]) && typeof eventType === "string";
+      const delivery = await this.forward(signed ? "paypal" : "unknown", headers, rawBody);
       res.writeHead(delivery.shopStatus === 0 ? 502 : delivery.shopStatus, { "content-type": "text/plain" });
       res.end(delivery.shopBody.slice(0, 200));
     });
-    await new Promise<void>((resolve) => this.server!.listen(port, "127.0.0.1", resolve));
+    await new Promise<void>((resolve, reject) => {
+      this.server!.once("error", reject);
+      this.server!.listen(port, "127.0.0.1", resolve);
+    });
   }
 
   /** Sends a delivery to the shop exactly as given and records what the shop answered. */
@@ -71,6 +88,9 @@ export class WebhookTap {
       shopBody: shopBody.slice(0, 500),
     };
     this.deliveries.push(delivery);
+    if (source === "paypal" && this.verifier) {
+      delivery.paypalVerified = await this.verifier(headers, rawBody).catch(() => null);
+    }
     if (source === "paypal") {
       for (const w of [...this.waiters]) {
         if (w.match(delivery)) {

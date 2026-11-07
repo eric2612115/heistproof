@@ -14,7 +14,11 @@ const purchase = (over: Partial<PurchaseResult> = {}): PurchaseResult => ({
   paypalAmount: { value: "49.00", currency: "USD" },
   captureId: "3C679366HH908993F",
   captureStatus: "COMPLETED",
-  shopOrder: { id: "FOG-ABC123", status: "fulfilled", shipments: 1 },
+  environment: null,
+  paypalStatus: "COMPLETED",
+  approved: true,
+  captureBlocked: false,
+  shopOrder: { id: "FOG-ABC123", status: "fulfilled", paid: true, shipments: 1, payment_reference: "3C679366HH908993F" },
   calls: [
     { method: "POST", path: "/api/paypal/orders", body: { items: [{ sku: "FOG-HOODIE", qty: 1 }] }, status: 201, response: { id: "5O190127TN364715T" } },
     { method: "POST", path: "/api/paypal/orders/5O190127TN364715T/capture", body: {}, status: 200, response: { status: "fulfilled" } },
@@ -50,7 +54,7 @@ test("redacts registered secrets everywhere", () => {
 test("the report says do not ship when any attack robbed the shop", () => {
   const md = renderReport({
     shopDir: "/tmp/shop",
-    rounds: [{ round: 0, tests: true, prove: purchase(), webhookVerified: true, attacks: [{ id: "price-tamper", title: "Pay $0.01 for the $49 hoodie", rule: [1], verdict: "robbed", summary: "USD 0.01", evidence: {} }] }],
+    rounds: [{ round: 0, tests: true, prove: purchase(), webhookVerified: true, attacks: [{ id: "price-tamper", title: "Price tampering", what: "Pay $0.01 for the $49 hoodie", rule: [1], verdict: "robbed", summary: "USD 0.01", evidence: {} }] }],
   });
   assert.match(md, /do not ship/);
   assert.match(md, /ROBBED/);

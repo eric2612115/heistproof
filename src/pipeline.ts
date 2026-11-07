@@ -1,29 +1,35 @@
 import { openSandbox } from "./sandbox.ts";
 import { purchase, closeBrowser, type PurchaseResult } from "./prove.ts";
-import { runAttacks, type AttackOutcome } from "./attacks.ts";
+import { runAttacks, shopOrderFor, ORDER, type AttackOutcome } from "./attacks.ts";
 import { runCodingAgent } from "./agent.ts";
 import { fixPrompt } from "./prompts.ts";
 import { diff, runTests, commit, ensureInstalled } from "./workspace.ts";
+import { loadProfile } from "./shop-profile.ts";
+import { shopOrders } from "./shop-process.ts";
+import { pace } from "./config.ts";
 import type { Run, Phase } from "./events.ts";
 
-export const HOODIE = [{ sku: "FOG-HOODIE", qty: 1 }];
-
 export type PayPalError = { call: string; status: number; name: string | null; issue: string | null; message: string | null; debugId: string | null };
-export type WebhookStatus = "verified" | "refused" | "not-delivered";
-export type Round = { round: number; tests: boolean; prove: PurchaseResult; attacks: AttackOutcome[]; webhookVerified: boolean; webhook?: WebhookStatus; webhookEvent?: string | null; paypalErrors?: PayPalError[] };
+/** How the shop answered PayPal's genuine, signed PAYMENT.CAPTURE.COMPLETED event for its own order ("verified" in older runs means accepted). */
+export type WebhookStatus = "accepted" | "verified" | "refused" | "not-delivered";
+export type Round = { round: number; tests: boolean; prove: PurchaseResult; attacks: AttackOutcome[]; webhookVerified?: boolean; webhook?: WebhookStatus; webhookEvent?: string | null; paypalErrors?: PayPalError[] };
 
 export type Verdict = "safe" | "unsafe" | "incomplete";
 
+/** Every robbery a check must run, and see blocked, before it can say "safe". */
+export const ALL_ATTACKS = ORDER;
+
 /**
- * safe: the tests pass, the real purchase worked, the shop accepted PayPal's genuine webhook, and every robbery that ran was blocked.
- * unsafe: a robbery worked, the tests fail, the shop refused a genuine webhook, or the purchase failed because of the shop.
- * incomplete: nothing got through, but some robberies were skipped or errored (for example, the sandbox never delivered a
- * webhook they need), or a sandbox problem stopped the purchase. Run it again; an incomplete check is never "safe".
+ * safe: the tests pass, the real purchase worked, and all ten robberies ran and were blocked.
+ * unsafe: a robbery worked, the tests fail, the shop refused PayPal's genuine webhook, or the purchase failed because of the shop.
+ * incomplete: nothing got through, but not every robbery ran (one was skipped or errored, or only some were asked for),
+ * or PayPal's sandbox stopped the purchase. Run it again; an incomplete check is never "safe".
  */
 export function verdictOf(r: Round): Verdict {
   if (r.attacks.some((a) => a.verdict === "robbed") || !r.tests || r.webhook === "refused") return "unsafe";
   if (!r.prove.ok) return environmentProblem(r) ? "incomplete" : "unsafe";
-  if (r.attacks.length === 0 || r.attacks.some((a) => a.verdict !== "held")) return "incomplete";
+  const held = new Set(r.attacks.filter((a) => a.verdict === "held").map((a) => a.id));
+  if (ALL_ATTACKS.some((id) => !held.has(id))) return "incomplete";
   return "safe";
 }
 
@@ -37,15 +43,16 @@ export const VERDICT_LINE: Record<Verdict, string> = {
   incomplete: "INCOMPLETE: nothing got through, but not every robbery could run; run the check again",
 };
 
-/** One full check of the shop as it is now: build, a real sandbox purchase, then every attack. */
+/** One full check of the shop as it is now: build, a real purchase, then every attack. */
 export async function checkShop(run: Run, shopDir: string, round: number, opts: { attacks?: string[]; skipAttacks?: boolean; method?: "paypal" | "venmo" | "paylater" } = {}): Promise<Round> {
   const phase: Phase = round === 0 ? "prove" : "fix";
   ensureInstalled(shopDir);
   const tests = runTests(shopDir);
   run.emit("build", "build.tests", { round, ok: tests.ok, output: tests.output.slice(-3000) });
-  const sandbox = await openSandbox(run, phase, shopDir, `shop-round${round}.db`);
+  const items = [loadProfile(shopDir).product];
+  const sandbox = await openSandbox(run, phase, shopDir, round);
   try {
-    const legit = await purchase({ run, phase: "prove", shop: sandbox.shop, tap: sandbox.tap, items: HOODIE, label: `round${round}-purchase${opts.method && opts.method !== "paypal" ? `-${opts.method}` : ""}`, method: opts.method });
+    const legit = await purchase({ run, phase: "prove", shop: sandbox.shop, tap: sandbox.tap, items, label: `round${round}-purchase${opts.method && opts.method !== "paypal" ? `-${opts.method}` : ""}`, method: opts.method });
     // What PayPal itself refused during the shopper's purchase (the shop's own calls, seen by the proxy).
     const paypalErrors: PayPalError[] = sandbox.proxy.calls
       .filter((c) => c.status >= 400 && !c.injected)
@@ -55,8 +62,8 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
       });
     if (paypalErrors.length) run.emit("prove", "prove.paypal_errors", { round, errors: paypalErrors });
     if (legit.ok && legit.captureId) {
-      // Give PayPal's sandbox a minute to deliver the purchase's PAYMENT.CAPTURE.COMPLETED; it is sometimes slower.
-      await sandbox.tap.waitFor((d) => d.eventType === "PAYMENT.CAPTURE.COMPLETED" && d.resourceId === legit.captureId, 60_000);
+      // Give PayPal a minute to deliver the purchase's PAYMENT.CAPTURE.COMPLETED; the sandbox is sometimes slower.
+      await sandbox.tap.waitFor((d) => d.eventType === "PAYMENT.CAPTURE.COMPLETED" && d.resourceId === legit.captureId, pace(60_000));
     }
     let attacks: AttackOutcome[] = [];
     if (!opts.skipAttacks && (legit.ok || legit.paypalOrderId)) {
@@ -65,14 +72,16 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
       const buyerFree = ["price-tamper", "bad-bag", "capture-unapproved", "secret-leak"];
       const purchased = legit.ok || legit.captureStatus === "COMPLETED";
       const only = purchased ? opts.attacks : (opts.attacks ?? buyerFree).filter((id) => buyerFree.includes(id));
-      attacks = await runAttacks({ run, shop: sandbox.shop, proxy: sandbox.proxy, tap: sandbox.tap, legit, hoodie: HOODIE }, only);
+      attacks = await runAttacks({ run, round, shop: sandbox.shop, proxy: sandbox.proxy, tap: sandbox.tap, legit, items }, only);
     }
-    // The webhook verdict for the round: how the shop answered a genuine, signed PAYMENT.CAPTURE.COMPLETED delivery.
-    const completed = sandbox.tap.genuine("PAYMENT.CAPTURE.COMPLETED");
-    const best = completed.find((d) => d.resourceId === legit.captureId) ?? completed[0];
-    const webhook: WebhookStatus = !best ? "not-delivered" : best.shopStatus >= 200 && best.shopStatus < 300 ? "verified" : "refused";
-    run.emit("prove", "prove.webhook", { round, status: webhook, eventId: best?.eventId ?? null, resourceId: best?.resourceId ?? null, shopStatus: best?.shopStatus ?? null, ok: webhook === "verified" });
-    const result: Round = { round, tests: tests.ok, prove: legit, attacks, webhookVerified: webhook === "verified", webhook, webhookEvent: best?.eventId ?? null, paypalErrors };
+    // The webhook verdict for the round: how the shop answered PayPal's genuine PAYMENT.CAPTURE.COMPLETED for one of its
+    // own orders. Events about other shops' orders (one sandbox app can serve several projects) do not count.
+    const orders = await shopOrders(sandbox.shop).catch(() => []);
+    const ours = sandbox.tap.genuine("PAYMENT.CAPTURE.COMPLETED").filter((d) => d.resourceId === legit.captureId || shopOrderFor(d, orders, legit));
+    const best = ours.find((d) => d.resourceId === legit.captureId) ?? ours[0];
+    const webhook: WebhookStatus = !best ? "not-delivered" : best.shopStatus >= 200 && best.shopStatus < 300 ? "accepted" : "refused";
+    run.emit("prove", "prove.webhook", { round, status: webhook, eventId: best?.eventId ?? null, resourceId: best?.resourceId ?? null, shopStatus: best?.shopStatus ?? null, paypalVerified: best?.paypalVerified ?? null, ok: webhook === "accepted" });
+    const result: Round = { round, tests: tests.ok, prove: legit, attacks, webhook, webhookEvent: best?.eventId ?? null, paypalErrors };
     run.writeJson(`round${round}.json`, result);
     return result;
   } finally {
@@ -81,9 +90,14 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
   }
 }
 
-/** Problems with the sandbox or the test accounts, not with the shop's code: never sent to the coding agent. */
+const LEGACY_ENVIRONMENT = /sandbox checkout page kept failing|sandbox buyer|SANDBOX_BUYER|seller account|CAPTCHA/;
+
+/** Problems with PayPal's sandbox or the test accounts, not with the shop's code: never sent to the coding agent. */
 export function environmentProblem(r: Round): string | null {
-  if (!r.prove.ok && /sandbox checkout page kept failing|sandbox buyer|SANDBOX_BUYER|seller account|CAPTCHA/.test(r.prove.verdict)) return r.prove.verdict;
+  if (r.prove.ok) return null;
+  if (r.prove.environment) return r.prove.verdict;
+  // Runs recorded before the purchase step named the reason.
+  if (r.prove.environment === undefined && LEGACY_ENVIRONMENT.test(r.prove.verdict)) return r.prove.verdict;
   return null;
 }
 
@@ -93,11 +107,11 @@ export function failures(r: Round): Array<{ title: string; detail: string }> {
   if (!r.prove.ok) {
     const errors = (r.paypalErrors ?? []).filter((e) => !e.call.includes("/v1/oauth2/token"));
     const told = errors.map((e) => `PayPal answered ${e.call} with HTTP ${e.status} ${e.name ?? ""}${e.issue ? ` (${e.issue})` : ""}${e.message ? `: ${e.message}` : ""} [debug id ${e.debugId}]`).join("; ");
-    out.push({ title: "The real sandbox purchase did not complete correctly", detail: `${r.prove.verdict}${told ? ` ${told}.` : ""}` });
+    out.push({ title: "The real purchase did not complete correctly", detail: `${r.prove.verdict}${told ? ` ${told}.` : ""}` });
   }
-  if (r.webhook === "refused") out.push({ title: "The shop refused PayPal's genuine PAYMENT.CAPTURE.COMPLETED webhook", detail: `A genuine, signed delivery (event ${r.webhookEvent}) to POST /api/paypal/webhooks did not get a 2xx answer.` });
-  for (const a of r.attacks) if (a.verdict === "error") out.push({ title: `Attack "${a.title}" could not run`, detail: a.summary });
-  for (const a of r.attacks) if (a.verdict === "robbed") out.push({ title: `Attack "${a.title}" succeeded (rules ${a.rule.join(", ")})`, detail: a.summary });
+  if (r.webhook === "refused") out.push({ title: "The shop refused PayPal's genuine PAYMENT.CAPTURE.COMPLETED webhook", detail: `A genuine, signed delivery (event ${r.webhookEvent}) to the shop's webhook route did not get a 2xx answer.` });
+  for (const a of r.attacks) if (a.verdict === "error") out.push({ title: `Robbery "${a.title}" could not run`, detail: a.summary });
+  for (const a of r.attacks) if (a.verdict === "robbed") out.push({ title: `Robbery "${a.title}" worked (${a.what}; rules ${a.rule.join(", ")})`, detail: a.summary });
   return out;
 }
 
@@ -109,10 +123,10 @@ export async function proveAndHarden(run: Run, shopDir: string, maxFixes = 2): P
     rounds.push(r);
     const f = failures(r);
     const env = environmentProblem(r);
-    run.emit(round === 0 ? "attack" : "fix", "round.done", { round, failures: f.length, robbed: r.attacks.filter((a) => a.verdict === "robbed").length, environment: env });
+    run.emit(round === 0 ? "attack" : "fix", "round.done", { round, failures: f.length, robbed: r.attacks.filter((a) => a.verdict === "robbed").length, environment: env, verdict: verdictOf(r) });
     if (env) break; // a sandbox or account problem: fixing the shop would not help
     if (f.length === 0 || round === maxFixes) break;
-    commit(shopDir, round === 0 ? "Add PayPal, Venmo and Pay Later checkout" : `Harden checkout (round ${round})`);
+    commit(shopDir, round === 0 ? "Add PayPal, Venmo and Pay Later checkout" : `Harden checkout (round ${round + 1})`);
     await runCodingAgent({ run, phase: "fix", cwd: shopDir, prompt: fixPrompt(f), label: `fix-${round + 1}`, maxTurns: 80 });
     run.writeText(`fix-${round + 1}.patch`, diff(shopDir).patch);
   }

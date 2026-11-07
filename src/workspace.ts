@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import { ROOT } from "./config.ts";
 
 const sh = (cmd: string, args: string[], cwd: string) => execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 }).toString();
@@ -34,6 +35,38 @@ export function prepareShop(template: string, runId: string): string {
   }
   sh("npm", ["install", "--no-audit", "--no-fund", "--silent"], dest);
   return dest;
+}
+
+/**
+ * A fingerprint of the code that decides verdicts (src/ except the console, and the plugin's skills): stored with every
+ * run, so a recorded run can be checked against the code it claims to come from.
+ */
+export function sourceHash(): string {
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        if (p !== path.join(ROOT, "src", "console")) walk(p);
+      } else if (/\.(ts|md|json)$/.test(e.name)) files.push(p);
+    }
+  };
+  walk(path.join(ROOT, "src"));
+  walk(path.join(ROOT, "plugin"));
+  const h = crypto.createHash("sha256");
+  for (const f of files.sort()) h.update(path.relative(ROOT, f).split(path.sep).join("/")).update("\0").update(fs.readFileSync(f)).update("\0");
+  return h.digest("hex").slice(0, 16);
+}
+
+/** The commit a shop starts from, so the final patch shows everything the run changed. */
+export function headCommit(shopDir: string): string {
+  return sh("git", ["rev-parse", "HEAD"], shopDir).trim();
+}
+
+/** Everything the run changed since `base`, committed or not. */
+export function diffSince(shopDir: string, base: string): string {
+  sh("git", ["add", "-A"], shopDir);
+  return sh("git", ["diff", "--cached", base, "--", ".", ":(exclude)package-lock.json"], shopDir);
 }
 
 /** The Heistproof commit a run was made with, so a recorded run can be matched to the code. */

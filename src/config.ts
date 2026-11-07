@@ -52,18 +52,38 @@ export function sandboxBuyer(): { email: string; password: string | null } | nul
   return email ? { email, password: null } : null;
 }
 
+/** Offline mode: for this whole process PayPal is Heistproof's local stand-in (src/paypal/stand-in.ts), not the sandbox. */
+let offlineMode = false;
+export function goOffline() {
+  offlineMode = true;
+}
+export const isOffline = () => offlineMode;
+
+/** The stand-in serving the current round: the shop and the harness talk to it instead of the sandbox. */
+let standIn: { clientId: string; clientSecret: string; apiBase: string } | null = null;
+export function usePayPalStandIn(target: { clientId: string; clientSecret: string; apiBase: string } | null) {
+  standIn = target;
+  if (target) registerSecret(target.clientSecret);
+}
+
 export const paypal = {
-  clientId: () => requireEnv("PAYPAL_CLIENT_ID"),
-  clientSecret: () => requireEnv("PAYPAL_CLIENT_SECRET"),
-  apiBase: () => env("PAYPAL_API_BASE", "https://api-m.sandbox.paypal.com")!,
+  clientId: () => standIn?.clientId ?? requireEnv("PAYPAL_CLIENT_ID"),
+  clientSecret: () => standIn?.clientSecret ?? requireEnv("PAYPAL_CLIENT_SECRET"),
+  apiBase: () => standIn?.apiBase ?? env("PAYPAL_API_BASE", "https://api-m.sandbox.paypal.com")!,
 };
 
+/** Waits meant for PayPal's sandbox; the local stand-in answers at once, so offline runs wait a quarter as long. */
+export const pace = (ms: number) => (offlineMode ? Math.max(100, Math.round(ms / 4)) : ms);
+
+// Every local port Heistproof uses, moved together with HEISTPROOF_PORT_BASE (default 4410).
+const PORT_BASE = Number(env("HEISTPROOF_PORT_BASE", "4410"));
 export const PORTS = {
-  console: 4410,
-  shop: 4411,
-  webhookTap: 4417,
-  paypalProxy: 4418,
-  probe: 4419,
+  console: PORT_BASE,
+  shop: PORT_BASE + 1,
+  paypalStandIn: PORT_BASE + 6,
+  webhookTap: PORT_BASE + 7,
+  paypalProxy: PORT_BASE + 8,
+  probe: PORT_BASE + 9,
 };
 
 /** The APIMatic Context Plugin for PayPal, pinned to the marketplace commit this project was built against. */

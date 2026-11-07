@@ -1,0 +1,65 @@
+import fs from "node:fs";
+import path from "node:path";
+
+/**
+ * What Heistproof needs to know about a shop to buy from it like a shopper and to read its back office.
+ * A shop describes itself in heistproof.json at its root; anything left out takes the sample shop's (Fogline's) value.
+ * The attacks themselves need nothing shop-specific: they learn the checkout's routes by watching the real purchase.
+ */
+export type ShopProfile = {
+  /** Starts the server. Its environment holds PORT, HOST, SHOP_DB, ADMIN_KEY and the PayPal variables. */
+  start: string[];
+  /** A GET path that answers 200 once the shop is up. */
+  health: string;
+  /** What the shopper buys. */
+  product: { sku: string; qty: number };
+  /** How the shopper fills and opens the bag: a localStorage key holding [{ sku, qty }], or a button to click per item. */
+  bag: { storageKey?: string; add?: string; open?: string; total: string };
+  /** The back office: an orders list (JSON, read with the admin key in a header) and the page to photograph. */
+  admin: { orders: string; keyHeader: string; page: string };
+  /** Field names in that orders list, and the statuses that mean the shop considers an order paid. */
+  orders: { id: string; status: string; paid: string[]; shipments: string; reference: string };
+  /** Where the shop receives PayPal's webhooks. */
+  webhooks: string;
+};
+
+export const FOGLINE: ShopProfile = {
+  start: ["node", "server.js"],
+  health: "/api/products",
+  product: { sku: "FOG-HOODIE", qty: 1 },
+  bag: { storageKey: "fogline.bag", open: "#bag-button", total: "#bag-total" },
+  admin: { orders: "/api/admin/orders", keyHeader: "x-admin-key", page: "/admin?key={key}" },
+  orders: { id: "id", status: "status", paid: ["paid", "fulfilled"], shipments: "shipments", reference: "payment_reference" },
+  webhooks: "/api/paypal/webhooks",
+};
+
+export function loadProfile(dir: string): ShopProfile {
+  const file = path.join(dir, "heistproof.json");
+  if (!fs.existsSync(file)) return FOGLINE;
+  const given = JSON.parse(fs.readFileSync(file, "utf8")) as Partial<ShopProfile>;
+  return {
+    start: given.start ?? FOGLINE.start,
+    health: given.health ?? FOGLINE.health,
+    product: { ...FOGLINE.product, ...given.product },
+    // A shop that names its own bag replaces Fogline's bag settings entirely (no stray localStorage key).
+    bag: given.bag ? { ...given.bag, total: given.bag.total ?? FOGLINE.bag.total } : FOGLINE.bag,
+    admin: { ...FOGLINE.admin, ...given.admin },
+    orders: { ...FOGLINE.orders, ...given.orders },
+    webhooks: given.webhooks ?? FOGLINE.webhooks,
+  };
+}
+
+/** A shop order as the attacks read it: the shop's own record, plus its id, status, paid flag, shipments and payment reference. */
+export type ShopOrder = Record<string, any> & { id: string; status: string; paid: boolean; shipments: number; payment_reference: string | null };
+
+export function normalizeOrder(raw: Record<string, any>, p: ShopProfile): ShopOrder {
+  const status = String(raw[p.orders.status] ?? "");
+  return {
+    ...raw,
+    id: String(raw[p.orders.id] ?? ""),
+    status,
+    paid: p.orders.paid.includes(status),
+    shipments: Number(raw[p.orders.shipments] ?? 0) || 0,
+    payment_reference: raw[p.orders.reference] ?? null,
+  };
+}
