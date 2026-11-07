@@ -41,8 +41,10 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     let attacks: AttackOutcome[] = [];
     if (!opts.skipAttacks && (legit.ok || legit.paypalOrderId)) {
       // Without a completed purchase only the attacks that need no buyer and no real webhook can run.
+      // A purchase PayPal captured is enough to attack with, even if the shop then misbehaved (shipped twice, say).
       const buyerFree = ["price-tamper", "bad-bag", "capture-unapproved", "secret-leak"];
-      const only = legit.ok ? opts.attacks : (opts.attacks ?? buyerFree).filter((id) => buyerFree.includes(id));
+      const purchased = legit.ok || legit.captureStatus === "COMPLETED";
+      const only = purchased ? opts.attacks : (opts.attacks ?? buyerFree).filter((id) => buyerFree.includes(id));
       attacks = await runAttacks({ run, shop: sandbox.shop, proxy: sandbox.proxy, tap: sandbox.tap, legit, hoodie: HOODIE }, only);
     }
     // The webhook verdict for the round: how the shop answered a genuine, signed PAYMENT.CAPTURE.COMPLETED delivery.

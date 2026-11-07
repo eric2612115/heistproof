@@ -300,7 +300,11 @@ export const ATTACKS: Attack[] = [
       const robbed = legitAfter?.status !== legitBefore?.status || after.labels > before.labels;
       return {
         verdict: robbed ? "robbed" : "held",
-        summary: robbed ? `The late event moved order ${legitAfter?.id} from ${legitBefore?.status} to ${legitAfter?.status}.` : `Order ${legitAfter?.id} stayed ${legitAfter?.status} after a late 'approved' event.`,
+        summary: robbed
+          ? legitAfter?.status !== legitBefore?.status
+            ? `The late event moved order ${legitAfter?.id} from ${legitBefore?.status} to ${legitAfter?.status}.`
+            : `The late 'approved' event printed ${after.labels - before.labels} more shipping label(s) for order ${legitAfter?.id}.`
+          : `Order ${legitAfter?.id} stayed ${legitAfter?.status} after a late 'approved' event.`,
         evidence: { eventId: approved.eventId, shopAnswer: r.shopStatus, before: legitBefore?.status, after: legitAfter?.status },
       };
     },
