@@ -1,6 +1,6 @@
 import path from "node:path";
 import { chromium, type BrowserContext, type Page } from "playwright";
-import { env, ROOT } from "./config.ts";
+import { env, ROOT, sandboxBuyer } from "./config.ts";
 import { getOrder, orderAmount, orderCapture } from "./paypal/rest.ts";
 import { shopOrders, type ShopProcess } from "./shop-process.ts";
 import type { Run, Phase } from "./events.ts";
@@ -22,6 +22,7 @@ export type PurchaseResult = {
   screenshots: string[];
   buttons: Record<string, boolean>;
   payLaterMessage: string | null;
+  consoleErrors: string[];
 };
 
 let context: BrowserContext | null = null;
@@ -35,6 +36,8 @@ export async function browser(): Promise<BrowserContext> {
     locale: "en-US",
     timezoneId: "America/Los_Angeles",
   });
+  // Start every run signed out of PayPal, so the configured sandbox buyer is the one who pays.
+  await context.clearCookies();
   return context;
 }
 
@@ -81,11 +84,7 @@ async function visible(page: Page, selector: string, timeout = 15_000) {
   }
 }
 
-/**
- * One real sandbox purchase, the way a shopper makes it. Before approving, the PayPal order's amount is
- * checked against the bag total; a mismatch is reported and the purchase is cancelled.
- */
-export async function purchase(opts: {
+type PurchaseOptions = {
   run: Run;
   phase: Phase;
   shop: ShopProcess;
@@ -95,8 +94,31 @@ export async function purchase(opts: {
   label: string;
   /** Called after the buyer approves and before the page's capture request leaves; return "abort" to block it. */
   onBeforeCapture?: (orderId: string) => Promise<"continue" | "abort">;
+  /** The attacker's edit of the page's create-order request body, as a thief would do in the browser's dev tools. */
+  tamperCreate?: (body: any) => any;
+  /** Skip the amount check (the attacker wants the wrong amount). */
+  skipAmountCheck?: boolean;
   expectPaid?: boolean;
-}): Promise<PurchaseResult> {
+};
+
+const SANDBOX_DOWN = /sandbox checkout page kept failing/;
+
+/** A purchase, started over (with a new PayPal order) when PayPal's sandbox checkout page itself fails. */
+export async function purchase(opts: PurchaseOptions): Promise<PurchaseResult> {
+  let result = await purchaseOnce(opts);
+  for (let attempt = 2; attempt <= 3 && SANDBOX_DOWN.test(result.verdict); attempt++) {
+    opts.run.emit(opts.phase, "prove.sandbox_restart", { label: opts.label, attempt });
+    await new Promise((r) => setTimeout(r, 5000));
+    result = await purchaseOnce({ ...opts, label: `${opts.label}-try${attempt}` });
+  }
+  return result;
+}
+
+/**
+ * One real sandbox purchase, the way a shopper makes it. Before approving, the PayPal order's amount is
+ * checked against the bag total; a mismatch is reported and the purchase is cancelled.
+ */
+async function purchaseOnce(opts: PurchaseOptions): Promise<PurchaseResult> {
   const { run, phase, shop, label } = opts;
   const method = opts.method ?? "paypal";
   const shots: string[] = [];
@@ -120,14 +142,33 @@ export async function purchase(opts: {
     screenshots: shots,
     buttons: {},
     payLaterMessage: null,
+    consoleErrors: [],
   };
 
   const page = await openCheckout(shop, opts.items);
+  // What the shopper's browser complained about: handed to the coding agent when the checkout breaks.
+  page.on("console", (m) => {
+    if (m.type() === "error" && !/permissions policy|favicon/i.test(m.text())) result.consoleErrors.push(m.text().slice(0, 300));
+  });
+  page.on("pageerror", (err) => result.consoleErrors.push(`${err.name}: ${err.message}`.slice(0, 300)));
   const origin = new URL(shop.url).origin;
   let abortCapture = false;
   let approvedOrderId: string | null = null;
   await page.route(`${origin}/**`, async (route) => {
     const req = route.request();
+    if (req.method() === "POST" && !approvedOrderId && opts.tamperCreate) {
+      let body: any = null;
+      try {
+        body = JSON.parse(req.postData() ?? "");
+      } catch {
+        /* not JSON */
+      }
+      if (body && (Array.isArray(body.items) || Array.isArray(body.cart))) {
+        const tampered = opts.tamperCreate(body);
+        run.emit(phase, "prove.tampered", { label, path: new URL(req.url()).pathname, body: tampered });
+        return route.continue({ postData: JSON.stringify(tampered) });
+      }
+    }
     if (req.method() === "POST" && approvedOrderId && opts.onBeforeCapture && (req.url().includes(approvedOrderId) || (req.postData() ?? "").includes(approvedOrderId))) {
       if ((await opts.onBeforeCapture(approvedOrderId)) === "abort") {
         abortCapture = true;
@@ -168,7 +209,7 @@ export async function purchase(opts: {
   await shot(page, "1-checkout");
   run.emit(phase, "prove.buttons", { label, buttons: result.buttons, payLaterMessage: result.payLaterMessage, bagTotal: result.bagTotal });
   if (!result.buttons[method]) {
-    result.verdict = `The ${method} button never appeared.`;
+    result.verdict = `The ${method} button never appeared.${result.consoleErrors.length ? ` The browser console said: ${result.consoleErrors.slice(0, 4).join(" | ")}` : " The browser console showed no errors."}`;
     await page.close();
     return result;
   }
@@ -195,12 +236,26 @@ export async function purchase(opts: {
   }
   run.emit(phase, "prove.order_created", { label, paypalOrderId: result.paypalOrderId });
 
-  // Log in as the sandbox buyer if PayPal asks.
-  const email = env("SANDBOX_BUYER_EMAIL");
-  const password = env("SANDBOX_BUYER_PASSWORD");
+  // Log in as the sandbox buyer if PayPal asks. Never past a CAPTCHA: if PayPal shows one, stop and say so.
+  const buyer = sandboxBuyer();
+  const email = buyer?.email;
+  const password = buyer?.password ?? null;
+  // Only a CAPTCHA the buyer can actually see counts (PayPal's login page carries hidden captcha containers).
+  const captcha = async () => {
+    const lists = [
+      popup.locator('iframe[src*="captcha" i], iframe[title*="captcha" i], iframe[src*="hcaptcha" i], iframe[src*="recaptcha" i]'),
+      popup.getByText(/security challenge|verify you.re (a )?human|i.m not a robot/i),
+    ];
+    for (const list of lists) {
+      const n = await list.count().catch(() => 0);
+      for (let i = 0; i < n; i++) if (await list.nth(i).isVisible().catch(() => false)) return true;
+    }
+    return false;
+  };
   const loginIfAsked = async () => {
+    if (await captcha()) throw new Error("captcha");
     const emailBox = popup.locator('input[name="login_email"], #email').first();
-    if (!(await emailBox.isVisible({ timeout: 8000 }).catch(() => false))) return;
+    if (!(await emailBox.waitFor({ state: "visible", timeout: 8000 }).then(() => true).catch(() => false))) return;
     if (!password) {
       run.emit(phase, "prove.needs_login", { label, note: "Log in as the sandbox buyer in the PayPal window (no password configured)." });
       await popup.waitForSelector('input[name="login_email"], #email', { state: "detached", timeout: 180_000 }).catch(() => {});
@@ -214,6 +269,8 @@ export async function purchase(opts: {
     await pw.fill(password);
     await popup.locator("#btnLogin").click();
     run.emit(phase, "prove.logged_in", { label, buyer: email });
+    await popup.waitForTimeout(2000);
+    if (await captcha()) throw new Error("captcha");
   };
   // PayPal's review page shows one primary button ("Complete Purchase", "Pay", "Continue").
   const approve = popup.locator('#payment-submit-btn, button[data-testid="submit-button-initial"], button:has-text("Complete Purchase"), button:has-text("Pay Now"), button:has-text("Continue to Review Order"), button:has-text("Agree & Continue")').first();
@@ -226,11 +283,11 @@ export async function purchase(opts: {
     run.emit(phase, "prove.amount_check", { label, bagTotal: result.bagTotal, paypalAmount: result.paypalAmount, debugId: order.debugId, ok: Boolean(matches) });
     await popup.waitForTimeout(2500);
     await shot(popup, "2-paypal");
-    if (!matches) {
+    if (!matches && !opts.skipAmountCheck) {
       // Show the wrong amount on PayPal's own review page, then walk away without approving.
       if (password) {
         await loginIfAsked().catch(() => {});
-        if (await approve.isVisible({ timeout: 30_000 }).catch(() => false)) {
+        if (await approve.waitFor({ state: "visible", timeout: 30_000 }).then(() => true).catch(() => false)) {
           await popup.waitForTimeout(1500);
           await shot(popup, "2b-paypal-wrong-amount");
         }
@@ -243,9 +300,34 @@ export async function purchase(opts: {
     }
   }
 
-  await loginIfAsked();
   try {
-    await approve.waitFor({ state: "visible", timeout: 45_000 });
+    await loginIfAsked();
+  } catch {
+    await shot(popup, "3-captcha");
+    result.verdict = "PayPal asked for a CAPTCHA, so Heistproof stopped (it never solves one). Run with HEISTPROOF_HEADED=1 and complete it yourself.";
+    run.emit(phase, "prove.result", { label, ok: false, verdict: result.verdict, screenshots: [...shots] });
+    await popup.close().catch(() => {});
+    await page.close();
+    return result;
+  }
+  try {
+    // PayPal's sandbox sometimes shows "Things don't appear to be working at the moment" with a Try again button.
+    // That is the sandbox, not the shop: press Try again (twice at most) and keep waiting for the review page.
+    const glitch = popup.getByText(/don.t appear to be working/i);
+    const deadline = Date.now() + 60_000;
+    let retries = 0;
+    for (;;) {
+      if (await approve.isVisible().catch(() => false)) break;
+      if (retries < 2 && (await glitch.count().catch(() => 0))) {
+        retries++;
+        run.emit(phase, "prove.sandbox_retry", { label, attempt: retries });
+        await popup.getByRole("button", { name: /try again/i }).click().catch(() => {});
+        await popup.waitForTimeout(2500);
+        await loginIfAsked().catch(() => {});
+      }
+      if (Date.now() > deadline) throw new Error("no review page");
+      await popup.waitForTimeout(500);
+    }
     await popup.waitForTimeout(1500);
     await shot(popup, "3-review");
     approvedOrderId = result.paypalOrderId;
@@ -254,7 +336,15 @@ export async function purchase(opts: {
   } catch {
     await shot(popup, "3-stuck");
     const refused = await popup.getByText(/info isn't correct|incorrect/i).count().catch(() => 0);
-    result.verdict = refused ? "PayPal refused the sandbox buyer's login (check SANDBOX_BUYER_PASSWORD)." : "Could not find PayPal's approve button (see screenshot).";
+    const seller = await popup.getByText(/account of the seller/i).count().catch(() => 0);
+    const sandboxDown = await popup.getByText(/don.t appear to be working/i).count().catch(() => 0);
+    result.verdict = seller
+      ? "The sandbox buyer is the shop's own seller account; use a Personal sandbox account as SANDBOX_BUYER_EMAIL."
+      : sandboxDown
+        ? "PayPal's sandbox checkout page kept failing (\"Things don't appear to be working\"); not the shop's fault, try again."
+        : refused
+        ? "PayPal refused the sandbox buyer's login (check SANDBOX_BUYER_PASSWORD)."
+        : "Could not find PayPal's approve button (see screenshot).";
     run.emit(phase, "prove.result", { label, ok: false, verdict: result.verdict, screenshots: [...shots] });
     await popup.close().catch(() => {});
     await page.close();

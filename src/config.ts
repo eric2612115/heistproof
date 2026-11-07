@@ -27,6 +27,30 @@ export const requireEnv = (name: string): string => {
   return v;
 };
 
+/**
+ * The sandbox buyer who approves purchases: SANDBOX_BUYER_EMAIL / SANDBOX_BUYER_PASSWORD, or a buyer from a shared
+ * JSON file ({ buyers: [{ label, email, password }] }) read at run time only. Returns null when there is none.
+ */
+export function sandboxBuyer(): { email: string; password: string | null } | null {
+  const email = env("SANDBOX_BUYER_EMAIL");
+  const password = env("SANDBOX_BUYER_PASSWORD");
+  if (email && password) return { email, password };
+  const file = process.env.HEISTPROOF_BUYERS_FILE ?? path.join(process.env.HOME ?? "", ".config", "paypal-hackathon", "sandbox-buyers.json");
+  if (fs.existsSync(file)) {
+    try {
+      const buyers = (JSON.parse(fs.readFileSync(file, "utf8")).buyers ?? []) as Array<{ email?: string; password?: string }>;
+      const pick = buyers.find((b) => b.email === email && b.password) ?? (email ? undefined : buyers.find((b) => b.email && b.password));
+      if (pick?.email && pick.password) {
+        registerSecret(pick.password);
+        return { email: pick.email, password: pick.password };
+      }
+    } catch {
+      /* unreadable file: fall through */
+    }
+  }
+  return email ? { email, password: null } : null;
+}
+
 export const paypal = {
   clientId: () => requireEnv("PAYPAL_CLIENT_ID"),
   clientSecret: () => requireEnv("PAYPAL_CLIENT_SECRET"),

@@ -1,5 +1,5 @@
 import type { Run } from "./events.ts";
-import type { Round } from "./pipeline.ts";
+import { isSafe, type Round } from "./pipeline.ts";
 
 const icon = (v: string) => (v === "held" ? "HELD" : v === "robbed" ? "ROBBED" : v === "skipped" ? "skipped" : "error");
 
@@ -12,8 +12,8 @@ export function renderReport(opts: { shopDir: string; rounds: Round[]; title?: s
   if (last) {
     const robbed = last.attacks.filter((a) => a.verdict === "robbed").length;
     const held = last.attacks.filter((a) => a.verdict === "held").length;
-    const ship = last.tests && last.prove.ok && last.webhookVerified && robbed === 0 && last.attacks.every((a) => a.verdict !== "error");
-    lines.push(`**Verdict: ${ship ? "safe to ship" : "do not ship"}.** ${held} of ${last.attacks.length} attacks held, ${robbed} robbed the shop. Real sandbox purchase: ${last.prove.ok ? "paid and shipped once" : "failed"}. Signed webhook: ${last.webhookVerified ? "verified" : "not verified"}. Tests: ${last.tests ? "pass" : "fail"}.`);
+    const ship = isSafe(last);
+    lines.push(`**Verdict: ${ship ? "safe to ship" : "do not ship"}.** ${held} of ${last.attacks.length} attacks held, ${robbed} robbed the shop. Real sandbox purchase: ${last.prove.ok ? "paid and shipped once" : "failed"}. Signed webhook: ${last.webhook === "verified" ? "verified" : last.webhook === "refused" ? "REFUSED by the shop" : "not delivered by the sandbox during this run"}. Tests: ${last.tests ? "pass" : "fail"}.`);
     lines.push("");
     lines.push("All payments ran in the PayPal sandbox (no real money). Order and capture ids below are PayPal's own and can be looked up in the merchant's sandbox account.");
     lines.push("");
@@ -29,7 +29,7 @@ export function renderReport(opts: { shopDir: string; rounds: Round[]; title?: s
     lines.push(`- Buttons shown: ${Object.entries(r.prove.buttons).map(([k, v]) => `${k} ${v ? "yes" : "no"}`).join(", ")}${r.prove.payLaterMessage ? `; Pay Later message: "${r.prove.payLaterMessage}"` : ""}`);
     lines.push(`- Purchase: ${r.prove.verdict}`);
     if (r.prove.paypalOrderId) lines.push(`  - PayPal order \`${r.prove.paypalOrderId}\`, amount ${r.prove.paypalAmount ? `${r.prove.paypalAmount.currency} ${r.prove.paypalAmount.value}` : "?"} (bag total $${r.prove.bagTotal}), capture \`${r.prove.captureId ?? "none"}\` ${r.prove.captureStatus ?? ""}`);
-    lines.push(`- Signed PAYMENT.CAPTURE.COMPLETED webhook accepted: ${r.webhookVerified ? "yes" : "no"}`);
+    lines.push(`- Signed PAYMENT.CAPTURE.COMPLETED webhook: ${r.webhook === "verified" ? `verified and accepted (event ${r.webhookEvent})` : r.webhook === "refused" ? `refused by the shop (event ${r.webhookEvent})` : "not delivered by the sandbox during this run"}`);
     if (r.attacks.length) {
       lines.push("");
       lines.push("| Attack | Rules | Result | What happened |");

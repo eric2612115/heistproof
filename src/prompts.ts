@@ -13,6 +13,7 @@ Contract with the test harness (keep these names exactly):
 - PayPal webhooks arrive at POST /api/paypal/webhooks.
 - No PayPal credentials exist while you build, so make no live PayPal calls; the harness runs the shop against the PayPal sandbox after you finish.
 - Keep the card checkout working and keep npm test green. Add tests for the new server code with a faked fetch (no network).
+- If you install a dependency from git, pin it to a commit over https so anyone can reinstall it.
 - Do not commit; the harness commits your work.
 
 Finish with a short summary: the files you changed, the PayPal operations you used, and how you met each checkout-hardening rule.`;
@@ -30,5 +31,5 @@ export function fixPrompt(failures: Array<{ title: string; detail: string }>): s
 
 ${failures.map((f, i) => `${i + 1}. ${f.title}\n   ${f.detail}`).join("\n")}
 
-Fix the code so each of these fails for the attacker, without breaking the card checkout or the PayPal buttons. Reload heistproof:checkout-hardening and the APIMatic PayPal skills if you need them, update paypal-plan.md if a contract changes, keep npm test green, and add a test for each fix. Do not commit. Finish with what you changed for each failure.`;
+Fix the code so a real shopper's purchase completes and every attack fails, without breaking the card checkout or the PayPal buttons. PayPal's own answers above (status, issue, debug id) come from the real sandbox and win over what your tests assumed. Reload heistproof:checkout-hardening and the APIMatic PayPal skills if you need them, update paypal-plan.md if a contract changes, keep npm test green, and add a test for each fix. Do not commit. Finish with what you changed for each failure.`;
 }

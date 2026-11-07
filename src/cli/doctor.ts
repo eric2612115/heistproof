@@ -2,7 +2,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { env, ROOT } from "../config.ts";
+import { env, ROOT, sandboxBuyer } from "../config.ts";
 import { chooseEngine, PROVIDERS } from "../engine.ts";
 
 type Check = { name: string; ok: boolean | null; detail: string };
@@ -34,7 +34,8 @@ else {
   const body = res ? ((await res.json().catch(() => ({}))) as { app_id?: string; error_description?: string }) : {};
   add("PayPal sandbox app", Boolean(res?.ok), res?.ok ? `OAuth OK (app ${body.app_id})` : `refused: ${body.error_description ?? "network error"}`);
 }
-add("Sandbox buyer login", env("SANDBOX_BUYER_PASSWORD") ? true : null, env("SANDBOX_BUYER_PASSWORD") ? `${env("SANDBOX_BUYER_EMAIL")} (automatic)` : "not set: you will log in to the PayPal window yourself (HEISTPROOF_HEADED=1)");
+const buyer = sandboxBuyer();
+add("Sandbox buyer login", buyer?.password ? true : null, buyer?.password ? `${buyer.email} (automatic)` : "not set: you will log in to the PayPal window yourself (HEISTPROOF_HEADED=1)");
 
 try {
   const c = chooseEngine();

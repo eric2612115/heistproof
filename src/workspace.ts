@@ -17,7 +17,7 @@ export function prepareShop(template: string, runId: string): string {
   fs.cpSync(src, dest, { recursive: true, filter: (p) => !/(^|\/)(node_modules|data|\.git)(\/|$)/.test(path.relative(src, p)) });
   sh("git", ["init", "-q", "-b", "main"], dest);
   sh("git", ["add", "-A"], dest);
-  sh("git", ["-c", "user.name=Fogline", "-c", "user.email=dev@fogline.example", "commit", "-q", "-m", "Card-only checkout"], dest);
+  sh("git", ["-c", "user.name=Fogline", "-c", "user.email=dev@fogline.example", "commit", "-q", "-m", "Shop before Heistproof"], dest);
   sh("npm", ["install", "--no-audit", "--no-fund", "--silent"], dest);
   return dest;
 }
@@ -41,6 +41,7 @@ export function runTests(shopDir: string): { ok: boolean; output: string } {
 
 export function commit(shopDir: string, message: string) {
   sh("git", ["add", "-A"], shopDir);
+  if (!sh("git", ["status", "--porcelain"], shopDir).trim()) return; // nothing changed since the last commit
   sh("git", ["-c", "user.name=Heistproof", "-c", "user.email=heistproof@users.noreply.github.com", "commit", "-q", "-m", message], shopDir);
 }
 

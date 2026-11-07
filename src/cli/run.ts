@@ -8,7 +8,7 @@ import { Run } from "../events.ts";
 import { runCodingAgent } from "../agent.ts";
 import { prepareShop, diff, commit } from "../workspace.ts";
 import { MIGRATION_PROMPT, BASELINE_PROMPT } from "../prompts.ts";
-import { proveAndHarden } from "../pipeline.ts";
+import { proveAndHarden, isSafe } from "../pipeline.ts";
 import { renderReport } from "../report.ts";
 import { chooseEngine } from "../engine.ts";
 
@@ -41,7 +41,7 @@ if (!existing) {
 const rounds = await proveAndHarden(run, shopDir, fixes);
 const last = rounds.at(-1)!;
 const robbed = last.attacks.filter((a) => a.verdict === "robbed").length;
-const safe = last.tests && last.prove.ok && last.webhookVerified && robbed === 0 && last.attacks.every((a) => a.verdict !== "error");
+const safe = isSafe(last);
 
 const report = renderReport({ shopDir, rounds, title: baseline ? "Baseline (no Heistproof context) evidence report" : "Heistproof evidence report", agent: { provider: choice.spec.label, model: agent.model, skills: [...new Set(agent.skillsLoaded)] } });
 run.writeText("REPORT.md", report);
