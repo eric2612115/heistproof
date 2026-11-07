@@ -50,3 +50,21 @@ export function ensureInstalled(shopDir: string) {
   if (fs.existsSync(path.join(shopDir, "node_modules"))) return;
   sh("npm", [fs.existsSync(path.join(shopDir, "package-lock.json")) ? "ci" : "install", "--no-audit", "--no-fund", "--silent"], shopDir);
 }
+
+/** Puts the shop's work on its own branch (commit it afterwards). */
+export function switchBranch(shopDir: string, branch: string) {
+  sh("git", ["checkout", "-q", "-B", branch], shopDir);
+}
+
+/** When the shop lives on GitHub, pushes the branch and opens a pull request whose body is the evidence report. */
+export function openPullRequest(shopDir: string, branch: string, title: string, reportFile: string): string | null {
+  let remote = "";
+  try {
+    remote = sh("git", ["remote", "get-url", "origin"], shopDir).trim();
+  } catch {
+    return null;
+  }
+  if (!/github\.com/.test(remote)) return null;
+  sh("git", ["push", "-q", "-u", "origin", branch], shopDir);
+  return sh("gh", ["pr", "create", "--head", branch, "--title", title, "--body-file", reportFile], shopDir).trim();
+}
