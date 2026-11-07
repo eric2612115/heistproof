@@ -1,6 +1,6 @@
 import { getOrder, orderAmount } from "./paypal/rest.ts";
 import { shopOrders, type ShopProcess } from "./shop-process.ts";
-import { purchase, type PurchaseResult, type ShopCall } from "./prove.ts";
+import { purchase, browser, type PurchaseResult, type ShopCall } from "./prove.ts";
 import { paypal } from "./config.ts";
 import type { PayPalProxy } from "./paypal/proxy.ts";
 import type { WebhookTap, Delivery } from "./webhooks/tap.ts";
@@ -88,7 +88,17 @@ async function snapshot(shop: ShopProcess) {
   };
 }
 
-const expectedValue = (ctx: AttackContext) => ctx.legit.paypalAmount?.value ?? ctx.legit.bagTotal ?? "49.00";
+// What PayPal should charge: the bag total the shopper saw (the shop's own PayPal amount may be the bug).
+const expectedValue = (ctx: AttackContext) => ctx.legit.bagTotal ?? ctx.legit.paypalAmount?.value ?? "49.00";
+
+/** A genuine, signed PAYMENT.CAPTURE.COMPLETED delivery from this run. The sandbox can take a while to send one. */
+async function genuineCompleted(ctx: AttackContext): Promise<Delivery | null> {
+  const have = ctx.tap.genuine("PAYMENT.CAPTURE.COMPLETED");
+  return have.find((d) => d.resourceId === ctx.legit.captureId) ?? have[0] ?? (await ctx.tap.waitFor((d) => d.eventType === "PAYMENT.CAPTURE.COMPLETED", 90_000));
+}
+
+/** Webhook attacks go last, so PayPal's slower deliveries have arrived by then. */
+const ORDER = ["price-tamper", "bad-bag", "capture-unapproved", "approved-not-captured", "double-capture", "declined-capture", "forged-webhook", "webhook-replay", "out-of-order", "secret-leak"];
 
 export const ATTACKS: Attack[] = [
   {
@@ -121,12 +131,44 @@ export const ATTACKS: Attack[] = [
         tries.push({ variant: v.name, shopStatus: r.status, paypalOrderId: id, paypalAmount: amount, debugId });
       }
       const worst = tries.find((t) => t.paypalAmount && (Number(t.paypalAmount.value) !== Number(expectedValue(ctx)) || t.paypalAmount.currency !== "USD"));
+      if (!robbed) {
+        return { verdict: "held", summary: `Every tampered request still produced a $${expectedValue(ctx)} USD PayPal order (or none).`, evidence: { request: create.path, expected: `USD ${expectedValue(ctx)}`, tries } };
+      }
+      // Follow through like a thief: tamper the request in the shopper's own browser, pay the wrong amount as the
+      // sandbox buyer, and see whether the shop ships the hoodie anyway.
+      const variant = variants[tries.indexOf(worst!)];
+      const before = await snapshot(ctx.shop);
+      const heist = await purchase({
+        run: ctx.run,
+        phase: "attack",
+        shop: ctx.shop,
+        tap: ctx.tap,
+        items: ctx.hoodie,
+        label: "attack-penny",
+        tamperCreate: (body) => ({ ...body, ...Object.fromEntries(Object.entries(variant.body).filter(([k]) => !(k in base) || k === "items" || k === "cart")) }),
+        skipAmountCheck: true,
+        expectPaid: false,
+      });
+      await sleep(1500);
+      const after = await snapshot(ctx.shop);
+      // The shop owner's view of the same order: the back office.
+      const office = await (await browser()).newPage();
+      await office.goto(`${ctx.shop.url}/admin?key=${encodeURIComponent(ctx.shop.adminKey)}`).catch(() => {});
+      await office.waitForTimeout(2500);
+      const officeShot = "attack-penny-5-backoffice.png";
+      await office.screenshot({ path: ctx.run.file(officeShot) }).catch(() => {});
+      await office.close();
+      heist.screenshots.push(officeShot);
+      const pp = heist.paypalOrderId ? await getOrder(heist.paypalOrderId) : null;
+      const captured = pp?.body?.purchase_units?.[0]?.payments?.captures?.[0]?.amount ?? null;
+      const shipped = after.labels > before.labels;
+      const shopOrder = after.orders.find((o: any) => JSON.stringify(o).includes(heist.paypalOrderId ?? "none")) ?? heist.shopOrder;
       return {
-        verdict: robbed ? "robbed" : "held",
-        summary: robbed
-          ? `The shop asked PayPal for ${worst!.paypalAmount!.currency} ${worst!.paypalAmount!.value} (order ${worst!.paypalOrderId}) after the browser said so.`
-          : `Every tampered request still produced a $${expectedValue(ctx)} USD PayPal order (or none).`,
-        evidence: { request: create.path, expected: `USD ${expectedValue(ctx)}`, tries },
+        verdict: "robbed",
+        summary: shipped && captured
+          ? `Shipped the $${expectedValue(ctx)} hoodie after PayPal captured ${captured.currency_code} ${captured.value} (order ${heist.paypalOrderId}); the shop's back office says ${shopOrder?.status ?? "paid"}.`
+          : `The shop asked PayPal for ${worst!.paypalAmount!.currency} ${worst!.paypalAmount!.value} (order ${worst!.paypalOrderId}) after the browser said so.`,
+        evidence: { request: create.path, expected: `USD ${expectedValue(ctx)}`, tries, followThrough: { paypalOrderId: heist.paypalOrderId, captured, shopOrder: shopOrder?.id, shopStatus: shopOrder?.status, shopPaidCents: shopOrder?.paid_cents, labelsAdded: after.labels - before.labels }, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId },
       };
     },
   },
@@ -193,8 +235,8 @@ export const ATTACKS: Attack[] = [
     rule: [6],
     async run(ctx) {
       const { create } = learnRoutes(ctx.legit);
-      const genuine = ctx.tap.genuine("PAYMENT.CAPTURE.COMPLETED")[0];
-      if (!create || !genuine) return { verdict: "error", summary: "Needs a real PAYMENT.CAPTURE.COMPLETED delivery and the create request.", evidence: {} };
+      const genuine = await genuineCompleted(ctx);
+      if (!create || !genuine) return { verdict: "skipped", summary: "PayPal's sandbox delivered no PAYMENT.CAPTURE.COMPLETED webhook in time to forge from.", evidence: {} };
       const made = await post(ctx.shop, create.path, create.body);
       const target = paypalIdFrom(made.body);
       const before = await snapshot(ctx.shop);
@@ -224,8 +266,8 @@ export const ATTACKS: Attack[] = [
     title: "Replay a real webhook to ship twice",
     rule: [7, 8],
     async run(ctx) {
-      const genuine = ctx.tap.genuine("PAYMENT.CAPTURE.COMPLETED")[0];
-      if (!genuine) return { verdict: "error", summary: "No real PAYMENT.CAPTURE.COMPLETED delivery arrived to replay.", evidence: {} };
+      const genuine = await genuineCompleted(ctx);
+      if (!genuine) return { verdict: "skipped", summary: "PayPal's sandbox delivered no PAYMENT.CAPTURE.COMPLETED webhook in time to replay.", evidence: {} };
       const before = await snapshot(ctx.shop);
       const answers = [];
       for (let i = 0; i < 3; i++) answers.push((await ctx.tap.forward("attacker", genuine.headers, genuine.rawBody)).shopStatus);
@@ -244,7 +286,10 @@ export const ATTACKS: Attack[] = [
     title: "Send 'approved' after 'completed'",
     rule: [9],
     async run(ctx) {
-      const approved = ctx.tap.genuine("CHECKOUT.ORDER.APPROVED").find((d) => d.resourceId === ctx.legit.paypalOrderId) ?? ctx.tap.genuine("CHECKOUT.ORDER.APPROVED")[0];
+      // The purchase's own "approved" event; PayPal's sandbox may still be on its way with it.
+      const approved =
+        ctx.tap.genuine("CHECKOUT.ORDER.APPROVED").find((d) => d.resourceId === ctx.legit.paypalOrderId) ??
+        (await ctx.tap.waitFor((d) => d.eventType === "CHECKOUT.ORDER.APPROVED" && d.resourceId === ctx.legit.paypalOrderId, 60_000));
       if (!approved) return { verdict: "skipped", summary: "PayPal sent no CHECKOUT.ORDER.APPROVED event for the real purchase.", evidence: {} };
       const before = await snapshot(ctx.shop);
       const legitBefore = before.orders.find((o) => o.id === ctx.legit.shopOrder?.id);
@@ -358,7 +403,8 @@ export const ATTACKS: Attack[] = [
 export async function runAttacks(ctx: AttackContext, only?: string[]): Promise<AttackOutcome[]> {
   const out: AttackOutcome[] = [];
   await discoverCaptureRoute(ctx.shop, ctx.legit).catch(() => {});
-  for (const a of ATTACKS) {
+  for (const id of ORDER) {
+    const a = ATTACKS.find((x) => x.id === id)!;
     if (only && !only.includes(a.id)) continue;
     ctx.run.emit("attack", "attack.start", { id: a.id, title: a.title });
     let outcome: AttackOutcome;
