@@ -5,15 +5,60 @@ import { products } from "./lib/catalog.js";
 import { priceCart, formatMoney } from "./lib/cart.js";
 import { openDb } from "./lib/db.js";
 import { createCardProcessor } from "./lib/card-processor.js";
-import { createPayPalService, inspectOrder, PayPalUpstreamError } from "./lib/paypal.js";
 import { fulfilOrder } from "./lib/fulfilment.js";
+import { createPayPalServiceFromEnv, assessPayPalOrder, parsePayPalAmount, PayPalServiceError } from "./lib/paypal.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-export function createApp({ db, cards, adminKey, paypal = null }) {
+export function createApp({ db, cards, adminKey, paypal }) {
   const app = express();
   app.use(express.json({ limit: "100kb" }));
   app.use(express.static(path.join(here, "public")));
+
+  // PayPal service is built once (lazily from env when not injected) so its
+  // OAuth token cache survives across requests. Missing PayPal configuration
+  // fails PayPal routes only; card checkout keeps working.
+  let paypalService = paypal ?? null;
+  let paypalConfigError = null;
+  const getPayPal = () => {
+    if (paypalService) return paypalService;
+    if (paypalConfigError) throw paypalConfigError;
+    try {
+      paypalService = createPayPalServiceFromEnv();
+      return paypalService;
+    } catch (err) {
+      paypalConfigError = new PayPalServiceError("Payment provider unavailable.", { httpStatus: 502, neverSent: true });
+      throw paypalConfigError;
+    }
+  };
+  const paypalError = (res, err, orderId) => {
+    const e = err instanceof PayPalServiceError ? err : new PayPalServiceError("Payment provider error.", { httpStatus: 502 });
+    return res.status(e.httpStatus).json({ error: e.message, ...(orderId ? { orderId } : {}), ...(e.outcomeUnknown ? { status: "pending" } : {}) });
+  };
+
+  // Fulfil exactly once: only the caller that atomically moves pending -> paid
+  // may call fulfilOrder (every call prints a shipping label).
+  const settlePaid = (shopOrder, capture) => {
+    const paidCents = capture?.amount ? parsePayPalAmount(capture.amount.value ?? capture.amount) : shopOrder.total_cents;
+    const won = db.claimPaidTransition(shopOrder.id, {
+      method: "paypal",
+      reference: capture?.id ?? shopOrder.paypal_order_id,
+      paidCents: paidCents ?? shopOrder.total_cents,
+    });
+    if (won) fulfilOrder(db, shopOrder.id);
+    return db.getOrder(shopOrder.id);
+  };
+
+  // Settle a shop order from a PayPal Order object PayPal holds. Returns an
+  // HTTP-ready outcome; never fulfils unless a matching COMPLETED capture exists.
+  const settleFromPayPalOrder = (shopOrder, paypalOrder) => {
+    if (paypalOrder?.id && shopOrder.paypal_order_id && paypalOrder.id !== shopOrder.paypal_order_id) {
+      return { kind: "mismatch" };
+    }
+    const assessment = assessPayPalOrder(paypalOrder, shopOrder);
+    if (assessment.state === "completed") return { kind: "settled", order: settlePaid(shopOrder, assessment.capture) };
+    return { kind: assessment.state };
+  };
 
   app.get("/api/products", (_req, res) => {
     res.json(products.map((p) => ({ ...p, price: formatMoney(p.priceCents) })));
@@ -45,152 +90,151 @@ export function createApp({ db, cards, adminKey, paypal = null }) {
     res.json({ orderId: order.id, status: db.getOrder(order.id).status });
   });
 
-  // ---- PayPal checkout (PayPal / Venmo / Pay Later via the v6 web SDK) ----
-  // The browser sends SKUs and quantities only; every amount is priced here.
-  const paypalUnavailable = (res) => res.status(503).json({ error: "PayPal payments are not available." });
-
-  // The one fulfilment gate for PayPal: a COMPLETED capture for the right amount,
-  // currency and shop order, applied through the atomic pending -> paid flip so
-  // capture responses, webhooks, retries and double clicks fulfil at most once.
-  function settleFromPayPalOrder(shopOrder, paypalOrder) {
-    const check = inspectOrder(paypalOrder, { shopOrderId: shopOrder.id, totalCents: shopOrder.total_cents, currency: shopOrder.currency });
-    if (check.state === "captured") {
-      const flipped = db.markPaidIfPending(shopOrder.id, { method: "paypal", reference: check.capture.id, paidCents: check.paidCents });
-      if (flipped) fulfilOrder(db, shopOrder.id);
-      return { settled: true, check };
-    }
-    return { settled: false, check };
-  }
-
-  function sendPayPalError(res, err, orderId) {
-    if (err instanceof PayPalUpstreamError) {
-      console.error(`[paypal] ${orderId ?? ""} ${err.message}${err.issue ? ` issue=${err.issue}` : ""}`, err.cause ?? "");
-      const body = { error: err.message };
-      if (err.issue) body.code = err.issue;
-      if (orderId) body.orderId = orderId;
-      return res.status(err.httpStatus).json(body);
-    }
-    throw err;
-  }
-
+  // --- PayPal: browser config (client id only, never the secret) ---
   app.get("/api/paypal/config", (_req, res) => {
-    if (!paypal) return paypalUnavailable(res);
-    res.json(paypal.config());
+    try {
+      res.json(getPayPal().getBrowserConfig());
+    } catch (err) {
+      return paypalError(res, err);
+    }
   });
 
+  // --- PayPal: create order. Prices come only from the server catalog; any
+  // price/amount/total/currency the browser sends is ignored. ---
   app.post("/api/paypal/orders", async (req, res) => {
-    if (!paypal) return paypalUnavailable(res);
-    const { items } = req.body ?? {};
+    const { items, email } = req.body ?? {};
     let cart;
     try {
       cart = priceCart(items);
     } catch (err) {
       return res.status(400).json({ error: err.message });
     }
-    const order = db.createOrder({ lines: cart.lines, totalCents: cart.totalCents, currency: cart.currency, method: "paypal" });
-    // Durable claim before the provider call, keyed on the shop order id.
-    const claimKey = `create:${order.id}`;
-    db.claimPaypal(claimKey, { shopOrderId: order.id, kind: "create", reference: order.id });
+    let service;
     try {
-      const created = await paypal.createOrder({ shopOrderId: order.id, cart, payPalRequestId: order.id });
-      db.setPaypalOrderId(order.id, created.id);
-      db.settleClaim(claimKey, { paypalOrderId: created.id });
-      return res.json({ id: created.id, orderId: order.id });
+      service = getPayPal();
     } catch (err) {
-      if (err instanceof PayPalUpstreamError && !err.outcomeUnknown) {
-        db.releaseClaim(claimKey); // provider refused: a later attempt is not blocked
-        db.markFailed(order.id, err.message);
+      return paypalError(res, err);
+    }
+    // Claim first: the shop order row exists before any PayPal call.
+    const shopOrder = db.createOrder({ email, lines: cart.lines, totalCents: cart.totalCents, currency: cart.currency, method: "paypal" });
+    const claimKey = `create:${shopOrder.id}`;
+    if (!db.claimPayPal(claimKey, { shopOrderId: shopOrder.id })) {
+      return res.status(409).json({ error: "Order creation already in progress", orderId: shopOrder.id });
+    }
+    try {
+      const paypalOrder = await service.createOrder({ shopOrderId: shopOrder.id, cart, email });
+      try {
+        db.bindPayPalOrder(shopOrder.id, paypalOrder.id);
+      } catch {
+        return res.status(409).json({ error: "PayPal order already bound to another order", orderId: shopOrder.id });
       }
-      return sendPayPalError(res, err, order.id);
+      db.setClaimPayPalOrder(claimKey, paypalOrder.id);
+      return res.json({ id: paypalOrder.id, orderId: shopOrder.id, status: "pending" });
+    } catch (err) {
+      const e = err instanceof PayPalServiceError ? err : null;
+      if (!e) throw err;
+      if (e.neverSent || (e.paypalStatus >= 400 && e.paypalStatus < 500)) {
+        db.releasePayPalClaim(claimKey);
+        db.markFailed(shopOrder.id, e.message);
+      }
+      return paypalError(res, e, shopOrder.id);
     }
   });
 
+  // --- PayPal: capture. The browser presents only the PayPal order id (in the
+  // path); its body and headers (incl. any PayPal-Mock-Response) are ignored
+  // and never forwarded. Approval alone is never payment. ---
   app.post("/api/paypal/orders/:paypalOrderId/capture", async (req, res) => {
-    if (!paypal) return paypalUnavailable(res);
-    const shopOrder = db.getOrderByPaypalOrderId(req.params.paypalOrderId);
+    const paypalOrderId = req.params.paypalOrderId;
+    const shopOrder = db.getOrderByPayPalId(paypalOrderId);
     if (!shopOrder) return res.status(404).json({ error: "Order not found" });
-    const current = db.getOrder(shopOrder.id);
-    if (current.status === "fulfilled" || current.status === "paid") {
-      return res.json({ orderId: shopOrder.id, status: current.status });
+    if (shopOrder.status === "fulfilled" || shopOrder.status === "paid") {
+      return res.json({ orderId: shopOrder.id, status: shopOrder.status });
     }
-    if (current.status !== "pending") return res.status(409).json({ error: "Order is not payable.", orderId: shopOrder.id });
-    const claimKey = `capture:${shopOrder.id}`;
-    const freshClaim = db.claimPaypal(claimKey, { shopOrderId: shopOrder.id, kind: "capture", reference: shopOrder.id });
+    if (shopOrder.status !== "pending") return res.status(409).json({ error: "Order is not payable", orderId: shopOrder.id, status: shopOrder.status });
+    let service;
     try {
-      // A pre-existing claim means an earlier attempt's outcome was unknown:
-      // settle from what PayPal holds instead of capturing a second time.
-      const paypalOrder = freshClaim
-        ? await paypal.captureOrder({ paypalOrderId: req.params.paypalOrderId, payPalRequestId: shopOrder.id })
-        : await paypal.getOrder(req.params.paypalOrderId);
-      const { settled, check } = settleFromPayPalOrder(shopOrder, paypalOrder);
-      if (settled) {
-        db.settleClaim(claimKey, { paypalOrderId: req.params.paypalOrderId });
-        return res.json({ orderId: shopOrder.id, status: db.getOrder(shopOrder.id).status });
-      }
-      if (check.state === "no_capture" && !freshClaim) {
-        // Another attempt is in flight (or its outcome is unsettled): pending.
-        return res.status(202).json({ error: "Payment is being processed.", orderId: shopOrder.id, status: "pending" });
-      }
-      if (check.state === "capture_not_completed" && check.captureStatus === "PENDING") {
-        // Wait for PAYMENT.CAPTURE.COMPLETED; the claim stays for that settlement.
-        return res.status(202).json({ error: "Payment is pending.", orderId: shopOrder.id, status: "pending" });
-      }
-      if (check.state === "capture_not_completed") {
-        db.releaseClaim(claimKey);
-        return res.status(402).json({ error: "The payment was not completed.", orderId: shopOrder.id });
-      }
-      // Paid amount / binding does not match this shop order: never fulfil.
-      db.releaseClaim(claimKey);
-      return res.status(422).json({ error: "The captured payment does not match this order.", orderId: shopOrder.id });
+      service = getPayPal();
     } catch (err) {
-      if (err instanceof PayPalUpstreamError) {
-        if (err.issue === "INSTRUMENT_DECLINED") {
-          db.releaseClaim(claimKey); // buyer may choose another way to pay
-          return res.status(402).json({ error: "Your payment method was declined. Please choose another way to pay.", code: err.issue, orderId: shopOrder.id });
-        }
-        if (!err.outcomeUnknown) db.releaseClaim(claimKey);
-        return sendPayPalError(res, err, shopOrder.id);
+      return paypalError(res, err, shopOrder.id);
+    }
+    const claimKey = `capture:${paypalOrderId}`;
+    if (!db.claimPayPal(claimKey, { shopOrderId: shopOrder.id, paypalOrderId })) {
+      // Second caller: do not capture again. Settle from what PayPal holds.
+      try {
+        const held = await service.getOrder(paypalOrderId);
+        const outcome = settleFromPayPalOrder(shopOrder, held);
+        if (outcome.kind === "settled") return res.json({ orderId: shopOrder.id, status: outcome.order.status });
+      } catch { /* still in flight / unknown */ }
+      return res.status(202).json({ error: "Capture already in progress", orderId: shopOrder.id, status: "pending" });
+    }
+    try {
+      const paypalOrder = await service.captureOrder(paypalOrderId, claimKey);
+      const outcome = settleFromPayPalOrder(shopOrder, paypalOrder);
+      db.releasePayPalClaim(claimKey);
+      if (outcome.kind === "settled") return res.json({ orderId: shopOrder.id, status: outcome.order.status });
+      if (outcome.kind === "pending") return res.status(202).json({ error: "Payment is pending", orderId: shopOrder.id, status: "pending" });
+      if (outcome.kind === "mismatch") return res.status(422).json({ error: "Captured amount does not match this order", orderId: shopOrder.id, status: "pending" });
+      // Capture returned but was not completed (e.g. DECLINED).
+      return res.status(422).json({ error: "Payment was not completed. Please choose another way to pay.", orderId: shopOrder.id, status: "pending" });
+    } catch (err) {
+      const e = err instanceof PayPalServiceError ? err : null;
+      if (!e) throw err;
+      if (e.neverSent || (e.paypalStatus >= 400 && e.paypalStatus < 500)) db.releasePayPalClaim(claimKey);
+      if (e.issue === "INSTRUMENT_DECLINED") {
+        return res.status(422).json({ error: `${e.message} Please choose another way to pay.`, orderId: shopOrder.id, status: "pending" });
       }
-      throw err;
+      return paypalError(res, e, shopOrder.id);
     }
   });
 
+  // --- PayPal webhooks: verify with PayPal first, record the event id once,
+  // and let only a verified PAYMENT.CAPTURE.COMPLETED settle an order. ---
   app.post("/api/paypal/webhooks", async (req, res) => {
-    if (!paypal) return paypalUnavailable(res);
     const event = req.body ?? {};
-    if (!event.id || !event.event_type) return res.status(400).json({ error: "Bad webhook event" });
-    // Repeat of an already-recorded delivery: 200, nothing changes.
-    if (db.hasWebhookEvent(event.id)) return res.json({ received: true, duplicate: true });
-    const verified = await paypal.verifyWebhook({
-      headers: {
-        authAlgo: req.get("paypal-auth-algo"),
-        certUrl: req.get("paypal-cert-url"),
-        transmissionId: req.get("paypal-transmission-id"),
-        transmissionSig: req.get("paypal-transmission-sig"),
-        transmissionTime: req.get("paypal-transmission-time"),
-      },
-      event,
-    });
+    if (!event?.id || !event?.event_type) return res.status(400).json({ error: "Invalid webhook event" });
+    let service;
+    try {
+      service = getPayPal();
+    } catch (err) {
+      return paypalError(res, err);
+    }
+    let verified = false;
+    try {
+      verified = await service.verifyWebhook(
+        {
+          authAlgo: req.get("paypal-auth-algo"),
+          certUrl: req.get("paypal-cert-url"),
+          transmissionId: req.get("paypal-transmission-id"),
+          transmissionSig: req.get("paypal-transmission-sig"),
+          transmissionTime: req.get("paypal-transmission-time"),
+        },
+        event,
+      );
+    } catch (err) {
+      return paypalError(res, err);
+    }
     if (!verified) return res.status(400).json({ error: "Webhook verification failed" });
-
+    if (!db.recordWebhookEvent(event.id, event.event_type)) {
+      return res.json({ received: true, duplicate: true }); // replay: 200, change nothing
+    }
     if (event.event_type === "PAYMENT.CAPTURE.COMPLETED") {
-      const paypalOrderId = event.resource?.supplementary_data?.related_ids?.order_id;
-      const shopOrder = (paypalOrderId && db.getOrderByPaypalOrderId(paypalOrderId)) || (event.resource?.custom_id && db.getOrder(event.resource.custom_id));
+      const resource = event.resource ?? {};
+      const relatedOrderId = resource.supplementary_data?.related_ids?.order_id;
+      let shopOrder = relatedOrderId ? db.getOrderByPayPalId(relatedOrderId) : null;
+      if (!shopOrder && resource.custom_id) shopOrder = db.getOrder(resource.custom_id);
       if (shopOrder && shopOrder.status === "pending") {
-        let paypalOrder;
-        try {
-          paypalOrder = await paypal.getOrder(paypalOrderId ?? shopOrder.paypal_order_id);
-        } catch (err) {
-          // Transient: do not record the event, so PayPal's redelivery can settle.
-          console.error(`[paypal] webhook re-read failed for ${shopOrder.id}`, err);
-          return res.status(500).json({ error: "Settlement unavailable" });
+        const cents = parsePayPalAmount(resource.amount?.value);
+        const currency = String(resource.amount?.currency_code ?? "").toUpperCase();
+        const customMatches = !resource.custom_id || resource.custom_id === shopOrder.id;
+        const orderMatches = !relatedOrderId || shopOrder.paypal_order_id === relatedOrderId;
+        if (resource.status === "COMPLETED" && customMatches && orderMatches && cents === shopOrder.total_cents && currency === String(shopOrder.currency).toUpperCase()) {
+          settlePaid(shopOrder, { id: resource.id, amount: resource.amount });
         }
-        settleFromPayPalOrder(shopOrder, paypalOrder); // no-ops on mismatch / not captured
       }
     }
-    // CHECKOUT.ORDER.APPROVED and everything else: verified, recorded, no action.
-    // Only the pending -> paid flip above ever moves an order, never backwards.
-    db.recordWebhookEvent(event.id, event.event_type);
+    // CHECKOUT.ORDER.APPROVED, PAYMENT.CAPTURE.PENDING and everything else:
+    // recorded above, never pay, never move an order backwards.
     return res.json({ received: true });
   });
 
@@ -217,19 +261,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const host = process.env.HOST ?? "127.0.0.1";
   const db = openDb(process.env.SHOP_DB ?? path.join(here, "data", "shop.db"));
   const cards = createCardProcessor({ apiKey: process.env.CARD_PROCESSOR_KEY ?? "test_card_key" });
-  // PayPal is built once (its OAuth token cache lives on the client). If any
-  // PayPal env is present the factory validates all of it and fails startup on
-  // a missing credential; with none present, card checkout still runs.
-  let paypal = null;
-  if (process.env.PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_SECRET || process.env.PAYPAL_API_BASE) {
-    paypal = createPayPalService({
-      clientId: process.env.PAYPAL_CLIENT_ID,
-      clientSecret: process.env.PAYPAL_CLIENT_SECRET,
-      baseUrl: process.env.PAYPAL_API_BASE ?? "https://api-m.sandbox.paypal.com",
-      webhookId: process.env.PAYPAL_WEBHOOK_ID ?? null,
-      testBuyerCountry: process.env.PAYPAL_TEST_BUYER_COUNTRY ?? null,
-    });
-  }
-  const app = createApp({ db, cards, adminKey: process.env.ADMIN_KEY ?? "local-admin", paypal });
+  const app = createApp({ db, cards, adminKey: process.env.ADMIN_KEY ?? "local-admin" });
   app.listen(port, host, () => console.log(`Fogline shop on http://${host === "0.0.0.0" ? "localhost" : host}:${port}`));
 }

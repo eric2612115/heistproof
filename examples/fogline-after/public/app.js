@@ -142,76 +142,60 @@ async function payByCard(event) {
   }
 }
 
-// ---- PayPal / Venmo / Pay Later (PayPal Web SDK v6) ----
-// The browser sends only SKUs and quantities; the server prices the bag, creates
-// the PayPal order, captures it, and decides whether anything is paid.
-function loadPayPalScript(sdkUrl) {
+function loadScript(src) {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.async = true;
-    script.src = sdkUrl;
+    script.src = src;
     script.onload = resolve;
-    script.onerror = () => reject(new Error("PayPal script failed to load"));
+    script.onerror = () => reject(new Error("Could not load PayPal"));
     document.head.appendChild(script);
   });
 }
 
+// PayPal / Venmo / Pay Later via the PayPal Web SDK v6. The browser only ever
+// sends SKUs and quantities; the server prices the bag and decides if it is paid.
 async function initPayPal() {
-  const optionsBox = $("#paypal-options");
-  if (!optionsBox) return;
   let config;
   try {
     const res = await fetch("/api/paypal/config");
-    if (!res.ok) return; // card checkout still works
+    if (!res.ok) return;
     config = await res.json();
   } catch {
     return;
   }
+  if (!config.clientId) return;
   try {
-    // Give the message element its bootstrap attributes before the SDK loads.
-    const messageEl = $("#paylater-message");
-    if (messageEl) {
-      messageEl.setAttribute("amount", (bagTotalCents() / 100).toFixed(2));
-      messageEl.setAttribute("currency-code", config.currency ?? "USD");
-    }
-    await loadPayPalScript(config.sdkUrl);
-    if (!window.paypal?.createInstance) return;
+    await loadScript(config.sdkUrl);
     const sdk = await window.paypal.createInstance({
       clientId: config.clientId,
       components: ["paypal-payments", "venmo-payments", "paypal-messages"],
       pageType: "checkout",
       ...(config.testBuyerCountry ? { testBuyerCountry: config.testBuyerCountry } : {}),
     });
-
-    // Pay Later messaging near the bag total; amount is a decimal string.
     try {
       sdk.createPayPalMessages();
-      const message = $("#paylater-message");
-      if (message) {
-        message.setAttribute("currency-code", config.currency ?? "USD");
-        const syncAmount = () => {
-          message.amount = (bagTotalCents() / 100).toFixed(2);
-        };
-        syncAmount();
-        document.addEventListener("bag:change", syncAmount);
-      }
-    } catch { /* messaging is optional */ }
+    } catch { /* messaging is decorative; buttons still work */ }
+    const message = $("#paylater-message");
+    const syncMessage = () => {
+      if (message) message.amount = formatMoney(bagTotalCents()).replace("$", "");
+    };
+    syncMessage();
+    document.addEventListener("bag:change", syncMessage);
 
-    const methods = await sdk.findEligibleMethods({ currencyCode: config.currency ?? "USD" });
+    const methods = await sdk.findEligibleMethods({ currencyCode: config.currencyCode ?? "USD" });
 
     const createOrder = async () => {
-      // Only what is in the bag — never prices, amounts, totals or currency.
       const res = await fetch("/api/paypal/orders", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ items: bag.read() }),
+        body: JSON.stringify({ items: bag.read(), email: $("#email")?.value || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not start PayPal checkout");
       return { orderId: data.id };
     };
-
-    const sessionOptions = {
+    const options = {
       async onApprove({ orderId }) {
         try {
           const res = await fetch(`/api/paypal/orders/${encodeURIComponent(orderId)}/capture`, {
@@ -220,55 +204,59 @@ async function initPayPal() {
             body: "{}",
           });
           const data = await res.json();
-          if (!res.ok) {
-            if (data.code === "INSTRUMENT_DECLINED") {
-              showError("Your payment method was declined. Please choose another way to pay.");
-              return;
-            }
-            throw new Error(data.error ?? "Payment failed");
+          if (res.status === 202) {
+            showError("Your payment is pending. We will confirm once PayPal completes it.");
+            return;
           }
+          if (!res.ok) throw new Error(data.error ?? "Payment failed. Please choose another way to pay.");
           await showConfirmation(data.orderId);
         } catch (err) {
           showError(err.message);
         }
       },
       onCancel() {
-        showError(""); // buyer closed the window: nothing is paid
+        showError("PayPal checkout was cancelled. Nothing was charged.");
       },
       onError() {
-        showError("Something went wrong with PayPal. Please try again or pay by card.");
+        showError("PayPal could not complete that payment. Please choose another way to pay.");
       },
     };
 
-    const sessions = [
-      ["paypal", "#paypal-button", () => sdk.createPayPalOneTimePaymentSession(sessionOptions)],
-      ["venmo", "#venmo-button", () => sdk.createVenmoOneTimePaymentSession(sessionOptions)],
-      ["paylater", "#paylater-button", () => sdk.createPayLaterOneTimePaymentSession(sessionOptions)],
-    ];
-    for (const [method, selector, makeSession] of sessions) {
-      const button = $(selector);
-      if (!button || !methods.isEligible(method)) continue;
-      if (method === "paylater") {
-        const { productCode, countryCode } = methods.getDetails("paylater");
-        button.productCode = productCode;
-        button.countryCode = countryCode;
-      }
-      const session = makeSession();
+    const wire = (buttonId, session, eligible) => {
+      const button = $(buttonId);
+      if (!button || !eligible) return;
+      button.hidden = false;
       button.addEventListener("click", async () => {
         showError("");
         try {
-          // Do NOT await createOrder() before start(): awaiting first loses the
+          // Do NOT await createOrder before start(): awaiting first loses the
           // click's transient activation and the popup is blocked.
           const createOrderPromise = createOrder();
+          createOrderPromise.catch(() => {});
           await session.start({ presentationMode: "auto" }, createOrderPromise);
         } catch (err) {
-          showError(err.message ?? "Payment failed");
+          showError(err.message ?? "PayPal could not start. Please try again.");
         }
       });
-      button.hidden = false;
+    };
+
+    if (methods.isEligible("paypal")) {
+      wire("#paypal-button", sdk.createPayPalOneTimePaymentSession(options), true);
+    }
+    if (methods.isEligible("venmo")) {
+      wire("#venmo-button", sdk.createVenmoOneTimePaymentSession(options), true);
+    }
+    if (methods.isEligible("paylater")) {
+      const button = $("#paylater-button");
+      const { productCode, countryCode } = methods.getDetails("paylater");
+      if (button) {
+        button.productCode = productCode;
+        button.countryCode = countryCode;
+      }
+      wire("#paylater-button", sdk.createPayLaterOneTimePaymentSession(options), true);
     }
   } catch {
-    // PayPal unavailable (offline, blocked): the card form remains.
+    // PayPal unavailable: the card form remains fully usable.
   }
 }
 

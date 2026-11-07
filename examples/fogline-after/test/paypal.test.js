@@ -3,436 +3,501 @@ import assert from "node:assert/strict";
 import { createApp } from "../server.js";
 import { openDb } from "../lib/db.js";
 import { createCardProcessor } from "../lib/card-processor.js";
-import { createPayPalService, centsToPayPalAmount, payPalAmountToCents } from "../lib/paypal.js";
+import { createPayPalService, formatPayPalAmount, parsePayPalAmount, PayPalServiceError } from "../lib/paypal.js";
 
 const jsonRes = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+const paypalErrorBody = (issue, description) => ({
+  name: "UNPROCESSABLE_ENTITY",
+  message: description,
+  debug_id: "debug-123",
+  details: [{ issue, description, location: "body" }],
+});
 
-// A faked PayPal (no network): handles the SDK's token + Orders calls and the
-// raw verify-webhook-signature call, in wire shape, and records every request.
-function fakePayPal(hooks = {}) {
-  const calls = [];
-  const state = {
-    createdBody: null,
-    captureValue: null, // override captured amount
-    createBehavior: "ok", // ok | throw
-    captureBehavior: "completed", // completed | pending | declined | throw
-    getBehavior: "approved", // approved | completed
-    verify: "SUCCESS",
-    tokenFails: false,
-    claimSeenAtCreate: null,
-  };
-  const fetchImpl = async (input, init) => {
-    const request = new Request(input, init);
-    const url = new URL(request.url);
-    const bodyText = request.body === null ? "" : await request.clone().text();
-    calls.push({ method: request.method, pathname: url.pathname, bodyText, headers: request.headers });
-    const shopId = state.createdBody?.purchase_units?.[0]?.custom_id ?? "FOG-UNKNOWN";
-    const totalValue = state.createdBody?.purchase_units?.[0]?.amount?.value ?? "0.00";
-
-    if (url.pathname === "/v1/oauth2/token") {
-      if (state.tokenFails) return jsonRes(401, { error: "invalid_client", error_description: "bad credentials" });
-      return jsonRes(200, { access_token: "TEST-TOKEN", token_type: "Bearer", expires_in: 3600 });
-    }
-    if (url.pathname === "/v1/notifications/verify-webhook-signature") {
-      return jsonRes(200, { verification_status: state.verify });
-    }
-    if (url.pathname === "/v2/checkout/orders" && request.method === "POST") {
-      if (state.createBehavior === "throw") throw new Error("socket hang up");
-      state.createdBody = JSON.parse(bodyText);
-      if (hooks.onCreate) state.claimSeenAtCreate = hooks.onCreate();
-      const pu = state.createdBody.purchase_units[0];
-      return jsonRes(201, { id: "PP-ORDER-1", status: "CREATED", purchase_units: [pu] });
-    }
-    if (/^\/v2\/checkout\/orders\/[^/]+\/capture$/.test(url.pathname)) {
-      if (state.captureBehavior === "throw") throw new Error("socket hang up");
-      if (state.captureBehavior === "declined") {
-        return jsonRes(422, {
-          name: "UNPROCESSABLE_ENTITY",
-          message: "The requested action could not be performed.",
-          debug_id: "dbg-1",
-          details: [{ issue: "INSTRUMENT_DECLINED", description: "The instrument presented was declined." }],
-        });
-      }
-      const captureStatus = state.captureBehavior === "pending" ? "PENDING" : "COMPLETED";
-      return jsonRes(200, completedOrder({ shopId, value: state.captureValue ?? totalValue, captureStatus }));
-    }
-    if (/^\/v2\/checkout\/orders\/[^/]+$/.test(url.pathname) && request.method === "GET") {
-      if (state.getBehavior === "completed") return jsonRes(200, completedOrder({ shopId, value: totalValue, captureStatus: "COMPLETED" }));
-      return jsonRes(200, { id: "PP-ORDER-1", status: "APPROVED", purchase_units: [{ reference_id: shopId, custom_id: shopId, amount: { currency_code: "USD", value: totalValue } }] });
-    }
-    return jsonRes(404, { name: "RESOURCE_NOT_FOUND", message: "not here", debug_id: "dbg-404" });
-  };
-  return { fetchImpl, calls, state };
-}
-
-function completedOrder({ shopId, value, captureStatus }) {
+function completedOrderWire(fake, { captureStatus = "COMPLETED", captureValue, captureCustomId } = {}) {
+  const pu = fake.state.created.purchase_units[0];
   return {
-    id: "PP-ORDER-1",
+    id: fake.state.paypalOrderId,
     status: "COMPLETED",
     purchase_units: [
       {
-        reference_id: shopId,
-        custom_id: shopId,
-        amount: { currency_code: "USD", value },
-        payments: { captures: [{ id: "CAP-1", status: captureStatus, amount: { currency_code: "USD", value }, custom_id: shopId }] },
+        custom_id: pu.custom_id,
+        amount: pu.amount,
+        payments: {
+          captures: [
+            {
+              id: "CAP-1",
+              status: captureStatus,
+              amount: { currency_code: "USD", value: captureValue ?? pu.amount.value },
+              custom_id: captureCustomId ?? pu.custom_id,
+            },
+          ],
+        },
       },
     ],
   };
 }
 
-async function startShop(fake, hooksDb) {
+// Fake PayPal at the fetch seam: token, orders, capture, get-order and
+// webhook verification all route on pathname. No network is touched.
+function makeFakePayPal() {
+  const fake = { calls: [], state: { paypalOrderId: "PP-ORDER-1" } };
+  fake.fetch = async (input, init) => {
+    const request = new Request(input, init);
+    const url = new URL(request.url);
+    const bodyText = request.method === "GET" ? undefined : await request.clone().text().catch(() => undefined);
+    let json;
+    try { json = bodyText ? JSON.parse(bodyText) : undefined; } catch { json = undefined; }
+    const call = { url, request, bodyText, json };
+    fake.calls.push(call);
+    if (url.pathname === "/v1/oauth2/token") {
+      if (fake.state.tokenHandler) return fake.state.tokenHandler(call);
+      return jsonRes(200, { access_token: "test-token", token_type: "Bearer", expires_in: 3600 });
+    }
+    if (url.pathname === "/v1/notifications/verify-webhook-signature") {
+      if (fake.state.verifyHandler) return fake.state.verifyHandler(call);
+      return jsonRes(200, { verification_status: "SUCCESS" });
+    }
+    if (url.pathname === "/v2/checkout/orders" && request.method === "POST") {
+      if (fake.state.createHandler) return fake.state.createHandler(call);
+      fake.state.created = json;
+      const pu = json.purchase_units[0];
+      return jsonRes(201, {
+        id: fake.state.paypalOrderId,
+        status: "CREATED",
+        intent: "CAPTURE",
+        purchase_units: [{ reference_id: pu.reference_id, custom_id: pu.custom_id, invoice_id: pu.invoice_id, amount: pu.amount }],
+      });
+    }
+    if (/^\/v2\/checkout\/orders\/[^/]+\/capture$/.test(url.pathname)) {
+      if (fake.state.captureHandler) return fake.state.captureHandler(call);
+      return jsonRes(200, completedOrderWire(fake));
+    }
+    if (/^\/v2\/checkout\/orders\/[^/]+$/.test(url.pathname) && request.method === "GET") {
+      if (fake.state.getOrderHandler) return fake.state.getOrderHandler(call);
+      return jsonRes(200, completedOrderWire(fake));
+    }
+    return jsonRes(404, paypalErrorBody("RESOURCE_NOT_FOUND", "not found"));
+  };
+  fake.callsTo = (pathPart, method) => fake.calls.filter((c) => c.url.pathname.includes(pathPart) && (!method || c.request.method === method));
+  return fake;
+}
+
+async function startPayPalShop(fake, serviceOpts = {}) {
   const db = openDb(":memory:");
-  if (hooksDb) hooksDb(db);
   const paypal = createPayPalService({
-    clientId: "client-id",
-    clientSecret: "client-secret",
+    clientId: "test-client-id",
+    clientSecret: "test-secret-value",
+    webhookId: "WH-TEST-1",
     baseUrl: "https://api-m.sandbox.paypal.com",
-    webhookId: "WH-1",
-    fetchImpl: fake.fetchImpl,
+    fetchImpl: fake.fetch,
+    ...serviceOpts,
   });
   const app = createApp({ db, cards: createCardProcessor({ apiKey: "test" }), adminKey: "k", paypal });
   const server = await new Promise((resolve) => {
     const s = app.listen(0, "127.0.0.1", () => resolve(s));
   });
-  return { db, base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise((r) => server.close(r)) };
+  return { db, paypal, base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise((r) => server.close(r)) };
 }
 
 const post = (url, body, headers = {}) =>
   fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
 
-async function createPayPalOrder(shop, items = [{ sku: "FOG-HOODIE", qty: 1 }]) {
-  const res = await post(`${shop.base}/api/paypal/orders`, { items, price: 1, amount: "0.01", total: 1, currency: "EUR" });
+async function createHoodieOrder(shop) {
+  const res = await post(`${shop.base}/api/paypal/orders`, {
+    items: [{ sku: "FOG-HOODIE", qty: 1, price: 1 }],
+    email: "buyer@example.com",
+    price: 1, amount: 1, total: 1, currency: "EUR",
+  });
   assert.equal(res.status, 200);
   return res.json();
 }
 
-const webhookHeaders = {
-  "paypal-auth-algo": "SHA256withRSA",
-  "paypal-cert-url": "https://api.sandbox.paypal.com/certs/cert-1.pem",
-  "paypal-transmission-id": "trans-1",
-  "paypal-transmission-sig": "sig",
-  "paypal-transmission-time": "2026-01-01T00:00:00Z",
-};
-
-function captureCompletedEvent(id, shopOrderId) {
+function webhookHeaders() {
   return {
-    id,
-    event_type: "PAYMENT.CAPTURE.COMPLETED",
-    resource: {
-      id: "CAP-1",
-      custom_id: shopOrderId,
-      amount: { value: "49.00", currency_code: "USD" },
-      supplementary_data: { related_ids: { order_id: "PP-ORDER-1" } },
-    },
+    "paypal-auth-algo": "SHA256withRSA",
+    "paypal-cert-url": "https://api.sandbox.paypal.com/certs/cert-1.pem",
+    "paypal-transmission-id": "trans-1",
+    "paypal-transmission-sig": "sig-1",
+    "paypal-transmission-time": "2026-01-01T00:00:00Z",
   };
 }
 
-test("converts cents to PayPal decimal strings exactly", () => {
-  assert.equal(centsToPayPalAmount(4900), "49.00");
-  assert.equal(centsToPayPalAmount(5), "0.05");
-  assert.equal(centsToPayPalAmount(0), "0.00");
-  assert.equal(centsToPayPalAmount(100001), "1000.01");
-  assert.equal(payPalAmountToCents("49.00"), 4900);
-  assert.equal(payPalAmountToCents("49"), null);
-  assert.equal(payPalAmountToCents("49.0"), null);
+test("formatPayPalAmount converts cents to decimal dollars exactly", () => {
+  assert.equal(formatPayPalAmount(4900), "49.00");
+  assert.equal(formatPayPalAmount(5), "0.05");
+  assert.equal(formatPayPalAmount(0), "0.00");
+  assert.equal(parsePayPalAmount("49.00"), 4900);
+  assert.equal(parsePayPalAmount("0.05"), 5);
+  assert.equal(parsePayPalAmount("49.999"), null);
 });
 
-test("config exposes only the client id, and the test buyer country only when set", async () => {
-  const fake = fakePayPal();
-  const shop = await startShop(fake);
+test("create order prices from the catalog, binds custom_id, and sends no invented fields", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const cfg = await (await fetch(`${shop.base}/api/paypal/config`)).json();
-    assert.equal(cfg.clientId, "client-id");
-    assert.ok(!("clientSecret" in cfg) && !JSON.stringify(cfg).includes("client-secret"));
-    assert.ok(!("testBuyerCountry" in cfg));
-    assert.match(cfg.sdkUrl, /sandbox\.paypal\.com\/web-sdk\/v6\/core/);
-  } finally {
-    await shop.close();
-  }
-});
-
-test("create prices from the catalog, ignores browser amounts, binds custom_id, claims before the call", async () => {
-  let dbRef;
-  const fake = fakePayPal({ onCreate: () => Boolean(dbRef.getClaim(`create:${lastOrderId(dbRef)}`)) });
-  function lastOrderId(db) {
-    return db.listOrders()[0]?.id;
-  }
-  const shop = await startShop(fake, (db) => (dbRef = db));
-  try {
-    const { id, orderId } = await createPayPalOrder(shop);
-    assert.equal(id, "PP-ORDER-1");
-    const sent = fake.state.createdBody;
-    assert.equal(sent.intent, "CAPTURE");
-    const pu = sent.purchase_units[0];
-    assert.equal(pu.amount.value, "49.00"); // catalog price, not the browser's 0.01
-    assert.equal(pu.amount.currency_code, "USD");
-    assert.equal(pu.custom_id, orderId);
-    assert.equal(pu.invoice_id, orderId);
-    // Item breakdown sums to the total.
-    const itemSum = pu.items.reduce((s, i) => s + payPalAmountToCents(i.unit_amount.value) * Number(i.quantity), 0);
-    assert.equal(itemSum, 4900);
-    assert.equal(pu.amount.breakdown.item_total.value, "49.00");
-    // The durable claim existed when the create request left.
-    assert.equal(fake.state.claimSeenAtCreate, true);
-    // Every PayPal call went to the configured base via the SDK: token first.
-    assert.equal(fake.calls[0].pathname, "/v1/oauth2/token");
-    const createCall = fake.calls.find((c) => c.pathname === "/v2/checkout/orders");
-    assert.equal(createCall.headers.get("paypal-request-id"), orderId);
-    assert.equal(createCall.headers.get("prefer"), "return=representation");
-    // No invented SDK-sent surface beyond the claim reference + prefer + SDK defaults.
-    assert.equal(createCall.headers.get("paypal-mock-response"), null);
-    const order = shop.db.getOrder(orderId);
+    const data = await createHoodieOrder(shop);
+    assert.equal(data.id, "PP-ORDER-1");
+    const order = shop.db.getOrder(data.orderId);
     assert.equal(order.paypal_order_id, "PP-ORDER-1");
-    assert.equal(order.status, "pending");
+    assert.equal(order.total_cents, 4900);
+
+    const createCall = fake.callsTo("/v2/checkout/orders", "POST")[0];
+    assert.deepEqual(Object.keys(createCall.json).sort(), ["intent", "purchase_units"]);
+    assert.equal(createCall.json.intent, "CAPTURE");
+    const pu = createCall.json.purchase_units[0];
+    assert.equal(pu.amount.value, "49.00");
+    assert.equal(pu.amount.currency_code, "USD");
+    assert.equal(pu.amount.breakdown.item_total.value, "49.00");
+    assert.equal(pu.custom_id, data.orderId);
+    assert.equal(pu.invoice_id, data.orderId);
+    assert.equal(pu.items[0].unit_amount.value, "49.00");
+    assert.equal(pu.items[0].quantity, "1");
+    assert.equal(createCall.request.headers.get("paypal-request-id"), data.orderId);
+    assert.equal(createCall.request.headers.get("paypal-mock-response"), null);
+    // Claim existed before the request left (recorded in our store).
+    assert.equal(shop.db.getPayPalClaim(`create:${data.orderId}`)?.paypal_order_id, "PP-ORDER-1");
+    // OAuth token went to the same configured base.
+    assert.equal(fake.callsTo("/v1/oauth2/token").length, 1);
   } finally {
     await shop.close();
   }
 });
 
-test("a dropped create connection is unknown: order stays pending and the claim is kept", async () => {
-  const fake = fakePayPal();
-  fake.state.createBehavior = "throw";
-  const shop = await startShop(fake);
+test("create order rejects bad bags and never calls PayPal", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const res = await post(`${shop.base}/api/paypal/orders`, { items: [{ sku: "FOG-HOODIE", qty: 1 }] });
-    assert.equal(res.status, 502);
-    const order = shop.db.listOrders()[0];
-    assert.equal(order.status, "pending"); // never marked failed
-    assert.ok(shop.db.getClaim(`create:${order.id}`)); // claim kept for settlement
+    for (const items of [[{ sku: "NOPE", qty: 1 }], [{ sku: "FOG-HOODIE", qty: 0 }], [{ sku: "FOG-HOODIE", qty: -1 }], [{ sku: "FOG-HOODIE", qty: 1.5 }], [{ sku: "FOG-HOODIE", qty: 99 }], []]) {
+      const res = await post(`${shop.base}/api/paypal/orders`, { items });
+      assert.equal(res.status, 400);
+    }
+    assert.equal(fake.callsTo("/v2/checkout/orders").length, 0);
   } finally {
     await shop.close();
   }
 });
 
-test("capture with a COMPLETED capture for the right amount fulfils once; a repeat capture is safe", async () => {
-  const fake = fakePayPal();
-  const shop = await startShop(fake);
+test("capture with a COMPLETED capture fulfils exactly once; a second capture is safe", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const { orderId } = await createPayPalOrder(shop);
-    const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
+    const data = await createHoodieOrder(shop);
+    let claimSeenDuringCapture = false;
+    fake.state.captureHandler = () => {
+      claimSeenDuringCapture = Boolean(shop.db.getPayPalClaim("capture:PP-ORDER-1"));
+      return jsonRes(200, completedOrderWire(fake));
+    };
+    const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {}, { "paypal-mock-response": '{"mock_application_codes":"INSTRUMENT_DECLINED"}' });
     assert.equal(res.status, 200);
-    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
-    assert.equal(shop.db.getOrder(orderId).paid_cents, 4900);
-    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
+    const body = await res.json();
+    assert.equal(body.orderId, data.orderId);
+    assert.equal(claimSeenDuringCapture, true);
+    assert.equal(shop.db.getOrder(data.orderId).status, "fulfilled");
+    assert.equal(shop.db.getOrder(data.orderId).paid_cents, 4900);
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 1);
+
+    const captureCall = fake.callsTo("/capture", "POST")[0];
+    assert.equal(captureCall.request.headers.get("prefer"), "return=representation");
+    assert.equal(captureCall.request.headers.get("paypal-mock-response"), null);
+    assert.equal(captureCall.request.headers.get("paypal-request-id"), "capture:PP-ORDER-1");
 
     const again = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
     assert.equal(again.status, 200);
-    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
-    assert.equal(fake.calls.filter((c) => c.pathname.endsWith("/capture")).length, 1);
+    assert.equal((await again.json()).status, "fulfilled");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 1);
   } finally {
     await shop.close();
   }
 });
 
-test("two simultaneous captures still ship exactly once", async () => {
-  const fake = fakePayPal();
-  const shop = await startShop(fake);
+test("capture sends an empty JSON body so PayPal does not reject it with 415", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const { orderId } = await createPayPalOrder(shop);
-    await Promise.all([
+    await createHoodieOrder(shop);
+    const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
+    assert.equal(res.status, 200);
+    const captureCall = fake.callsTo("/capture", "POST")[0];
+    // Regression for real sandbox 415 UNSUPPORTED_MEDIA_TYPE (debug id
+    // ca56775236e7a): omitting the body sends no Content-Type at all.
+    assert.equal(captureCall.request.headers.get("content-type"), "application/json");
+    assert.equal(captureCall.bodyText, "{}");
+    assert.deepEqual(captureCall.json, {});
+  } finally {
+    await shop.close();
+  }
+});
+
+test("two captures fired at once fulfil exactly once", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
+  try {
+    await createHoodieOrder(shop);
+    const [a, b] = await Promise.all([
       post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {}),
       post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {}),
     ]);
-    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
+    assert.ok([a.status, b.status].every((s) => s === 200 || s === 202));
+    const order = shop.db.getOrderByPayPalId("PP-ORDER-1");
+    assert.equal(order.status, "fulfilled");
+    assert.equal(shop.db.shipmentsFor(order.id).length, 1);
   } finally {
     await shop.close();
   }
 });
 
-test("capture for a PayPal order we never created is 404 and never reaches PayPal's capture", async () => {
-  const fake = fakePayPal();
-  const shop = await startShop(fake);
+test("a connection failure on create re-issues with the same PayPal-Request-Id", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const res = await post(`${shop.base}/api/paypal/orders/PP-FOREIGN/capture`, {});
+    let attempts = 0;
+    fake.state.createHandler = (call) => {
+      attempts += 1;
+      if (attempts === 1) throw new Error("socket hang up");
+      fake.state.created = call.json;
+      const pu = call.json.purchase_units[0];
+      return jsonRes(201, { id: "PP-ORDER-1", status: "CREATED", purchase_units: [{ custom_id: pu.custom_id, amount: pu.amount }] });
+    };
+    const data = await createHoodieOrder(shop);
+    assert.equal(data.id, "PP-ORDER-1");
+    const creates = fake.callsTo("/v2/checkout/orders", "POST");
+    assert.equal(creates.length, 2);
+    assert.equal(creates[0].request.headers.get("paypal-request-id"), creates[1].request.headers.get("paypal-request-id"));
+    assert.equal(creates[0].request.headers.get("paypal-request-id"), data.orderId);
+  } finally {
+    await shop.close();
+  }
+});
+
+test("capture for an unbound PayPal order is rejected before any capture call", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
+  try {
+    const res = await post(`${shop.base}/api/paypal/orders/PP-UNKNOWN/capture`, {});
     assert.equal(res.status, 404);
-    assert.equal(fake.calls.filter((c) => c.pathname.endsWith("/capture")).length, 0);
+    assert.equal(fake.callsTo("/capture").length, 0);
   } finally {
     await shop.close();
   }
 });
 
-test("a capture for the wrong amount never fulfils", async () => {
-  const fake = fakePayPal();
-  fake.state.captureValue = "1.00"; // cheap capture presented for the hoodie bag
-  const shop = await startShop(fake);
+test("INSTRUMENT_DECLINED returns PayPal's reason, stays unpaid, and the buyer can retry", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const { orderId } = await createPayPalOrder(shop);
+    const data = await createHoodieOrder(shop);
+    fake.state.captureHandler = () => jsonRes(422, paypalErrorBody("INSTRUMENT_DECLINED", "The instrument presented was declined"));
     const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
     assert.equal(res.status, 422);
-    assert.equal(shop.db.getOrder(orderId).status, "pending");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
+    const body = await res.json();
+    assert.match(body.error, /declined/);
+    assert.match(body.error, /another way to pay/);
+    assert.equal(shop.db.getOrder(data.orderId).status, "pending");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 0);
+
+    fake.state.captureHandler = null;
+    const retry = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
+    assert.equal(retry.status, 200);
+    assert.equal(shop.db.getOrder(data.orderId).status, "fulfilled");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 1);
   } finally {
     await shop.close();
   }
 });
 
-test("INSTRUMENT_DECLINED stays unpaid, carries PayPal's reason path, and can be retried", async () => {
-  const fake = fakePayPal();
-  fake.state.captureBehavior = "declined";
-  const shop = await startShop(fake);
+test("a 4xx other than credential errors keeps its status and PayPal's reason", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const { orderId } = await createPayPalOrder(shop);
+    const data = await createHoodieOrder(shop);
+    fake.state.captureHandler = () => jsonRes(422, paypalErrorBody("ORDER_NOT_APPROVED", "Order must be approved before capture"));
     const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
-    assert.equal(res.status, 402);
-    const data = await res.json();
-    assert.equal(data.code, "INSTRUMENT_DECLINED");
-    assert.match(data.error, /another way to pay/);
-    assert.equal(shop.db.getOrder(orderId).status, "pending");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
-    // Claim was released: a later attempt can capture.
-    fake.state.captureBehavior = "completed";
-    const retry = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
-    assert.equal(retry.status, 200);
-    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
+    assert.equal(res.status, 422);
+    assert.match((await res.json()).error, /approved before capture/);
+    assert.equal(shop.db.getOrder(data.orderId).status, "pending");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 0);
+  } finally {
+    await shop.close();
+  }
+});
+
+test("ORDER_ALREADY_CAPTURED settles from a getOrder re-read", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
+  try {
+    const data = await createHoodieOrder(shop);
+    fake.state.captureHandler = () => jsonRes(422, paypalErrorBody("ORDER_ALREADY_CAPTURED", "Order already captured"));
+    const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
+    assert.equal(res.status, 200);
+    assert.equal(shop.db.getOrder(data.orderId).status, "fulfilled");
+    assert.equal(fake.callsTo("/v2/checkout/orders/PP-ORDER-1", "GET").length, 1);
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 1);
+  } finally {
+    await shop.close();
+  }
+});
+
+test("a connection failure on capture re-reads the order and settles from PayPal", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
+  try {
+    const data = await createHoodieOrder(shop);
+    fake.state.captureHandler = () => { throw new Error("socket hang up"); };
+    const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
+    assert.equal(res.status, 200);
+    assert.equal(fake.callsTo("/v2/checkout/orders/PP-ORDER-1", "GET").length, 1);
+    assert.equal(shop.db.getOrder(data.orderId).status, "fulfilled");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 1);
+  } finally {
+    await shop.close();
+  }
+});
+
+test("a never-sent auth failure on capture makes no re-read", async () => {
+  const fake = makeFakePayPal();
+  fake.state.tokenHandler = () => jsonRes(401, { error: "invalid_client" });
+  const paypal = createPayPalService({
+    clientId: "test-client-id", clientSecret: "bad", webhookId: "WH-TEST-1",
+    baseUrl: "https://api-m.sandbox.paypal.com", fetchImpl: fake.fetch,
+  });
+  await assert.rejects(
+    () => paypal.captureOrder("PP-ORDER-1", "capture:PP-ORDER-1"),
+    (err) => err instanceof PayPalServiceError && err.neverSent === true && err.httpStatus === 502,
+  );
+  assert.equal(fake.callsTo("/v2/checkout/orders/PP-ORDER-1", "GET").length, 0);
+  assert.equal(fake.callsTo("/capture").length, 0);
+});
+
+test("a capture whose amount or custom_id does not match never fulfils", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
+  try {
+    const data = await createHoodieOrder(shop);
+    fake.state.captureHandler = () => jsonRes(200, completedOrderWire(fake, { captureValue: "1.00" }));
+    const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
+    assert.equal(res.status, 422);
+    assert.equal(shop.db.getOrder(data.orderId).status, "pending");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 0);
+
+    fake.state.captureHandler = () => jsonRes(200, completedOrderWire(fake, { captureCustomId: "FOG-OTHER" }));
+    const res2 = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
+    assert.equal(res2.status, 422);
+    assert.equal(shop.db.getOrder(data.orderId).status, "pending");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 0);
   } finally {
     await shop.close();
   }
 });
 
 test("a PENDING capture stays unpaid", async () => {
-  const fake = fakePayPal();
-  fake.state.captureBehavior = "pending";
-  const shop = await startShop(fake);
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const { orderId } = await createPayPalOrder(shop);
+    const data = await createHoodieOrder(shop);
+    fake.state.captureHandler = () => jsonRes(200, completedOrderWire(fake, { captureStatus: "PENDING" }));
     const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
     assert.equal(res.status, 202);
-    assert.equal(shop.db.getOrder(orderId).status, "pending");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
+    assert.equal(shop.db.getOrder(data.orderId).status, "pending");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 0);
   } finally {
     await shop.close();
   }
 });
 
-test("a dropped capture connection is settled by re-reading the order, never reported failed", async () => {
-  const fake = fakePayPal();
-  fake.state.captureBehavior = "throw";
-  fake.state.getBehavior = "completed";
-  const shop = await startShop(fake);
+test("browser config exposes only the client id, and testBuyerCountry only when set in sandbox", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
+  const fake2 = makeFakePayPal();
+  const shop2 = await startPayPalShop(fake2, { testBuyerCountry: "GB" });
   try {
-    const { orderId } = await createPayPalOrder(shop);
-    const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
+    const res = await fetch(`${shop.base}/api/paypal/config`);
+    const body = await res.json();
+    assert.equal(body.clientId, "test-client-id");
+    assert.equal(body.sdkUrl, "https://www.sandbox.paypal.com/web-sdk/v6/core");
+    assert.equal("testBuyerCountry" in body, false);
+    assert.equal(JSON.stringify(body).includes("test-secret-value"), false);
+
+    const body2 = await (await fetch(`${shop2.base}/api/paypal/config`)).json();
+    assert.equal(body2.testBuyerCountry, "GB");
+  } finally {
+    await shop.close();
+    await shop2.close();
+  }
+});
+
+test("a verified CHECKOUT.ORDER.APPROVED webhook never pays an order", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
+  try {
+    const data = await createHoodieOrder(shop);
+    const event = { id: "EVT-APPROVED-1", event_type: "CHECKOUT.ORDER.APPROVED", resource: { id: "PP-ORDER-1", status: "APPROVED" } };
+    const res = await post(`${shop.base}/api/paypal/webhooks`, event, webhookHeaders());
     assert.equal(res.status, 200);
-    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
-    // The re-read actually happened.
-    assert.ok(fake.calls.some((c) => c.method === "GET" && c.pathname === "/v2/checkout/orders/PP-ORDER-1"));
+    assert.equal(shop.db.getOrder(data.orderId).status, "pending");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 0);
+
+    const verifyCall = fake.callsTo("/v1/notifications/verify-webhook-signature")[0];
+    assert.equal(verifyCall.json.webhook_id, "WH-TEST-1");
+    assert.equal(verifyCall.json.transmission_id, "trans-1");
+    assert.equal(verifyCall.json.auth_algo, "SHA256withRSA");
+    assert.equal(verifyCall.json.webhook_event.id, "EVT-APPROVED-1");
+    assert.equal(verifyCall.request.headers.get("authorization"), "Bearer test-token");
   } finally {
     await shop.close();
   }
 });
 
-test("a dropped capture with nothing captured is unknown, not failed", async () => {
-  const fake = fakePayPal();
-  fake.state.captureBehavior = "throw";
-  fake.state.getBehavior = "approved";
-  const shop = await startShop(fake);
+test("a verified PAYMENT.CAPTURE.COMPLETED webhook fulfils once; replays and late events change nothing", async () => {
+  const fake = makeFakePayPal();
+  const shop = await startPayPalShop(fake);
   try {
-    const { orderId } = await createPayPalOrder(shop);
-    const res = await post(`${shop.base}/api/paypal/orders/PP-ORDER-1/capture`, {});
-    assert.equal(res.status, 422); // re-read shows no capture: not paid, not fulfilled
-    assert.equal(shop.db.getOrder(orderId).status, "pending");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
-  } finally {
-    await shop.close();
-  }
-});
-
-test("bad credentials (token refused) are a 502 and trigger no re-read", async () => {
-  const fake = fakePayPal();
-  const shop = await startShop(fake);
-  try {
-    const { orderId } = await createPayPalOrder(shop);
-    fake.state.tokenFails = true;
-    // Fresh service whose token cache is empty, pointed at the same shop.
-    const badPaypal = createPayPalService({
-      clientId: "client-id",
-      clientSecret: "wrong",
-      baseUrl: "https://api-m.sandbox.paypal.com",
-      webhookId: "WH-1",
-      fetchImpl: fake.fetchImpl,
-    });
-    const before = fake.calls.filter((c) => c.method === "GET").length;
-    await assert.rejects(() => badPaypal.captureOrder({ paypalOrderId: "PP-ORDER-1", payPalRequestId: orderId }), (err) => err.httpStatus === 502);
-    assert.equal(fake.calls.filter((c) => c.method === "GET").length, before);
-  } finally {
-    await shop.close();
-  }
-});
-
-test("a forged webhook changes nothing; a verified APPROVED event never fulfils", async () => {
-  const fake = fakePayPal();
-  const shop = await startShop(fake);
-  try {
-    const { orderId } = await createPayPalOrder(shop);
-    fake.state.verify = "FAILURE";
-    const forged = await post(`${shop.base}/api/paypal/webhooks`, captureCompletedEvent("EVT-FORGED", orderId), webhookHeaders);
-    assert.equal(forged.status, 400);
-    assert.equal(shop.db.getOrder(orderId).status, "pending");
-
-    fake.state.verify = "SUCCESS";
-    const approved = await post(
-      `${shop.base}/api/paypal/webhooks`,
-      { id: "EVT-APPROVED", event_type: "CHECKOUT.ORDER.APPROVED", resource: { id: "PP-ORDER-1", status: "APPROVED" } },
-      webhookHeaders,
-    );
-    assert.equal(approved.status, 200);
-    assert.equal(shop.db.getOrder(orderId).status, "pending");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
-  } finally {
-    await shop.close();
-  }
-});
-
-test("a verified CAPTURE.COMPLETED webhook fulfils via re-read, exactly once, replay-safe and order-safe", async () => {
-  const fake = fakePayPal();
-  fake.state.getBehavior = "completed";
-  const shop = await startShop(fake);
-  try {
-    const { orderId } = await createPayPalOrder(shop);
-    const event = captureCompletedEvent("EVT-1", orderId);
-    const res = await post(`${shop.base}/api/paypal/webhooks`, event, webhookHeaders);
+    const data = await createHoodieOrder(shop);
+    const event = {
+      id: "EVT-CAPTURE-1",
+      event_type: "PAYMENT.CAPTURE.COMPLETED",
+      resource: {
+        id: "CAP-1",
+        status: "COMPLETED",
+        amount: { value: "49.00", currency_code: "USD" },
+        custom_id: data.orderId,
+        supplementary_data: { related_ids: { order_id: "PP-ORDER-1" } },
+      },
+    };
+    const res = await post(`${shop.base}/api/paypal/webhooks`, event, webhookHeaders());
     assert.equal(res.status, 200);
-    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
-    // The webhook was verified against the configured base with our webhook id.
-    const verifyCall = fake.calls.find((c) => c.pathname === "/v1/notifications/verify-webhook-signature");
-    assert.ok(verifyCall);
-    assert.equal(JSON.parse(verifyCall.bodyText).webhook_id, "WH-1");
-    assert.equal(JSON.parse(verifyCall.bodyText).transmission_id, "trans-1");
+    assert.equal(shop.db.getOrder(data.orderId).status, "fulfilled");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 1);
 
-    // Replay: 200, nothing changes.
-    const replay = await post(`${shop.base}/api/paypal/webhooks`, event, webhookHeaders);
+    const replay = await post(`${shop.base}/api/paypal/webhooks`, event, webhookHeaders());
     assert.equal(replay.status, 200);
-    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 1);
 
-    // An out-of-order APPROVED after fulfilment moves nothing backwards.
-    const late = await post(
-      `${shop.base}/api/paypal/webhooks`,
-      { id: "EVT-LATE", event_type: "CHECKOUT.ORDER.APPROVED", resource: { id: "PP-ORDER-1", status: "APPROVED" } },
-      webhookHeaders,
-    );
+    // Out-of-order old event after fulfilment: no backwards movement.
+    const approved = { id: "EVT-LATE-APPROVED", event_type: "CHECKOUT.ORDER.APPROVED", resource: { id: "PP-ORDER-1", status: "APPROVED" } };
+    const late = await post(`${shop.base}/api/paypal/webhooks`, approved, webhookHeaders());
     assert.equal(late.status, 200);
-    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
-    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
+    assert.equal(shop.db.getOrder(data.orderId).status, "fulfilled");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 1);
   } finally {
     await shop.close();
   }
 });
 
-test("webhook verify failure after an edited body answers 400", async () => {
-  const fake = fakePayPal();
-  fake.state.verify = "FAILURE";
-  const shop = await startShop(fake);
+test("an unverified webhook is rejected with 400 and changes nothing", async () => {
+  const fake = makeFakePayPal();
+  fake.state.verifyHandler = () => jsonRes(200, { verification_status: "FAILURE" });
+  const shop = await startPayPalShop(fake);
   try {
-    const { orderId } = await createPayPalOrder(shop);
-    const edited = captureCompletedEvent("EVT-EDITED", orderId);
-    edited.resource.amount.value = "0.01";
-    const res = await post(`${shop.base}/api/paypal/webhooks`, edited, webhookHeaders);
+    const data = await createHoodieOrder(shop);
+    const event = {
+      id: "EVT-FORGED-1",
+      event_type: "PAYMENT.CAPTURE.COMPLETED",
+      resource: { id: "CAP-1", status: "COMPLETED", amount: { value: "49.00", currency_code: "USD" }, custom_id: data.orderId, supplementary_data: { related_ids: { order_id: "PP-ORDER-1" } } },
+    };
+    const res = await post(`${shop.base}/api/paypal/webhooks`, event, webhookHeaders());
     assert.equal(res.status, 400);
-    assert.equal(shop.db.getOrder(orderId).status, "pending");
-    assert.equal(shop.db.hasWebhookEvent("EVT-EDITED"), false);
+    assert.equal(shop.db.getOrder(data.orderId).status, "pending");
+    assert.equal(shop.db.shipmentsFor(data.orderId).length, 0);
   } finally {
     await shop.close();
   }

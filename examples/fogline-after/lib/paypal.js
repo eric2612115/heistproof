@@ -1,306 +1,322 @@
-import { PaypalClient, PaypalError } from "paypal";
+import { PaypalClient, PaypalError, CheckoutPaymentIntent } from "paypal";
 
-// Server-side PayPal integration. Every Orders call goes through the APIMatic SDK
-// (package `paypal`, client PaypalClient); the SDK's map/contract live in
-// paypal-plan.md. Webhook signature verification has no SDK operation, so that one
-// REST call is made directly — against the same PAYPAL_API_BASE, with a
-// client-credentials token from the same base.
-
-const DEFAULT_BASE = "https://api-m.sandbox.paypal.com";
-
-// Catalog prices are integer cents; PayPal amounts are decimal strings in dollars.
-// This is the one conversion function (rule: 4900 -> "49.00", 5 -> "0.05").
-export function centsToPayPalAmount(cents) {
+// The ONE place cents (shop/catalog unit) become PayPal decimal dollars.
+// 4900 -> "49.00", 5 -> "0.05". Never via floating point.
+export function formatPayPalAmount(cents) {
   if (!Number.isInteger(cents) || cents < 0) throw new Error("amount must be a non-negative integer number of cents");
-  const dollars = Math.floor(cents / 100);
-  const remainder = cents % 100;
-  return `${dollars}.${String(remainder).padStart(2, "0")}`;
+  return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
 }
 
-// Strict inverse: only PayPal's canonical "D.CC" shape counts. Returns null otherwise.
-export function payPalAmountToCents(value) {
-  if (typeof value !== "string") return null;
-  const m = /^(\d+)\.(\d{2})$/.exec(value);
+// Exact inverse for amounts PayPal returns ("49.00" -> 4900). Rejects anything
+// that is not a plain decimal with at most two fraction digits.
+export function parsePayPalAmount(value) {
+  const m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(String(value ?? "").trim());
   if (!m) return null;
-  return Number(m[1]) * 100 + Number(m[2]);
+  return Number(m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0") || 0);
 }
 
-export class PayPalUpstreamError extends Error {
-  constructor(httpStatus, message, { issue = null, outcomeUnknown = false, cause } = {}) {
-    super(message, cause ? { cause } : undefined);
-    this.name = "PayPalUpstreamError";
+export class PayPalServiceError extends Error {
+  constructor(message, { httpStatus = 502, paypalStatus = null, issue = null, outcomeUnknown = false, neverSent = false } = {}) {
+    super(message);
+    this.name = "PayPalServiceError";
     this.httpStatus = httpStatus;
+    this.paypalStatus = paypalStatus;
     this.issue = issue;
     this.outcomeUnknown = outcomeUnknown;
+    this.neverSent = neverSent;
   }
 }
 
-function decodeRawBody(rawBody) {
-  if (!rawBody) return null;
-  try {
-    return JSON.parse(new TextDecoder().decode(rawBody));
-  } catch {
-    return null;
-  }
-}
-
-// The API's reason, where it sent one: typed Error arm body, else parsed raw bytes.
-function apiReasonAndIssue(err) {
-  let body = null;
+function payloadReason(err) {
   const payload = err?.payload;
-  if (payload && typeof payload === "object") {
-    if (payload.body && typeof payload.body === "object") body = payload.body;
-    else if ("rawBody" in payload) body = decodeRawBody(payload.rawBody);
-  }
-  if (!body) return { reason: null, issue: null };
-  const details = Array.isArray(body.details) ? body.details : [];
-  const issue = details.find((d) => d?.issue)?.issue ?? null;
-  const parts = [body.message, ...details.map((d) => d?.description || d?.issue)].filter(Boolean);
-  return { reason: parts.length ? [...new Set(parts)].join(" ") : null, issue };
+  if (!payload || typeof payload !== "object") return null;
+  if ("rawBody" in payload) return null; // undeclared arm: raw bytes, no trusted reason
+  const body = payload.body;
+  if (!body || typeof body !== "object") return null;
+  const parts = [body.message, ...(Array.isArray(body.details) ? body.details.map((d) => d?.description || d?.issue) : [])].filter(Boolean);
+  return parts.length ? [...new Set(parts)].join(": ") : null;
 }
 
-// One error ladder for every call site (paypal-plan.md 1b.4). SDK err.message is
-// logged by callers, never returned: it names the URL we dialled.
-function translateError(err, { isWrite = false } = {}) {
-  if (err instanceof PayPalUpstreamError) return err;
-  if (err instanceof PaypalError || (err && typeof err === "object" && "kind" in err && "uri" in err)) {
-    switch (err.kind) {
-      case "api": {
-        const { reason, issue } = apiReasonAndIssue(err);
-        if (err.status === 401 || err.status === 403) {
-          return new PayPalUpstreamError(502, "PayPal payments are temporarily unavailable.", { issue, cause: err });
-        }
-        if (err.status === 429) {
-          return new PayPalUpstreamError(503, "PayPal payments are temporarily unavailable.", { issue, cause: err });
-        }
-        if (err.status >= 400 && err.status < 500) {
-          return new PayPalUpstreamError(err.status, reason ?? "PayPal rejected the request.", { issue, cause: err });
-        }
-        return new PayPalUpstreamError(502, "PayPal payments are temporarily unavailable.", { issue, cause: err });
+function payloadIssues(err) {
+  const body = err?.payload && "body" in err.payload ? err.payload.body : null;
+  if (!body || !Array.isArray(body.details)) return [];
+  return body.details.map((d) => d?.issue).filter(Boolean);
+}
+
+function payloadDebugId(err) {
+  const body = err?.payload && "body" in err.payload ? err.payload.body : null;
+  return body?.debugId ?? null;
+}
+
+// One translation ladder for every SDK call (plan 1b.4). Arm tags are
+// per-operation and are never switched on; err.status is the discriminator.
+export function translatePayPalError(err) {
+  if (err instanceof PayPalServiceError) return err;
+  if (!(err instanceof PaypalError)) return null; // outside the family: caller rethrows
+  const debugId = payloadDebugId(err);
+  if (debugId) console.error(`[paypal] api error debug_id=${debugId} status=${err.status ?? ""} kind=${err.kind}`);
+  switch (err.kind) {
+    case "api": {
+      const issues = payloadIssues(err);
+      const issue = issues[0] ?? null;
+      if (err.status === 401 || err.status === 403) {
+        return new PayPalServiceError("Payment provider unavailable.", { httpStatus: 502, paypalStatus: err.status, issue, neverSent: false });
       }
-      case "connection":
-      case "timeout":
-        return new PayPalUpstreamError(502, isWrite ? "The payment outcome is unknown. Please do not pay again yet." : "PayPal payments are temporarily unavailable.", {
-          outcomeUnknown: isWrite,
-          cause: err,
-        });
-      case "decode":
-        // A 2xx we cannot read is unknown on a write; an error status stays that status.
-        if (err.status >= 200 && err.status < 300) {
-          return new PayPalUpstreamError(502, isWrite ? "The payment outcome is unknown. Please do not pay again yet." : "PayPal payments are temporarily unavailable.", {
-            outcomeUnknown: isWrite,
-            cause: err,
-          });
-        }
-        if (err.status === 401 || err.status === 403) return new PayPalUpstreamError(502, "PayPal payments are temporarily unavailable.", { cause: err });
-        if (err.status >= 400 && err.status < 500) return new PayPalUpstreamError(err.status, "PayPal rejected the request.", { cause: err });
-        return new PayPalUpstreamError(502, "PayPal payments are temporarily unavailable.", { cause: err });
-      case "auth":
-      case "encode":
-      default:
-        // Never sent (credential could not be obtained / value would not encode):
-        // an integration fault, not a payment failure, and never re-read.
-        return new PayPalUpstreamError(502, "PayPal payments are temporarily unavailable.", { cause: err });
+      if (err.status === 429) {
+        return new PayPalServiceError("Payment provider temporarily unavailable.", { httpStatus: 503, paypalStatus: err.status, issue });
+      }
+      if (err.status >= 400 && err.status < 500) {
+        return new PayPalServiceError(payloadReason(err) ?? "Payment request rejected.", { httpStatus: err.status, paypalStatus: err.status, issue });
+      }
+      return new PayPalServiceError("Payment provider error.", { httpStatus: 502, paypalStatus: err.status, issue });
     }
+    case "decode":
+      // 2xx we cannot read = outcome unknown; on an error status the provider
+      // did reject, only the detail was lost.
+      if (err.status >= 200 && err.status < 300) {
+        return new PayPalServiceError("Payment outcome unknown.", { httpStatus: 502, paypalStatus: err.status, outcomeUnknown: true });
+      }
+      if (err.status >= 400 && err.status < 500) {
+        return new PayPalServiceError("Payment request rejected.", { httpStatus: err.status, paypalStatus: err.status });
+      }
+      return new PayPalServiceError("Payment provider error.", { httpStatus: 502, paypalStatus: err.status });
+    case "connection":
+    case "timeout":
+      return new PayPalServiceError("Payment outcome unknown.", { httpStatus: 502, outcomeUnknown: true });
+    case "auth":
+    case "encode":
+      // Nothing was sent: our credentials / our bug, never a buyer failure.
+      return new PayPalServiceError("Payment provider unavailable.", { httpStatus: 502, neverSent: true });
+    default:
+      return new PayPalServiceError("Payment provider error.", { httpStatus: 502 });
   }
-  return err; // outside the SDK family: a bug or an abort reason — rethrow raw
 }
 
-function isNeverSent(err) {
-  return err instanceof PaypalError && (err.kind === "auth" || err.kind === "encode");
+function isUnknown(err) {
+  const t = translatePayPalError(err);
+  return Boolean(t?.outcomeUnknown);
 }
 
-function isUnknownOutcome(err) {
-  if (!(err instanceof PaypalError)) return false;
-  if (err.kind === "connection" || err.kind === "timeout") return true;
-  if (err.kind === "decode" && err.status >= 200 && err.status < 300) return true;
-  return false;
-}
-
-// Find the captures on a decoded Order and check the fulfilment gate against the
-// shop order. Nothing here trusts optional members: Order fields are all optional
-// in the SDK model, so absence is checked explicitly.
-export function inspectOrder(order, { shopOrderId, totalCents, currency }) {
-  const units = Array.isArray(order?.purchaseUnits) ? order.purchaseUnits : [];
-  const captures = [];
-  for (const unit of units) {
+// Assess what PayPal holds for a shop order. Pure: SDK Order (camelCase) in.
+export function assessPayPalOrder(paypalOrder, shopOrder) {
+  const totalCents = shopOrder.total_cents;
+  const currency = String(shopOrder.currency ?? "").toUpperCase();
+  let sawPending = false;
+  let sawCapture = false;
+  let sawMismatch = false;
+  for (const unit of paypalOrder?.purchaseUnits ?? []) {
+    const unitCustomId = unit?.customId;
     for (const capture of unit?.payments?.captures ?? []) {
-      captures.push({ capture, unit });
+      sawCapture = true;
+      if (capture.status === "PENDING") sawPending = true;
+      if (capture.status !== "COMPLETED") continue;
+      const customId = capture.customId ?? unitCustomId;
+      const cents = capture.amount ? parsePayPalAmount(capture.amount.value) : null;
+      const captureCurrency = String(capture.amount?.currencyCode ?? "").toUpperCase();
+      if (customId === shopOrder.id && cents === totalCents && captureCurrency === currency) {
+        return { state: "completed", capture };
+      }
+      sawMismatch = true;
+    }
+    // A purchase unit explicitly bound to a different shop order can never settle this one.
+    if (unitCustomId && unitCustomId !== shopOrder.id && (unit?.payments?.captures ?? []).some((c) => c.status === "COMPLETED")) {
+      sawMismatch = true;
     }
   }
-  if (!captures.length) return { state: "no_capture", orderStatus: order?.status ?? null };
-  // Prefer a COMPLETED capture; otherwise report the most relevant one.
-  const entry = captures.find((c) => c.capture?.status === "COMPLETED") ?? captures[0];
-  const { capture, unit } = entry;
-  if (!capture) return { state: "no_capture", orderStatus: order?.status ?? null };
-  if (capture.status !== "COMPLETED") return { state: "capture_not_completed", captureStatus: capture.status ?? null, capture };
-  const paidCents = payPalAmountToCents(capture.amount?.value);
-  const paidCurrency = typeof capture.amount?.currencyCode === "string" ? capture.amount.currencyCode.toLowerCase() : null;
-  if (paidCents === null || paidCents !== totalCents || paidCurrency !== String(currency).toLowerCase()) {
-    return { state: "amount_mismatch", capture, paidCents };
-  }
-  const customIds = [unit?.customId, capture.customId].filter((v) => typeof v === "string" && v.length > 0);
-  if (!customIds.length || customIds.some((v) => v !== shopOrderId)) {
-    return { state: "binding_mismatch", capture };
-  }
-  if (!capture.id) return { state: "amount_mismatch", capture };
-  return { state: "captured", capture, paidCents };
+  if (sawMismatch) return { state: "mismatch", capture: null };
+  if (sawPending) return { state: "pending", capture: null };
+  if (sawCapture) return { state: "not_completed", capture: null };
+  return { state: "none", capture: null };
 }
 
-export function createPayPalService({
-  clientId,
-  clientSecret,
-  baseUrl = DEFAULT_BASE,
-  webhookId = null,
-  testBuyerCountry = null,
-  fetchImpl = null,
-} = {}) {
-  if (!clientId) throw new Error("PAYPAL_CLIENT_ID is not configured. Set it in the environment before starting the shop.");
-  if (!clientSecret) throw new Error("PAYPAL_CLIENT_SECRET is not configured. Set it in the environment before starting the shop.");
-  const base = String(baseUrl || DEFAULT_BASE).replace(/\/+$/, "");
+export function createPayPalService({ clientId, clientSecret, webhookId, baseUrl, testBuyerCountry, fetchImpl } = {}) {
+  if (!clientId) throw new Error("PAYPAL_CLIENT_ID is not configured");
+  if (!clientSecret) throw new Error("PAYPAL_CLIENT_SECRET is not configured");
+  const resolvedBase = String(baseUrl || "https://api-m.sandbox.paypal.com").replace(/\/+$/, "");
+  const transport = fetchImpl ?? globalThis.fetch;
+  if (typeof transport !== "function") throw new Error("no fetch available for PayPal client");
 
-  // Built once and held: resource getters and the OAuth token cache live on it.
+  // Built once and held: OAuth token cache and memoized resources live on it.
   // No ServerEnvironment exists on this SDK; the host is the serverOptions.baseUrl
-  // override, bound explicitly to PAYPAL_API_BASE here. Logging is pinned off in
-  // code so PAYPAL_CLIENT_LOG cannot switch it on; request bodies are never logged.
-  const clientOptions = {
-    serverOptions: { baseUrl: base },
+  // override. Both the operations and the OAuth token request track this base.
+  const client = new PaypalClient({
+    serverOptions: { baseUrl: resolvedBase },
     oauth2: { clientId, clientSecret },
     logging: { level: "off" },
-    retry: { timeout: 15_000 },
-  };
-  if (fetchImpl) clientOptions.fetch = fetchImpl;
-  const client = new PaypalClient(clientOptions);
+    ...(fetchImpl ? { fetch: (request) => transport(request) } : {}),
+  });
 
-  const doFetch = fetchImpl ?? globalThis.fetch;
-  let cachedToken = null;
+  let cachedToken = null; // { value, expiresAt } for webhook verification only
 
   async function getAccessToken() {
     if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) return cachedToken.value;
-    const basic = Buffer.from(`${clientId}:${clientSecret}`, "utf8").toString("base64");
-    let res;
-    try {
-      res = await doFetch(`${base}/v1/oauth2/token`, {
-        method: "POST",
-        headers: { authorization: `Basic ${basic}`, "content-type": "application/x-www-form-urlencoded" },
-        body: "grant_type=client_credentials",
-      });
-    } catch (err) {
-      throw new PayPalUpstreamError(502, "PayPal payments are temporarily unavailable.", { cause: err });
-    }
-    if (!res.ok) throw new PayPalUpstreamError(502, "PayPal payments are temporarily unavailable.");
-    const data = await res.json().catch(() => null);
-    if (!data?.access_token) throw new PayPalUpstreamError(502, "PayPal payments are temporarily unavailable.");
-    const expiresIn = Number(data.expires_in);
-    cachedToken = { value: data.access_token, expiresAt: Date.now() + (Number.isFinite(expiresIn) && expiresIn > 0 ? expiresIn * 1000 : 3600_000) };
+    const res = await transport(`${resolvedBase}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
+    if (!res.ok) throw new PayPalServiceError("Payment provider unavailable.", { httpStatus: 502, neverSent: true });
+    const body = await res.json();
+    if (!body?.access_token) throw new PayPalServiceError("Payment provider unavailable.", { httpStatus: 502, neverSent: true });
+    cachedToken = { value: body.access_token, expiresAt: Date.now() + Number(body.expires_in ?? 3600) * 1000 };
     return cachedToken.value;
   }
 
-  return {
+  const service = {
+    client,
     clientId,
-    baseUrl: base,
+    baseUrl: resolvedBase,
 
-    config() {
-      const sdkUrl = base.includes("api-m.paypal.com") && !base.includes("sandbox")
-        ? "https://www.paypal.com/web-sdk/v6/core"
-        : "https://www.sandbox.paypal.com/web-sdk/v6/core";
-      return { clientId, sdkUrl, currency: "USD", ...(testBuyerCountry ? { testBuyerCountry } : {}) };
+    getBrowserConfig() {
+      let sdkUrl = "https://www.sandbox.paypal.com/web-sdk/v6/core";
+      try {
+        const host = new URL(resolvedBase).hostname;
+        if (host === "api-m.paypal.com") sdkUrl = "https://www.paypal.com/web-sdk/v6/core";
+      } catch { /* keep sandbox default for local/fake bases */ }
+      const isSandbox = sdkUrl.includes("sandbox");
+      return {
+        clientId,
+        sdkUrl,
+        currencyCode: "USD",
+        ...(isSandbox && testBuyerCountry ? { testBuyerCountry } : {}),
+      };
     },
 
-    // Create an order for a shop order already priced by the server. The body is
-    // built only from the cart lines; no browser amount ever reaches this call.
-    async createOrder({ shopOrderId, cart, payPalRequestId }) {
+    // claimReference is the shop order id; it is sent as PayPal-Request-Id so a
+    // re-issue after an unknown outcome is deduped by PayPal (plan 1b.1).
+    async createOrder({ shopOrderId, cart, email }) {
       const currencyCode = String(cart.currency).toUpperCase();
-      const amount = { currencyCode, value: centsToPayPalAmount(cart.totalCents) };
-      let order;
-      try {
-        order = await client.orders.createOrder({
-          payPalRequestId,
-          prefer: "return=representation",
-          body: {
-            intent: "CAPTURE",
-            purchaseUnits: [
-              {
-                referenceId: shopOrderId,
-                customId: shopOrderId,
-                invoiceId: shopOrderId,
-                amount: { ...amount, breakdown: { itemTotal: { ...amount } } },
-                items: cart.lines.map((line) => ({
-                  name: line.name,
-                  sku: line.sku,
-                  quantity: String(line.qty),
-                  unitAmount: { currencyCode, value: centsToPayPalAmount(line.unitCents) },
-                })),
+      const request = {
+        payPalRequestId: shopOrderId,
+        body: {
+          intent: CheckoutPaymentIntent.Capture,
+          purchaseUnits: [
+            {
+              referenceId: shopOrderId,
+              customId: shopOrderId,
+              invoiceId: shopOrderId,
+              amount: {
+                currencyCode,
+                value: formatPayPalAmount(cart.totalCents),
+                breakdown: { itemTotal: { currencyCode, value: formatPayPalAmount(cart.totalCents) } },
               },
-            ],
-          },
-        });
-      } catch (err) {
-        // A create that may have happened but taught us no id cannot be re-read
-        // (no search-by-reference operation): unknown, never "failed".
-        if (isUnknownOutcome(err)) {
-          throw new PayPalUpstreamError(502, "The payment outcome is unknown. Please do not pay again yet.", { outcomeUnknown: true, cause: err });
+              items: cart.lines.map((line) => ({
+                name: line.name,
+                unitAmount: { currencyCode, value: formatPayPalAmount(line.unitCents) },
+                quantity: String(line.qty),
+                sku: line.sku,
+              })),
+            },
+          ],
+        },
+      };
+      const attempt = async () => {
+        const order = await client.orders.createOrder(request);
+        if (!order?.id) {
+          throw new PayPalServiceError("Payment outcome unknown.", { httpStatus: 502, outcomeUnknown: true });
         }
-        throw translateError(err, { isWrite: true });
+        return order;
+      };
+      try {
+        return await attempt();
+      } catch (err) {
+        const translated = translatePayPalError(err);
+        if (!translated) throw err;
+        if (!translated.outcomeUnknown) throw translated;
+        // Unknown: the create may have reached PayPal. Re-issue once with the
+        // SAME PayPal-Request-Id (stored on the claim); never report "failed".
+        try {
+          return await attempt();
+        } catch (retryErr) {
+          const t2 = translatePayPalError(retryErr);
+          if (!t2) throw retryErr;
+          throw t2.outcomeUnknown ? new PayPalServiceError("Payment outcome unknown.", { httpStatus: 502, outcomeUnknown: true }) : t2;
+        }
       }
-      if (!order?.id) {
-        throw new PayPalUpstreamError(502, "The payment outcome is unknown. Please do not pay again yet.", { outcomeUnknown: true });
-      }
-      return order;
     },
 
     async getOrder(paypalOrderId) {
       try {
-        return await client.orders.getOrder({ id: paypalOrderId });
+        const order = await client.orders.getOrder({ id: paypalOrderId });
+        if (!order?.id) throw new PayPalServiceError("Payment outcome unknown.", { httpStatus: 502, outcomeUnknown: true });
+        return order;
       } catch (err) {
-        throw translateError(err, { isWrite: false });
+        const translated = translatePayPalError(err);
+        if (!translated) throw err;
+        throw translated;
       }
     },
 
-    // Capture, and on any unknown outcome (or ORDER_ALREADY_CAPTURED) settle from
-    // what PayPal holds by re-reading the order. Never-sent failures (auth/encode)
-    // settle nothing and are never re-read.
-    async captureOrder({ paypalOrderId, payPalRequestId }) {
+    // On ORDER_ALREADY_CAPTURED or any unknown outcome, settle from what
+    // PayPal holds via getOrder — never resend the capture blindly.
+    async captureOrder(paypalOrderId, claimKey) {
       try {
-        return await client.orders.captureOrder({ id: paypalOrderId, prefer: "return=representation", payPalRequestId });
-      } catch (err) {
-        const { issue } = err instanceof PaypalError && err.kind === "api" ? apiReasonAndIssue(err) : { issue: null };
-        const settleable = isUnknownOutcome(err) || issue === "ORDER_ALREADY_CAPTURED";
-        if (!settleable) throw translateError(err, { isWrite: true });
-        if (isNeverSent(err)) throw translateError(err, { isWrite: true });
-        try {
-          return await client.orders.getOrder({ id: paypalOrderId });
-        } catch (rereadErr) {
-          throw new PayPalUpstreamError(502, "The payment outcome is unknown. Please do not pay again yet.", { outcomeUnknown: true, cause: rereadErr });
-        }
-      }
-    },
-
-    // The one non-SDK REST call (the SDK declares no webhook operation), made to
-    // the same base with a client-credentials token. True only on SUCCESS.
-    async verifyWebhook({ headers, event }) {
-      if (!webhookId) return false;
-      try {
-        const token = await getAccessToken();
-        const res = await doFetch(`${base}/v1/notifications/verify-webhook-signature`, {
-          method: "POST",
-          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-          body: JSON.stringify({
-            auth_algo: headers.authAlgo,
-            cert_url: headers.certUrl,
-            transmission_id: headers.transmissionId,
-            transmission_sig: headers.transmissionSig,
-            transmission_time: headers.transmissionTime,
-            webhook_id: webhookId,
-            webhook_event: event,
-          }),
+        const order = await client.orders.captureOrder({
+          id: paypalOrderId,
+          payPalRequestId: claimKey,
+          prefer: "return=representation",
+          // Real sandbox (debug id ca56775236e7a) rejects a capture with no
+          // body / no Content-Type: 415 UNSUPPORTED_MEDIA_TYPE. Sending an
+          // empty JSON object makes the SDK send "{}" as application/json.
+          // The SDK map calls the body optional, but PayPal's answer wins.
+          body: {},
         });
-        if (!res.ok) return false;
-        const data = await res.json().catch(() => null);
-        return data?.verification_status === "SUCCESS";
-      } catch {
-        return false;
+        if (!order?.id || !order?.purchaseUnits) {
+          // Thin 2xx: outcome unknown until re-read.
+          return await service.getOrder(paypalOrderId);
+        }
+        return order;
+      } catch (err) {
+        const translated = translatePayPalError(err);
+        if (!translated) throw err;
+        const alreadyCaptured = translated.issue === "ORDER_ALREADY_CAPTURED" || payloadIssues(err).includes("ORDER_ALREADY_CAPTURED");
+        if (alreadyCaptured || translated.outcomeUnknown) {
+          try {
+            return await service.getOrder(paypalOrderId);
+          } catch {
+            throw translated; // still unknown (or already-captured but unreadable): never "failed"
+          }
+        }
+        throw translated;
       }
+    },
+
+    // The SDK has no webhook operation; verification goes to the same
+    // configured base URL (plan: webhook verification section).
+    async verifyWebhook(headers, event) {
+      if (!webhookId) throw new PayPalServiceError("Payment provider unavailable.", { httpStatus: 502, neverSent: true });
+      const token = await getAccessToken();
+      const res = await transport(`${resolvedBase}/v1/notifications/verify-webhook-signature`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          auth_algo: headers.authAlgo,
+          cert_url: headers.certUrl,
+          transmission_id: headers.transmissionId,
+          transmission_sig: headers.transmissionSig,
+          transmission_time: headers.transmissionTime,
+          webhook_id: webhookId,
+          webhook_event: event,
+        }),
+      });
+      if (!res.ok) return false;
+      const body = await res.json().catch(() => null);
+      return body?.verification_status === "SUCCESS";
     },
   };
+  return service;
+}
+
+export function createPayPalServiceFromEnv(env = process.env, fetchImpl) {
+  return createPayPalService({
+    clientId: env.PAYPAL_CLIENT_ID,
+    clientSecret: env.PAYPAL_CLIENT_SECRET,
+    webhookId: env.PAYPAL_WEBHOOK_ID,
+    baseUrl: env.PAYPAL_API_BASE || "https://api-m.sandbox.paypal.com",
+    testBuyerCountry: env.PAYPAL_TEST_BUYER_COUNTRY || undefined,
+    fetchImpl,
+  });
 }
