@@ -5,9 +5,13 @@ services:
   - type: web
     name: heistproof-console
     runtime: static
-    buildCommand: npm ci && node scripts/build-site.mjs site --url https://heistproof-console.onrender.com/
+    # The static export needs no npm packages; skipping npm ci also skips the demo setup (Chromium, demo shops).
+    buildCommand: node scripts/build-site.mjs site --url https://heistproof-console.onrender.com/
     staticPublishPath: site
     pullRequestPreviewsEnabled: false
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.2
     headers:
       - path: /*
         name: X-Content-Type-Options
