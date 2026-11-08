@@ -106,12 +106,53 @@ const MISSED_BEFORE: Record<string, Plant & { robbery: string }> = {
   },
 };
 
-/** Correct shops that an earlier version wrongly flagged: selling a thousand at full price, and adding shipping. */
+/** A "confirm" route that ships when the page says PayPal completed the payment: caught by "payment nobody approved". */
+const CONFIRM_ROUTE: Patch[] = [
+  {
+    file: "server.js",
+    from: "        const m = /^\\/api\\/checkout\\/paypal\\/([^/]+)\\/capture$/.exec(p);",
+    to: "        const confirm = /^\\/api\\/checkout\\/paypal\\/([^/]+)\\/confirm$/.exec(p);\n        if (confirm) {\n          const order = store.byPayPal(decodeURIComponent(confirm[1]));\n          if (!order) return send(res, 404, { error: \"unknown order\" });\n          if (body.status === \"COMPLETED\" && order.state === \"awaiting_payment\") { order.state = \"shipped\"; order.parcels = 1; store.save(); }\n          return send(res, 200, { ref: order.ref, state: order.state });\n        }\n        const m = /^\\/api\\/checkout\\/paypal\\/([^/]+)\\/capture$/.exec(p);",
+  },
+  {
+    file: "public/app.js",
+    from: "      if (!res.ok) return notice(data.error ?? \"The payment did not go through.\");\n      cart.clear();",
+    to: "      if (!res.ok) return notice(data.error ?? \"The payment did not go through.\");\n      await post(`/api/checkout/paypal/${encodeURIComponent(orderId)}/confirm`, { status: \"COMPLETED\" });\n      cart.clear();",
+  },
+];
+
+/** Correct shops that an earlier version wrongly flagged: a thousand at full price, shipping, a sale, shipping later, volume pricing. */
 const CORRECT: Record<string, Plant & { robberies?: string[] }> = {
   "wholesale-1000": {
     mistake: "sells up to 1,000 of an item at the catalog price",
     patches: [{ file: "lib/catalog.js", from: "const MAX_COUNT = 10;", to: "const MAX_COUNT = 1000;" }],
     robberies: ["bad-bag"],
+    noTests: true,
+  },
+  "volume-pricing": {
+    mistake: "sells a hundred or more of a product at 10% off each",
+    patches: [
+      { file: "lib/catalog.js", from: "const MAX_COUNT = 10;", to: "const MAX_COUNT = 1000;" },
+      { file: "lib/catalog.js", from: "    return { product: sku, name: CATALOG[sku].name, count, unit_cents: CATALOG[sku].cents };", to: "    return { product: sku, name: CATALOG[sku].name, count, unit_cents: count >= 100 ? Math.round(CATALOG[sku].cents * 0.9) : CATALOG[sku].cents };" },
+    ],
+    robberies: ["bad-bag"],
+    noTests: true,
+  },
+  "sale-discount": {
+    mistake: "runs a 10% sale, shown in the bag and named in PayPal's breakdown as a discount",
+    patches: [
+      { file: "lib/catalog.js", from: "  return { lines: priced, total_cents: priced.reduce((n, l) => n + l.count * l.unit_cents, 0) };", to: "  const item_total_cents = priced.reduce((n, l) => n + l.count * l.unit_cents, 0);\n  const discount_cents = Math.round(item_total_cents / 10);\n  return { lines: priced, item_total_cents, discount_cents, total_cents: item_total_cents - discount_cents };" },
+      { file: "lib/paypal.js", from: "              amount: { currency_code: \"USD\", value, breakdown: { item_total: { currency_code: \"USD\", value } } },", to: "              amount: { currency_code: \"USD\", value, breakdown: { item_total: { currency_code: \"USD\", value: dollars(order.item_total_cents) }, discount: { currency_code: \"USD\", value: dollars(order.discount_cents) } } }," },
+      { file: "public/app.js", from: "const cartTotal = () => [...cart].reduce((sum, [sku, count]) => sum + Number(catalog.find((p) => p.sku === sku)?.price ?? 0) * count, 0);", to: "const cartTotal = () => Math.round([...cart].reduce((sum, [sku, count]) => sum + Number(catalog.find((p) => p.sku === sku)?.price ?? 0) * 100 * count, 0) * 0.9) / 100;" },
+    ],
+    robberies: ["price-tamper"],
+    noTests: true,
+  },
+  "ships-later": {
+    mistake: "marks orders paid and leaves the parcel to staff",
+    patches: [
+      { file: "server.js", from: "    if (order.state === \"paid\" && order.parcels === 0 && order.paypal_capture === capture.id) {\n      order.parcels = 1;\n      order.state = \"shipped\";\n      store.note(order, \"parcel booked\");\n    }\n", to: "    // Staff book parcels by hand later.\n" },
+    ],
+    robberies: ["price-tamper"],
     noTests: true,
   },
   "flat-shipping": {
@@ -217,6 +258,17 @@ for (const [name, plant] of Object.entries(CORRECT)) {
     }
   });
 }
+
+test("a shop with a \"confirm\" route that ships on the page's word is robbed by \"capture-unapproved\"", { timeout: 240_000 }, async () => {
+  const dir = patched("confirm-route", CONFIRM_ROUTE);
+  try {
+    const { round } = await checkOffline(dir, { attacks: ["capture-unapproved"], label: "copper-kettle-confirm-route" });
+    const outcome = round.attacks.find((a) => a.id === "capture-unapproved");
+    assert.equal(outcome?.verdict, "robbed", outcome?.summary);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test("a shop that captures orders it created to AUTHORIZE never passes: PayPal refuses the capture", { timeout: 240_000 }, async () => {
   const dir = patched("authorize-intent", AUTHORIZE);

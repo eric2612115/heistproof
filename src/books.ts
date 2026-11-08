@@ -73,6 +73,7 @@ export async function reconcile(shop: ShopProcess, calls: ProxiedCall[], legit: 
   const legitPaid = legit.ok ? (await capturesOf(legitOrder)).reduce((n, c) => n + cents(c.amount?.value), 0) : 0;
 
   const mismatches: Books["mismatches"] = [];
+  const paypalOnly = shop.profile.payments?.length === 1 && shop.profile.payments[0] === "paypal";
   // One payment pays for one order: the same completed capture may not stand behind two orders the shop shipped.
   const claimedBy = new Map<string, string>();
   let paid = 0;
@@ -83,7 +84,9 @@ export async function reconcile(shop: ShopProcess, calls: ProxiedCall[], legit: 
     // way (the card form, say), and PayPal's records cannot vouch for it either way.
     const ids = [...new Set(JSON.stringify(o).match(PAYPAL_ID) ?? [])];
     if (!ids.some((id) => ours.has(id)) && !(await capturesOf(o)).length) {
-      otherPaid++;
+      // A shop that takes only PayPal (heistproof.json "payments": ["paypal"]) has no other way to be paid.
+      if (paypalOnly) mismatches.push({ order: o.id, problem: `${o.status} with ${o.shipments} parcel(s), but it names no PayPal payment, and this shop takes only PayPal` });
+      else otherPaid++;
       continue;
     }
     paid++;

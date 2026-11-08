@@ -36,10 +36,16 @@ runs:
       id: check
       shell: bash
       working-directory: ${{ github.action_path }}
+      # Inputs reach the script as environment variables, never pasted into it.
+      env:
+        SHOP: ${{ inputs.shop }}
+        SANDBOX: ${{ inputs.sandbox }}
+        PLANS: ${{ inputs.thief-plans }}
       run: |
         set +e
-        plans="${{ inputs.thief-plans }}"
-        npx tsx src/cli/check.ts "$GITHUB_WORKSPACE/${{ inputs.shop }}" ${{ inputs.sandbox == 'true' && ' ' || '--offline' }} ${plans:+--thief-plans="$GITHUB_WORKSPACE/$plans"} | tee heistproof.log
+        mode=--offline
+        [ "$SANDBOX" = "true" ] && mode=
+        npx tsx src/cli/check.ts "$GITHUB_WORKSPACE/$SHOP" $mode ${PLANS:+--thief-plans="$GITHUB_WORKSPACE/$PLANS"} | tee heistproof.log
         code=${PIPESTATUS[0]}
         case $code in 0) v=safe ;; 1) v=unsafe ;; *) v=incomplete ;; esac
         echo "verdict=$v" >> "$GITHUB_OUTPUT"

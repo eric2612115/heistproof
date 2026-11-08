@@ -139,10 +139,10 @@ type PurchaseOptions = {
 
 /** A purchase, started over (with a new PayPal order) when PayPal's sandbox checkout page itself fails. */
 /**
- * Does PayPal's order charge what the bag says? The goods must cost exactly the bag total: PayPal's item total when the
- * order has a breakdown, else the whole amount. On top of the goods, the breakdown may add shipping, handling, insurance
- * or tax, but never a discount, and its parts must add up to the amount. A shop that adds $5 shipping passes; a shop that
- * asks for $4,900 for a $49 bag, or $0.01, does not.
+ * Does PayPal's order charge what the bag says? Either PayPal charges exactly the bag total (whatever shipping, tax or
+ * discount the bag already shows), or the bag shows the goods and PayPal adds only shipping, handling, insurance or tax
+ * on top. A breakdown's parts must add up to the amount. A shop that adds $5 shipping, or shows a 10% sale in the bag,
+ * passes; a shop that asks for $4,900 for a $49 bag, or $0.01, or takes off a discount the bag never showed, does not.
  */
 export function amountCheck(order: any, bagTotal: string | null | undefined): { ok: boolean; goods: string | null; extras: Array<{ kind: string; value: string }> } {
   const amount = order?.purchase_units?.[0]?.amount;
@@ -150,10 +150,13 @@ export function amountCheck(order: any, bagTotal: string | null | undefined): { 
   const b = amount.breakdown ?? {};
   const goods = String(b.item_total?.value ?? amount.value);
   const extras = ["shipping", "handling", "insurance", "tax_total"].filter((k) => Number(b[k]?.value ?? 0) > 0).map((k) => ({ kind: k === "tax_total" ? "tax" : k, value: String(b[k].value) }));
-  const discounted = ["discount", "shipping_discount"].some((k) => Number(b[k]?.value ?? 0) > 0);
   const cents = (v: unknown) => Math.round(Number(v) * 100);
-  const adds = cents(goods) + extras.reduce((n, e) => n + cents(e.value), 0);
-  const ok = !discounted && cents(goods) === cents(bagTotal) && adds === cents(amount.value);
+  const discount = ["discount", "shipping_discount"].reduce((n, k) => n + cents(b[k]?.value ?? 0), 0);
+  const addsUp = !amount.breakdown || cents(goods) + extras.reduce((n, e) => n + cents(e.value), 0) - discount === cents(amount.value);
+  const asShown = cents(amount.value) === cents(bagTotal);
+  const goodsPlusExtras = discount === 0 && cents(goods) === cents(bagTotal);
+  const ok = addsUp && (asShown || goodsPlusExtras);
+  if (discount) extras.push({ kind: "discount", value: (-discount / 100).toFixed(2) });
   return { ok, goods, extras };
 }
 
@@ -272,7 +275,8 @@ async function purchaseOnce(opts: PurchaseOptions): Promise<PurchaseResult> {
     } catch {
       /* not json */
     }
-    const headers = Object.fromEntries(Object.entries(await req.allHeaders().catch(() => ({}) as Record<string, string>)).filter(([k]) => /^(x-[\w-]+|content-type|authorization)$/i.test(k)));
+    // A request still in flight when the page moves on has no full header list: fall back to what the page set on it.
+    const headers = Object.fromEntries(Object.entries(await req.allHeaders().catch(() => req.headers())).filter(([k]) => /^(x-[\w-]+|content-type|authorization)$/i.test(k)));
     calls.push({ method: req.method(), path: new URL(req.url()).pathname, body, status: res.status(), response, headers });
   });
 
@@ -465,9 +469,10 @@ async function purchaseOnce(opts: PurchaseOptions): Promise<PurchaseResult> {
     result.ok = !paid;
     result.verdict = paid ? "The shop marked the order paid." : "The shop kept the order unpaid.";
   } else {
-    result.ok = paid && result.captureStatus === "COMPLETED" && result.shopOrder?.shipments === 1;
+    // Paid, and shipped at most once: a shop may book its parcel later (staff, a nightly job); shipping twice is a bug.
+    result.ok = paid && result.captureStatus === "COMPLETED" && (result.shopOrder?.shipments ?? 0) <= 1;
     result.verdict = result.ok
-      ? `Paid $${result.paypalAmount?.value}: capture ${result.captureId} COMPLETED, shop order ${result.shopOrder!.id} ${result.shopOrder!.status}, 1 label.`
+      ? `Paid $${result.paypalAmount?.value}: capture ${result.captureId} COMPLETED, shop order ${result.shopOrder!.id} ${result.shopOrder!.status}, ${result.shopOrder!.shipments === 1 ? "1 label" : "no label yet"}.`
       : `Capture ${result.captureStatus ?? "missing"}; shop order ${result.shopOrder?.id ?? "?"} is ${result.shopOrder?.status ?? "?"} with ${result.shopOrder?.shipments ?? 0} labels.`;
   }
   run.emit(phase, "prove.result", { label, ok: result.ok, verdict: result.verdict, captureId: result.captureId, paypalStatus: result.paypalStatus, shopOrder: result.shopOrder?.id, screenshots: [...shots] });

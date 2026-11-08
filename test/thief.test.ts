@@ -82,3 +82,15 @@ test("a books problem is sorted by kind, so a plan that only repeats a known pro
   assert.equal(mismatchKind("PayPal captured $0.01 for an order of $49.00"), "less captured than the order costs");
   assert.notEqual(mismatchKind("3 parcels for 1 completed capture(s)"), mismatchKind("PayPal captured $0.01 for an order of $49.00"));
 });
+
+test("an edit or a tamper that reaches a prototype is refused, so a plan cannot break Heistproof itself", () => {
+  const plan = (step: Record<string, unknown>) => ({ plans: [{ name: "p", idea: "i", expect: "e", steps: [step] }] });
+  for (const key of ["__proto__.payments", "resource.constructor.prototype.x", "prototype"]) {
+    const { plans, dropped } = validatePlans(plan({ do: "webhook", event: "PAYMENT.CAPTURE.COMPLETED", edit: { [key]: 1 } }));
+    assert.equal(plans.length, 0, key);
+    assert.ok(dropped.some((d) => /prototype/.test(d)), `${key}: ${dropped.join("; ")}`);
+  }
+  const tamper = validatePlans(plan({ do: "buy", tamper: JSON.parse('{"__proto__": {"polluted": true}}') }));
+  assert.equal(tamper.plans.length, 0);
+  assert.equal(({} as any).polluted, undefined, "nothing was polluted");
+});

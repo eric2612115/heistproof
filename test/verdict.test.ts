@@ -87,3 +87,14 @@ test("safe without the AI thief says so: it covers the ten scripted robberies on
   assert.match(noThief, /no model key/);
   assert.match(verdictLine(base({ thief: undefined })), /the AI thief did not run/);
 });
+
+test("offline, a shop that refuses the stand-in's signed event is incomplete, not unsafe; in the sandbox it is unsafe", () => {
+  assert.equal(verdictOf(base({ webhook: "refused", offline: true })), "incomplete");
+  assert.equal(verdictOf(base({ webhook: "refused" })), "unsafe");
+});
+
+test("an AI thief robbery that could not be carried out is never counted as blocked: the check is incomplete", () => {
+  const plan = (verdict: "held" | "error") => ({ name: "p", idea: "", expect: "", verdict, summary: "", steps: [], mismatches: [] });
+  assert.equal(verdictOf(base({ thief: { ran: true, plans: [plan("held"), plan("error")] } })), "incomplete");
+  assert.equal(verdictOf(base({ thief: { ran: true, plans: [plan("held")] } })), "safe");
+});

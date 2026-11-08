@@ -60,6 +60,7 @@ export function renderReport(opts: { shopDir: string; rounds: Round[]; title?: s
     lines.push(`- Tests: ${r.tests ? "pass" : "fail"}`);
     lines.push(`- Buttons shown: ${Object.entries(r.prove.buttons).map(([k, v]) => `${k} ${v ? "yes" : "no"}`).join(", ")}${r.prove.payLaterMessage ? `; Pay Later message: "${r.prove.payLaterMessage}"` : ""}`);
     lines.push(`- Purchase: ${r.prove.verdict}`);
+    for (const e of (r.paypalErrors ?? []).filter((x) => !x.call.includes("/v1/oauth2/"))) lines.push(`  - PayPal refused \`${e.call}\`: HTTP ${e.status} ${e.name ?? ""}${e.issue ? ` (${e.issue})` : ""}${e.message ? `, "${e.message}"` : ""}${e.debugId ? `, debug id \`${e.debugId}\`` : ""}`);
     if (r.prove.paypalOrderId) lines.push(`  - PayPal order \`${r.prove.paypalOrderId}\`, amount ${r.prove.paypalAmount ? `${r.prove.paypalAmount.currency} ${r.prove.paypalAmount.value}` : "?"} (bag total $${r.prove.bagTotal}), capture \`${r.prove.captureId ?? "none"}\` ${r.prove.captureStatus ?? ""}`);
     lines.push(`- Webhook: ${webhookLine(r)}`);
     if (r.books) lines.push(`- Books: ${!r.books.matched ? (r.books.error ? `could not be read (${r.books.error})` : "not matched (the back office shows no PayPal ids)") : r.books.mismatches.length ? `DO NOT MATCH PayPal's records on ${r.books.mismatches.length} order(s): ${[...new Set(r.books.mismatches.map((m) => mismatchKind(m.problem)))].join("; ")}. ${r.books.mismatches.map((m) => `Order ${m.order}: ${m.problem}`).join("; ")}` : `${r.books.paid} PayPal order(s) the shop calls paid, checked against PayPal's records: each backed by a completed capture that covers it, none shipped more than once${r.books.otherPaid ? ` (${r.books.otherPaid} paid another way, not PayPal's to check)` : ""}`}`);
@@ -77,11 +78,12 @@ export function renderReport(opts: { shopDir: string; rounds: Round[]; title?: s
       if (!r.thief.ran) lines.push(`AI thief: not run (${r.thief.reason ?? "no model key"}).`);
       else {
         const robbed = r.thief.plans.filter((p) => p.verdict === "robbed").length;
-        lines.push(`AI thief (${r.thief.source === "replay" ? "plans replayed from an earlier run" : `${r.thief.provider} ${r.thief.model}`}): read only what any visitor can see and tried ${r.thief.plans.length} robberies of its own; ${robbed ? `${robbed} GOT THROUGH` : "none got through"}. The books against PayPal's records decide each one, not the model.`);
+        const repeats = r.thief.plans.filter((p) => p.verdict === "repeat").length;
+        lines.push(`AI thief (${r.thief.source === "replay" ? "plans replayed from an earlier run" : `${r.thief.provider} ${r.thief.model}`}): read what any visitor can see and tried ${r.thief.plans.length} robberies of its own; ${robbed ? `${robbed} GOT THROUGH` : "none got through"}${repeats ? `, ${repeats} only repeated a problem the books already showed` : ""}. The books against PayPal's records decide each one, not the model.`);
         lines.push("");
         lines.push("| AI thief's robbery | Its idea | Result | What happened |");
         lines.push("|---|---|---|---|");
-        for (const p of r.thief.plans) lines.push(`| ${p.name.replace(/\|/g, "/")} | ${p.idea.replace(/\|/g, "/")} | ${p.verdict === "robbed" ? "ROBBED" : p.verdict === "held" ? "Blocked" : "Error"} | ${p.summary.replace(/\|/g, "/")} |`);
+        for (const p of r.thief.plans) lines.push(`| ${p.name.replace(/\|/g, "/")} | ${p.idea.replace(/\|/g, "/")} | ${p.verdict === "robbed" ? "ROBBED" : p.verdict === "held" ? "Blocked" : p.verdict === "repeat" ? "Repeat (a problem the books already showed)" : "Error"} | ${p.summary.replace(/\|/g, "/")} |`);
       }
     }
     lines.push("");

@@ -14,7 +14,7 @@ import type { Run, Phase } from "./events.ts";
 export type PayPalError = { call: string; status: number; name: string | null; issue: string | null; message: string | null; debugId: string | null };
 /** How the shop answered PayPal's genuine, signed PAYMENT.CAPTURE.COMPLETED event for its own order ("verified" in older runs means accepted). */
 export type WebhookStatus = "accepted" | "verified" | "refused" | "not-delivered";
-export type Round = { round: number; tests: boolean; prove: PurchaseResult; attacks: AttackOutcome[]; webhookVerified?: boolean; webhook?: WebhookStatus; webhookEvent?: string | null; paypalErrors?: PayPalError[]; books?: Books; thief?: ThiefReport };
+export type Round = { round: number; offline?: boolean; tests: boolean; prove: PurchaseResult; attacks: AttackOutcome[]; webhookVerified?: boolean; webhook?: WebhookStatus; webhookEvent?: string | null; paypalErrors?: PayPalError[]; books?: Books; thief?: ThiefReport };
 
 export type Verdict = "safe" | "unsafe" | "incomplete";
 
@@ -29,10 +29,14 @@ export const ALL_ATTACKS = ORDER;
  * or PayPal's sandbox stopped the purchase. Run it again; an incomplete check is never "safe".
  */
 export function verdictOf(r: Round): Verdict {
-  if (r.attacks.some((a) => a.verdict === "robbed") || r.thief?.plans.some((p) => p.verdict === "robbed") || !r.tests || r.webhook === "refused" || (r.books?.mismatches.length ?? 0) > 0) return "unsafe";
+  if (r.attacks.some((a) => a.verdict === "robbed") || r.thief?.plans.some((p) => p.verdict === "robbed") || !r.tests || (r.webhook === "refused" && !r.offline) || (r.books?.mismatches.length ?? 0) > 0) return "unsafe";
+  // Offline, the stand-in's certificate address is local: a shop that checks PayPal's certificate itself refuses its
+  // events. Only the sandbox can tell whether that shop accepts PayPal's real ones.
+  if (r.webhook === "refused" && r.offline) return "incomplete";
   if (!r.prove.ok) return environmentProblem(r) ? "incomplete" : "unsafe";
   const held = new Set(r.attacks.filter((a) => a.verdict === "held").map((a) => a.id));
   if (ALL_ATTACKS.some((id) => !held.has(id))) return "incomplete";
+  if (r.thief?.plans.some((p) => p.verdict === "error")) return "incomplete";
   // Safe also needs the books: matched to PayPal's records, every paid order backed. Books that could not be read or
   // matched leave the check incomplete.
   if (!r.books?.matched) return "incomplete";
@@ -98,8 +102,11 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     }
     // Then the AI thief invents robberies of its own (only on a complete check, once a buyer could approve).
     let thief: ThiefReport | undefined;
-    const buyerCouldApprove = legit.ok || legit.approved || legit.captureStatus === "COMPLETED";
-    if (opts.thief !== false && opts.thief !== undefined && !opts.skipAttacks && !opts.attacks && buyerCouldApprove) {
+    const shopCouldBePaid = legit.ok || legit.captureStatus === "COMPLETED";
+    if (opts.thief !== false && opts.thief !== undefined && !opts.skipAttacks && !opts.attacks && !shopCouldBePaid) {
+      thief = { ran: false, reason: legit.approved ? "the shop's capture did not work, so nothing could be paid for the thief to steal" : "the real purchase never reached a buyer's approval, so there was no checkout to rob", plans: [] };
+      run.emit("attack", "thief.skipped", { round, reason: thief.reason });
+    } else if (opts.thief !== false && opts.thief !== undefined && !opts.skipAttacks && !opts.attacks && shopCouldBePaid) {
       thief = await runThief({ run, round, shop: sandbox.shop, proxy: sandbox.proxy, tap: sandbox.tap, legit, items, scripted: attacks }, opts.thief).catch((err) => ({ ran: false, reason: `the AI thief failed: ${String((err as Error).message ?? err).slice(0, 200)}`, plans: [] }));
     }
     // After every robbery, the shop's books against PayPal's own records.
@@ -116,7 +123,7 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     const webhook: WebhookStatus = !best ? "not-delivered" : best.shopStatus >= 200 && best.shopStatus < 300 ? "accepted" : "refused";
     if (sandbox.tap.resends.length) run.emit("prove", "webhook.resends", { round, resends: sandbox.tap.resends });
     run.emit("prove", "prove.webhook", { round, status: webhook, eventId: best?.eventId ?? null, resourceId: best?.resourceId ?? null, shopStatus: best?.shopStatus ?? null, paypalVerified: best?.paypalVerified ?? null, ok: webhook === "accepted" });
-    const result: Round = { round, tests: tests.ok, prove: legit, attacks, webhook, webhookEvent: best?.eventId ?? null, paypalErrors, books, thief };
+    const result: Round = { round, offline: Boolean(sandbox.standIn), tests: tests.ok, prove: legit, attacks, webhook, webhookEvent: best?.eventId ?? null, paypalErrors, books, thief };
     run.writeJson(`round${round}.json`, result);
     return result;
   } finally {
@@ -144,7 +151,7 @@ export function failures(r: Round): Array<{ title: string; detail: string }> {
     const told = errors.map((e) => `PayPal answered ${e.call} with HTTP ${e.status} ${e.name ?? ""}${e.issue ? ` (${e.issue})` : ""}${e.message ? `: ${e.message}` : ""} [debug id ${e.debugId}]`).join("; ");
     out.push({ title: "The real purchase did not complete correctly", detail: `${r.prove.verdict}${told ? ` ${told}.` : ""}` });
   }
-  if (r.webhook === "refused") out.push({ title: "The shop refused PayPal's genuine PAYMENT.CAPTURE.COMPLETED webhook", detail: `A genuine, signed delivery (event ${r.webhookEvent}) to the shop's webhook route did not get a 2xx answer.` });
+  if (r.webhook === "refused" && !r.offline) out.push({ title: "The shop refused PayPal's genuine PAYMENT.CAPTURE.COMPLETED webhook", detail: `A genuine, signed delivery (event ${r.webhookEvent}) to the shop's webhook route did not get a 2xx answer.` });
   for (const a of r.attacks) if (a.verdict === "error") out.push({ title: `Robbery "${a.title}" could not run`, detail: a.summary });
   for (const a of r.attacks) if (a.verdict === "robbed") out.push({ title: `Robbery "${a.title}" worked (${a.what}; rules ${a.rule.join(", ")})`, detail: a.summary });
   for (const p of r.thief?.plans ?? []) if (p.verdict === "robbed") out.push({ title: `The AI thief got through: ${p.name}`, detail: `${p.idea} What it did: ${p.steps.map((s) => `${JSON.stringify(s.step)} -> ${s.result}`).join("; ")}. ${p.summary}` });

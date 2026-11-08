@@ -100,8 +100,10 @@ export async function shopScripts(shop: ShopProcess, limit = 40): Promise<Array<
  * with the headers the page used (a CSRF token, say), so a refusal means the shop refused the tampering, not a stranger.
  */
 async function send(ctx: AttackContext, call: Pick<ShopCall, "path" | "headers">, body: unknown) {
+  // The page's own headers (a CSRF token, say) from its order-creating request, then the call's own, which win.
+  const page = learnRoutes(ctx.legit).create?.headers ?? {};
   const r = await (await browser()).request.post(`${ctx.shop.url}${call.path}`, {
-    headers: { "content-type": "application/json", ...(call.headers ?? {}) },
+    headers: { "content-type": "application/json", ...page, ...(call.headers ?? {}) },
     data: typeof body === "string" ? body : JSON.stringify(body ?? {}),
     failOnStatusCode: false,
   });
@@ -327,6 +329,20 @@ export const ATTACKS: Attack[] = [
           evidence: { ...evidence, variant: variant.name, followThrough, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId },
         };
       }
+      if (!robbed && heist.approved) {
+        return {
+          verdict: "held",
+          summary: `The shop asked PayPal for ${worst.paypalAmount!.currency} ${worst.paypalAmount!.value} (order ${heist.paypalOrderId}), but never took the payment: nothing was paid or shipped.`,
+          evidence: { ...evidence, variant: variant.name, followThrough, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId },
+        };
+      }
+      if (!robbed) {
+        return {
+          verdict: "error",
+          summary: `The shop asked PayPal for ${worst.paypalAmount!.currency} ${worst.paypalAmount!.value} (order ${worst.paypalOrderId}) when the unchanged bag asks for ${fair.currency} ${fair.value}, but the follow-through purchase did not reach the buyer's approval (${heist.verdict}), so whether it would ship is untested.`,
+          evidence: { ...evidence, variant: variant.name, followThrough, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId },
+        };
+      }
       return {
         verdict: "robbed",
         summary: robbed
@@ -354,13 +370,13 @@ export const ATTACKS: Attack[] = [
       const unit = unitPrice(ctx);
       const other = ctx.shop.profile.product.other;
       // Each bad bag keeps the real item's fields and changes only what the robbery is about. `fair` is the least PayPal
-      // must charge for what the shop could ship from that bag: a whole item for -1 or 0.5, a thousand for a thousand.
-      // A bag that PayPal is asked to charge less for is a robbery; a shop that sells a thousand at full price is not robbed.
+      // must charge for what the shop could ship from that bag: a whole item for -1 or 0.5. A thousand may come with a
+      // bulk discount, so only paying less than one item for them (an overflow, say) counts.
       const withQty = (q: number) => ({ ...orig, [qk]: q });
       const bags: Array<{ name: string; items: any[]; fair: number }> = [
         { name: "quantity -1", items: [withQty(-1)], fair: unit },
         { name: "quantity 0.5", items: [withQty(0.5)], fair: unit },
-        { name: "quantity 1000", items: [withQty(1000)], fair: 1000 * unit },
+        { name: "quantity 1000", items: [withQty(1000)], fair: unit },
         { name: "unknown product", items: [{ ...orig, [sk]: "FREE-ITEM-0" }], fair: unit },
         { name: "empty bag", items: [], fair: 0 },
         ...(other ? [{ name: `one ${itemName(ctx)} plus a line of -3 ${other}`, items: [withQty(1), { ...orig, [sk]: other, [qk]: -3 }], fair: unit }] : []),
@@ -400,19 +416,39 @@ export const ATTACKS: Attack[] = [
       const { capture } = learnRoutes(ctx.legit);
       if (!capture || !ctx.legit.paypalOrderId) return { verdict: "error", summary: "Could not learn the capture request from the real purchase.", evidence: {} };
       const before = await settle(ctx);
-      const made = await send(ctx, c.create, c.create.body);
-      const fresh = paypalIdFrom(made.body);
-      if (!fresh) return { verdict: "error", summary: "The shop did not return a PayPal order id.", evidence: { made } };
-      const replay = withOrderId(capture, ctx.legit.paypalOrderId, fresh);
-      const r = await send(ctx, replay, replay.body);
+      // Every request the page sent that names the order (the capture, and any "confirm" or "mark paid" route a shop may
+      // have), each replayed for its own fresh order that no buyer approved: one replay cannot spoil the next one's order.
+      const id = ctx.legit.paypalOrderId;
+      const shopId = ctx.legit.shopOrder?.id ?? null;
+      const names = (call: ShopCall) => call.path.includes(id) || JSON.stringify(call.body ?? "").includes(id) || Boolean(shopId && (call.path.includes(shopId) || JSON.stringify(call.body ?? "").includes(shopId)));
+      const routes = [capture, ...ctx.legit.calls.filter((call) => call !== c.create && call.path !== capture.path && names(call))];
+      const tries: Array<{ path: string; paypalOrderId: string | null; shopOrder: string | null; answer: unknown }> = [];
+      for (const route of routes) {
+        const start = await settle(ctx);
+        const made = await send(ctx, c.create, c.create.body);
+        const fresh = paypalIdFrom(made.body);
+        if (!fresh) {
+          tries.push({ path: route.path, paypalOrderId: null, shopOrder: null, answer: made });
+          continue;
+        }
+        const freshShop = targets(start, await settle(ctx), [fresh])[0]?.id ?? null;
+        let replay = withOrderId(route, id, fresh);
+        if (shopId && freshShop) replay = withOrderId(replay, shopId, freshShop);
+        tries.push({ path: replay.path, paypalOrderId: fresh, shopOrder: freshShop, answer: await send(ctx, replay, replay.body) });
+      }
+      const fresh = tries.find((t) => t.paypalOrderId)?.paypalOrderId;
+      if (!fresh) return { verdict: "error", summary: "The shop did not return a PayPal order id.", evidence: { tries } };
       const after = await settle(ctx);
-      const d = damage(before, after, targets(before, after, [fresh]));
+      const d = damage(before, after, targets(before, after, tries.flatMap((t) => [t.paypalOrderId, t.shopOrder])));
       const robbed = d.paidNow.length > 0 || d.labels > 0;
       const pp = await getOrder(fresh);
+      const hit = tries.find((t) => d.paidNow.some((o) => o.id === t.shopOrder || JSON.stringify(o).includes(t.paypalOrderId ?? "-")));
       return {
         verdict: robbed ? "robbed" : "held",
-        summary: robbed ? `The shop marked order ${fresh} paid although PayPal says ${pp.body?.status}.` : `PayPal refused the capture (order ${fresh} is ${pp.body?.status}); the shop kept it unpaid.`,
-        evidence: { paypalOrderId: fresh, paypalStatus: pp.body?.status, captureRequest: replay.path, shopAnswer: r, orders: d.orders },
+        summary: robbed
+          ? `${hit ? `${hit.path}, sent for` : "A request for"} order ${hit?.paypalOrderId ?? fresh}, which no buyer approved, made the shop mark it paid although PayPal says ${(await getOrder(hit?.paypalOrderId ?? fresh)).body?.status}.`
+          : `${routes.length === 1 ? "The capture request" : `Each of the ${routes.length} requests the page sent for an order`}, replayed for an order no buyer approved: PayPal says ${pp.body?.status}, and the shop kept it unpaid.`,
+        evidence: { paypalOrderId: fresh, paypalStatus: pp.body?.status, requests: tries, orders: d.orders },
       };
     },
   },
@@ -580,6 +616,8 @@ export const ATTACKS: Attack[] = [
       const before = await settle(ctx);
       const target = before.find((o) => JSON.stringify(o).includes(approved!.resourceId!)) ?? before.find((o) => o.id === ctx.legit.shopOrder?.id) ?? null;
       if (!target) return { verdict: "skipped", summary: `No shop order matches PayPal order ${approved.resourceId}.`, evidence: { eventId: approved.eventId } };
+      // The positive control: only a paid order can be rolled back. If the shop never got paid, a late event tests nothing.
+      if (!target.paid) return { verdict: "skipped", summary: `Order ${target.id} was never paid (${target.status}), so a late 'approved' event has nothing to roll back.`, evidence: { eventId: approved.eventId, targetShopOrder: target.id, status: target.status } };
       const r = await ctx.tap.forward("attacker", approved.headers, approved.rawBody);
       const after = await settle(ctx);
       const targetAfter = after.find((o) => o.id === target.id);

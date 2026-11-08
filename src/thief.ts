@@ -62,6 +62,9 @@ export function validatePlans(raw: unknown): { plans: ThiefPlan[]; dropped: stri
   return { plans, dropped };
 }
 
+/** Path segments that would reach an object's prototype in Heistproof's own process: never allowed in an edit. */
+const UNSAFE_KEY = /(^|\.)(__proto__|constructor|prototype)(\.|$)/;
+
 function checkStep(s: any): string | null {
   const small = (v: unknown, n: number) => JSON.stringify(v ?? null).length <= n;
   if (!s || typeof s !== "object") return "not an object";
@@ -76,10 +79,12 @@ function checkStep(s: any): string | null {
       return null;
     case "buy":
       if (s.tamper !== undefined && (typeof s.tamper !== "object" || Array.isArray(s.tamper) || !small(s.tamper, 5000))) return "tamper must be a small object";
+      if (s.tamper && /"(__proto__|constructor|prototype)"\s*:/.test(JSON.stringify(s.tamper))) return "tamper reaches a prototype";
       return null;
     case "webhook":
       if (!["PAYMENT.CAPTURE.COMPLETED", "CHECKOUT.ORDER.APPROVED"].includes(s.event)) return "unknown event";
       if (s.edit !== undefined && (typeof s.edit !== "object" || Array.isArray(s.edit) || Object.keys(s.edit).length > 20 || !small(s.edit, 5000))) return "edit must be a small object";
+      if (s.edit && Object.keys(s.edit).some((k) => UNSAFE_KEY.test(k))) return "edit path reaches a prototype";
       if (s.times !== undefined && !(Number.isInteger(s.times) && s.times >= 1 && s.times <= 3)) return "times must be 1 to 3";
       return null;
     case "wait":
@@ -106,6 +111,7 @@ export function fill(value: unknown, saved: Record<string, unknown>): unknown {
 }
 
 function setPath(target: any, dotted: string, v: unknown) {
+  if (UNSAFE_KEY.test(dotted)) throw new Error(`refused to edit ${dotted}`);
   const keys = dotted.split(".");
   let o = target;
   for (const k of keys.slice(0, -1)) o = o[k] ??= {};
@@ -188,6 +194,7 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
   const create = ctx.legit.calls.find((c) => ctx.legit.paypalOrderId && JSON.stringify(c.response ?? "").includes(ctx.legit.paypalOrderId));
   const pageHeaders = create?.headers ?? {};
   const log: ThiefOutcome["steps"] = [];
+  const failed: string[] = [];
   for (const raw of plan.steps) {
     const step = fill(raw, saved) as ThiefStep;
     try {
@@ -198,6 +205,8 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
             headers: { "content-type": "application/json", ...pageHeaders, ...(step.headers ?? {}) },
             data: step.body === undefined || step.method.toUpperCase() === "GET" ? undefined : typeof step.body === "string" ? step.body : JSON.stringify(step.body),
             failOnStatusCode: false,
+            // A redirect could lead anywhere: the thief only ever reaches the shop under test.
+            maxRedirects: 0,
           });
           const text = await r.text();
           let body: any = text.slice(0, 2000);
@@ -257,7 +266,9 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
         log.push({ step: raw, result: `waited ${step.ms} ms` });
       }
     } catch (err) {
-      log.push({ step: raw, result: `failed: ${String((err as Error).message ?? err).slice(0, 200)}` });
+      const why = String((err as Error).message ?? err).slice(0, 200);
+      failed.push(why);
+      log.push({ step: raw, result: `failed: ${why}` });
     }
   }
   await settledOrders(ctx.shop, pace(1500), pace(12_000));
@@ -272,9 +283,12 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
     name: plan.name,
     idea: plan.idea,
     expect: plan.expect,
-    verdict: novel.length ? "robbed" : fresh.length ? "repeat" : "held",
+    // A plan whose steps could not all be carried out tested nothing; it is never counted as blocked.
+    verdict: novel.length ? "robbed" : failed.length ? "error" : fresh.length ? "repeat" : "held",
     summary: novel.length
       ? `Got through: ${novel.map((m) => `order ${m.order} ${m.problem}`).join("; ")}.`
+      : failed.length
+        ? `Could not be carried out: ${failed[0]}`
       : fresh.length
         ? `Only repeated a problem the books already showed (${[...new Set(fresh.map((m) => mismatchKind(m.problem)))].join("; ")}) on ${fresh.map((m) => `order ${m.order}`).join(", ")}: not a new way in.`
         : changed.length

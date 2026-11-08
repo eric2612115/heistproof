@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="{{CSRF}}" />
+    <title>Copper Kettle · kitchen goods</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">Copper <span>Kettle</span></a>
+      <button id="cart-open" type="button" aria-controls="cart">Cart <b id="cart-count">0</b></button>
+    </header>
+    <main>
+      <section class="intro">
+        <h1>Good things for slow mornings.</h1>
+        <p>Small-batch kitchen goods, shipped from Portland.</p>
+      </section>
+      <section id="products" class="products" aria-label="Products"></section>
+    </main>
+    <aside id="cart" class="cart" aria-label="Your cart" aria-hidden="true">
+      <header><h2>Your cart</h2><button id="cart-close" type="button" aria-label="Close cart">×</button></header>
+      <ul id="cart-lines"></ul>
+      <p class="total"><span>Total</span><strong id="cart-total">$0.00</strong></p>
+      <div id="pay" class="pay">
+        <paypal-button id="paypal-button" type="pay" hidden></paypal-button>
+        <venmo-button id="venmo-button" hidden></venmo-button>
+        <paypal-pay-later-button id="paylater-button" hidden></paypal-pay-later-button>
+        <paypal-message id="paylater-message" hidden></paypal-message>
+      </div>
+      <p id="notice" class="notice" role="status"></p>
+    </aside>
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>

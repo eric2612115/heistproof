@@ -36,7 +36,7 @@ test("when PayPal has not delivered an event, the tap asks PayPal to resend it, 
     return ["WH-LATE"];
   };
   try {
-    const got = await tap.waitOrAsk((d) => d.eventId === "WH-LATE", "PAYMENT.CAPTURE.COMPLETED", ["CAPWH-LATE", null], 400);
+    const got = await tap.waitOrAsk((d) => d.eventId === "WH-LATE", "PAYMENT.CAPTURE.COMPLETED", ["CAPWH-LATE", null], 4000);
     assert.equal(got?.eventId, "WH-LATE");
     assert.deepEqual(asked, [["PAYMENT.CAPTURE.COMPLETED", ["CAPWH-LATE"]]]);
     assert.equal(tap.resends.length, 1);

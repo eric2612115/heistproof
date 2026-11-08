@@ -24,6 +24,8 @@ export type ShopProfile = {
   orders: { id: string; status: string; paid: string[]; shipments: string; reference: string; total?: string; totalUnit?: "cents" | "dollars" };
   /** Where the shop receives PayPal's webhooks. */
   webhooks: string;
+  /** How the shop takes money. ["paypal"] means PayPal only: any order paid without a PayPal capture is then a mismatch. */
+  payments?: string[];
 };
 
 export const FOGLINE: ShopProfile = {
@@ -50,6 +52,7 @@ export function loadProfile(dir: string): ShopProfile {
     admin: { ...FOGLINE.admin, ...given.admin },
     orders: { ...FOGLINE.orders, ...given.orders },
     webhooks: given.webhooks ?? FOGLINE.webhooks,
+    payments: given.payments,
   };
 }
 

@@ -17,6 +17,7 @@ const CHECKED = {
   "fogline-naive": "Hand-written, planted mistakes (cents sent as dollars)",
   "fogline-after": "The coding agent's checkout, checked again",
   "copper-kettle": "Copper Kettle, careful, built differently",
+  "copper-kettle-binding": "Copper Kettle with one planted mistake only the AI thief can see",
 };
 const rounds = (n) => (n === 1 ? "1 round" : `${n} rounds`);
 function checkout(mode, template, fixes) {
@@ -26,7 +27,7 @@ function checkout(mode, template, fixes) {
   return CHECKED[template] ?? template;
 }
 /** The story order: the agent's run, its control, the robbed checkouts, the fix, then the rest. */
-const RANK = (mode, template) => ({ heistproof: 0, baseline: 1 })[mode] ?? (mode === "existing" ? 4 : { "fogline-afternoon": 2, "fogline-naive": 3, "copper-kettle": 5, "fogline-after": 6 }[template] ?? 7);
+const RANK = (mode, template) => ({ heistproof: 0, baseline: 1 })[mode] ?? (mode === "existing" ? 4 : { "fogline-afternoon": 2, "fogline-naive": 3, "copper-kettle": 5, "copper-kettle-binding": 6, "fogline-after": 7 }[template] ?? 8);
 
 export function rows() {
   const dir = path.join(root, "runs");
@@ -60,7 +61,7 @@ export function rows() {
       scripted,
       thief: thiefCell,
       books,
-      verdict: verdict === "safe" && !thief?.ran ? "safe vs the ten" : verdict,
+      verdict: verdict === "safe" ? (thief?.ran ? "Safe to ship" : "Safe to ship (the ten only; no AI thief)") : verdict === "unsafe" ? "Do not ship" : "Incomplete",
     });
   }
   return out.sort((a, b) => a.rank - b.rank || a.id.localeCompare(b.id));

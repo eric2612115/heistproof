@@ -19,6 +19,12 @@ test("a shop that adds shipping or tax on top of the goods is not stopped", () =
   assert.equal(amountCheck(order({ value: "70.12", breakdown: { item_total: { value: "64.00" }, shipping: { value: "5.00" }, tax_total: { value: "1.12" } } }), "64.00").ok, true);
 });
 
+test("a sale the bag already shows, named in PayPal's breakdown as a discount, is not stopped", () => {
+  const r = amountCheck(order({ value: "57.60", breakdown: { item_total: { value: "64.00" }, discount: { value: "6.40" } } }), "57.60");
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.extras, [{ kind: "discount", value: "-6.40" }]);
+});
+
 test("a breakdown that does not add up, or a discount, is stopped", () => {
   assert.equal(amountCheck(order({ value: "10.00", breakdown: { item_total: { value: "64.00" }, shipping: { value: "5.00" } } }), "64.00").ok, false, "parts that do not add up");
   assert.equal(amountCheck(order({ value: "34.00", breakdown: { item_total: { value: "64.00" }, discount: { value: "30.00" } } }), "64.00").ok, false, "a discount the bag never showed");
