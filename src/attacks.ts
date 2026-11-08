@@ -1,4 +1,4 @@
-import { getOrder, orderAmount } from "./paypal/rest.ts";
+import { getOrder, orderAmount, pp } from "./paypal/rest.ts";
 import { shopOrders, settledOrders, backOfficeUrl, type ShopProcess } from "./shop-process.ts";
 import type { ShopOrder } from "./shop-profile.ts";
 import { itemList, skuKey, qtyKey } from "./checkout-shape.ts";
@@ -8,7 +8,8 @@ import type { PayPalProxy } from "./paypal/proxy.ts";
 import type { WebhookTap, Delivery } from "./webhooks/tap.ts";
 import type { Run } from "./events.ts";
 
-export type Verdict = "held" | "robbed" | "skipped" | "error";
+/** n/a: the robbery cannot apply to how this shop is built (no webhook route, say); it counts as passed, and says why. */
+export type Verdict = "held" | "robbed" | "skipped" | "error" | "n/a";
 export type AttackOutcome = {
   id: string;
   title: string;
@@ -38,12 +39,48 @@ type Attack = { id: string; title: string; what: string; rule: number[]; run: (c
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 const prefix = (ctx: AttackContext) => `round${ctx.round}`;
 
-/** The checkout calls the shop's own page made during the real purchase: Heistproof learns the routes by watching. */
+/** The shop's own order id in a create answer, whatever the shop calls it (never a PayPal id). */
+export function shopIdFrom(body: any): string | null {
+  if (!body || typeof body !== "object") return null;
+  for (const k of ["_id", "id", "ref", "orderId", "order_id", "number"]) if (typeof body[k] === "string" && body[k].length >= 4 && !/^[0-9A-Z]{17}$/.test(body[k])) return body[k];
+  return null;
+}
+
+/**
+ * The checkout calls the shop's own page made during the real purchase: Heistproof learns the routes by watching. Where
+ * the browser makes the PayPal order, the shop's create call answers with its own order, whose id the call that tells
+ * the shop about the payment then names; that call stands in for the capture.
+ */
 export function learnRoutes(legit: PurchaseResult): { create: ShopCall | null; capture: ShopCall | null } {
   const id = legit.paypalOrderId;
-  const create = legit.calls.find((c) => id && JSON.stringify(c.response ?? "").includes(id) && !c.path.includes(id)) ?? null;
-  const capture = legit.calls.find((c) => c !== create && id && (c.path.includes(id) || JSON.stringify(c.body ?? "").includes(id))) ?? inferredCapture(legit);
+  // A call that sends the PayPal order id tells the shop about a payment; the call that creates an order only gets it back.
+  const names = (c: ShopCall) => Boolean(id) && (c.path.includes(id!) || JSON.stringify(c.body ?? "").includes(id!));
+  let create = legit.calls.find((c) => id && JSON.stringify(c.response ?? "").includes(id) && !names(c)) ?? null;
+  const capture = legit.calls.find((c) => c !== create && names(c)) ?? inferredCapture(legit);
+  if (!create && capture)
+    create =
+      legit.calls.find((c) => {
+        const own = c.method === "POST" && c !== capture ? shopIdFrom(c.response) : null;
+        return Boolean(own && (capture.path.includes(own) || JSON.stringify(capture.body ?? "").includes(own)));
+      }) ?? null;
   return { create, capture };
+}
+
+/** Shops where the shopper's browser creates and captures the PayPal order, then tells the shop. */
+const inBrowser = (ctx: AttackContext) => ctx.shop.profile.capture === "browser";
+const notApplicable = (why: string): Result => ({ verdict: "n/a", summary: `Does not apply to this shop: ${why}.`, evidence: {} });
+
+/** An order's total as the shop's own records give it (what the page will ask PayPal for, where the browser makes the PayPal order). */
+async function shopTotal(ctx: AttackContext, shopId: string | null): Promise<Amount | null> {
+  if (!shopId) return null;
+  const o = (await shopOrders(ctx.shop).catch(() => [] as ShopOrder[])).find((x) => x.id === shopId);
+  return o?.total_cents != null ? { value: (o.total_cents / 100).toFixed(2), currency: "USD" } : null;
+}
+
+/** A PayPal order made the way the shop's page makes one, for an amount; nobody approves it. */
+async function paypalOrderFor(amount: Amount): Promise<string | null> {
+  const r = await pp("POST", "/v2/checkout/orders", { intent: "CAPTURE", purchase_units: [{ amount: { currency_code: amount.currency, value: amount.value } }] }).catch(() => null);
+  return r && r.status < 300 && typeof r.body?.id === "string" ? r.body.id : null;
 }
 
 const inferred = new WeakMap<PurchaseResult, ShopCall>();
@@ -99,10 +136,11 @@ export async function shopScripts(shop: ShopProcess, limit = 40): Promise<Array<
  * Sends a request to the shop the way the shopper's browser sent it: from the same browser profile (its cookies) and
  * with the headers the page used (a CSRF token, say), so a refusal means the shop refused the tampering, not a stranger.
  */
-async function send(ctx: AttackContext, call: Pick<ShopCall, "path" | "headers">, body: unknown) {
+async function send(ctx: AttackContext, call: Pick<ShopCall, "path" | "headers"> & { method?: string }, body: unknown) {
   // The page's own headers (a CSRF token, say) from its order-creating request, then the call's own, which win.
   const page = learnRoutes(ctx.legit).create?.headers ?? {};
-  const r = await (await browser()).request.post(`${ctx.shop.url}${call.path}`, {
+  const r = await (await browser()).request.fetch(`${ctx.shop.url}${call.path}`, {
+    method: call.method ?? "POST",
     headers: { "content-type": "application/json", ...page, ...(call.headers ?? {}) },
     data: typeof body === "string" ? body : JSON.stringify(body ?? {}),
     failOnStatusCode: false,
@@ -182,7 +220,7 @@ const settle = (ctx: AttackContext, maxMs = 12_000) => settledOrders(ctx.shop, p
  * The positive control for every replayed request: the shop's own create-order request, sent again unchanged, must give
  * a PayPal order just like the shopper's did. If it does not, a refused tampered request would prove nothing.
  */
-const controls = new WeakMap<AttackContext, Promise<{ ok: boolean; why: string; create: ShopCall | null; paypalOrderId: string | null; amount?: Amount | null }>>();
+const controls = new WeakMap<AttackContext, Promise<{ ok: boolean; why: string; create: ShopCall | null; paypalOrderId: string | null; amount?: Amount | null; shopOrderId?: string | null }>>();
 function control(ctx: AttackContext) {
   if (!controls.has(ctx))
     controls.set(
@@ -191,6 +229,16 @@ function control(ctx: AttackContext) {
         const { create } = learnRoutes(ctx.legit);
         if (!create) return { ok: false, why: "the real purchase showed no create-order request to replay", create: null, paypalOrderId: null };
         const r = await send(ctx, create, create.body);
+        if (inBrowser(ctx)) {
+          // The browser makes the PayPal order here: faithful means the shop made an order for the same total.
+          const own = shopIdFrom(r.body);
+          if (r.status >= 300 || !own) return { ok: false, why: `the shop answered its own create-order request, replayed unchanged, with HTTP ${r.status} and no order`, create, paypalOrderId: null };
+          await settle(ctx);
+          const total = await shopTotal(ctx, own);
+          const want = ctx.legit.paypalAmount ?? { value: expectedValue(ctx), currency: "USD" };
+          if (!total || Number(total.value) !== Number(want.value)) return { ok: false, why: `the unchanged request made an order of ${total?.value ?? "?"}, where the shopper's own made one of ${want.value}`, create, paypalOrderId: null };
+          return { ok: true, why: "", create, paypalOrderId: null, amount: total, shopOrderId: own };
+        }
         const id = paypalIdFrom(r.body);
         if (r.status >= 300 || !id) return { ok: false, why: `the shop answered its own create-order request, replayed unchanged, with HTTP ${r.status} and no PayPal order`, create, paypalOrderId: null };
         // Faithful means the same PayPal amount the shopper's own request produced (which may itself be the bug).
@@ -288,8 +336,11 @@ export const ATTACKS: Attack[] = [
           const o = await getOrder(id);
           amount = orderAmount(o.body);
           debugId = o.debugId;
+        } else if (inBrowser(ctx) && r.status < 300) {
+          await settle(ctx);
+          amount = await shopTotal(ctx, shopIdFrom(r.body));
         }
-        tries.push({ variant: v.name, shopStatus: r.status, paypalOrderId: id, paypalAmount: amount, debugId });
+        tries.push({ variant: v.name, shopStatus: r.status, paypalOrderId: id, shopOrder: inBrowser(ctx) ? shopIdFrom(r.body) : undefined, paypalAmount: amount, debugId });
       }
       const fair = c.amount ?? { value: String(expectedValue(ctx)), currency: "USD" };
       const worst = tries.find((t) => cheaper(fair, t.paypalAmount));
@@ -368,7 +419,7 @@ export const ATTACKS: Attack[] = [
       const sk = skuKey(orig) ?? "sku";
       const qk = qtyKey(orig) ?? "quantity";
       const unit = unitPrice(ctx);
-      const other = ctx.shop.profile.product.other;
+      const other = ctx.shop.profile.product.other ?? (await anotherProduct(ctx, sk, orig[sk]));
       // Each bad bag keeps the real item's fields and changes only what the robbery is about. `fair` is the least PayPal
       // must charge for what the shop could ship from that bag: a whole item for -1 or 0.5. A thousand may come with a
       // bulk discount, so only paying less than one item for them (an overflow, say) counts.
@@ -388,18 +439,58 @@ export const ATTACKS: Attack[] = [
         const r = await send(ctx, c.create, { ...base, [key]: b.items });
         const made = ctx.proxy.since(mark).find((x) => x.method === "POST" && x.path === "/v2/checkout/orders");
         const id = made && made.status < 300 ? ((made.responseBody as any)?.id ?? paypalIdFrom(r.body)) : null;
-        const amount = id ? orderAmount((await getOrder(id)).body) : null;
-        const short = Boolean(amount && Number.isFinite(b.fair) && (amount.currency !== currency || Number(amount.value) < b.fair - 0.005));
+        let amount = id ? orderAmount((await getOrder(id)).body) : null;
+        if (!amount && inBrowser(ctx) && r.status < 300) {
+          await settle(ctx);
+          amount = await shopTotal(ctx, shopIdFrom(r.body));
+        }
+        // Only an amount PayPal would take can rob the shop: a bag priced at zero or less can never be paid.
+        const short = Boolean(amount && Number(amount.value) > 0 && Number.isFinite(b.fair) && (amount.currency !== currency || Number(amount.value) < b.fair - 0.005));
         tries.push({ bag: b.name, shopStatus: r.status, paypal: made ? { status: made.status, debugId: made.debugId } : null, paypalOrderId: id, paypalAmount: amount, leastFair: Number.isFinite(b.fair) ? b.fair.toFixed(2) : null, robbed: short });
       }
       const robbed = tries.filter((t) => t.robbed);
-      const made = tries.filter((t) => t.paypalOrderId);
+      // Where the browser makes the PayPal order, a bag's price is the shop's own total until someone pays it.
+      const browser = inBrowser(ctx);
+      const priced = (t: { bag: string; paypalAmount: Amount | null }) =>
+        browser ? `the shop priced the bag "${t.bag}" at ${t.paypalAmount!.currency} ${t.paypalAmount!.value}` : `the bag "${t.bag}" became a PayPal order for ${t.paypalAmount!.currency} ${t.paypalAmount!.value}`;
+      if (robbed.length && browser) {
+        // Follow through like a thief with the cheapest bag: send it from the shopper's own browser, pay what the shop
+        // asks as the buyer, and see whether the shop marks the order paid.
+        const cheapest = robbed.reduce((a, b) => (Number(a.paypalAmount!.value) <= Number(b.paypalAmount!.value) ? a : b));
+        const bag = bags.find((b) => b.name === cheapest.bag)!;
+        const before = await settle(ctx);
+        const heist = await purchase({
+          run: ctx.run,
+          phase: "attack",
+          shop: ctx.shop,
+          tap: ctx.tap,
+          items: ctx.items,
+          label: `${prefix(ctx)}-attack-bad-bag`,
+          tamperCreate: (body) => ({ ...body, [key]: bag.items }),
+          skipAmountCheck: true,
+          expectPaid: false,
+        });
+        const after = await settle(ctx);
+        const touched = targets(before, after, [heist.paypalOrderId, heist.captureId]);
+        const d = damage(before, after, touched);
+        const pp = heist.paypalOrderId ? await getOrder(heist.paypalOrderId) : null;
+        const captured = pp?.body?.purchase_units?.[0]?.payments?.captures?.[0]?.amount ?? null;
+        const followThrough = { bag: bag.name, paypalOrderId: heist.paypalOrderId, approved: heist.approved, captured, shopOrder: touched[0]?.id ?? heist.shopOrder?.id ?? null, shopStatus: touched[0]?.status ?? null, paidNow: d.paidNow.map((o) => o.id), labelsAdded: d.labels };
+        const lower = `${robbed.map(priced).join("; ")}, less than the ${t0(cheapest.leastFair)} the goods cost.`;
+        const evidence = { tries, followThrough, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId };
+        if (d.paidNow.length || d.labels)
+          return { verdict: "robbed", summary: `${lower[0].toUpperCase()}${lower.slice(1)} Bought for real with the bag "${bag.name}": PayPal captured ${captured ? `${captured.currency_code} ${captured.value}` : "the lower amount"} (order ${heist.paypalOrderId}), and the shop marked the order ${touched[0]?.status ?? "paid"}.`, evidence };
+        if (captured || heist.approved)
+          return { verdict: "held", summary: `${lower[0].toUpperCase()}${lower.slice(1)} But bought for real with the bag "${bag.name}", the shop never marked it paid or shipped it (PayPal order ${heist.paypalOrderId}).`, evidence };
+        return { verdict: "error", summary: `${lower[0].toUpperCase()}${lower.slice(1)} The purchase that would show whether the shop takes it did not reach the buyer's approval (${heist.verdict}).`, evidence };
+      }
+      const made = tries.filter((t) => (browser ? t.paypalAmount : t.paypalOrderId));
       return {
         verdict: robbed.length ? "robbed" : "held",
         summary: robbed.length
-          ? `${robbed.map((t) => `the bag "${t.bag}" became a PayPal order for ${t.paypalAmount!.currency} ${t.paypalAmount!.value}`).join("; ")}, less than the ${t0(robbed[0].leastFair)} the goods cost.`
+          ? `${robbed.map(priced).join("; ")}, less than the ${t0(robbed[0].leastFair)} the goods cost.`
           : made.length
-            ? `No bad bag got the goods for less: ${made.map((t) => `"${t.bag}" was charged ${t.paypalAmount?.currency} ${t.paypalAmount?.value}`).join(", ")}; the others were refused before PayPal.`
+            ? `No bad bag got the goods for less: ${made.map((t) => `"${t.bag}" was ${browser ? "priced" : "charged"} ${t.paypalAmount?.currency} ${t.paypalAmount?.value}`).join(", ")}; the others were refused${browser ? "" : " before PayPal"}.`
             : `All ${bags.length} bad bags were refused before any PayPal order was created (the unchanged bag did create one).`,
         evidence: { tries },
       };
@@ -426,12 +517,20 @@ export const ATTACKS: Attack[] = [
       for (const route of routes) {
         const start = await settle(ctx);
         const made = await send(ctx, c.create, c.create.body);
-        const fresh = paypalIdFrom(made.body);
+        let fresh = paypalIdFrom(made.body);
+        let freshShop: string | null = null;
+        if (!fresh && inBrowser(ctx)) {
+          // The browser makes the PayPal order on this shop: make one the same way, for this order, and never approve it.
+          freshShop = shopIdFrom(made.body);
+          await settle(ctx);
+          const amount = await shopTotal(ctx, freshShop);
+          fresh = amount ? await paypalOrderFor(amount) : null;
+        }
         if (!fresh) {
-          tries.push({ path: route.path, paypalOrderId: null, shopOrder: null, answer: made });
+          tries.push({ path: route.path, paypalOrderId: null, shopOrder: freshShop, answer: made });
           continue;
         }
-        const freshShop = targets(start, await settle(ctx), [fresh])[0]?.id ?? null;
+        freshShop ??= targets(start, await settle(ctx), [fresh])[0]?.id ?? null;
         let replay = withOrderId(route, id, fresh);
         if (shopId && freshShop) replay = withOrderId(replay, shopId, freshShop);
         tries.push({ path: replay.path, paypalOrderId: fresh, shopOrder: freshShop, answer: await send(ctx, replay, replay.body) });
@@ -466,12 +565,25 @@ export const ATTACKS: Attack[] = [
       const status = (await getOrder(p.paypalOrderId)).body?.status;
       if (status !== "APPROVED") return { verdict: "error", summary: `PayPal says order ${p.paypalOrderId} is ${status}, not APPROVED, so approval alone was not what the shop saw.`, evidence: { paypalOrderId: p.paypalOrderId, paypalStatus: status } };
       approvedOrder.set(ctx, p.paypalOrderId);
+      let told: unknown = null;
+      if (inBrowser(ctx)) {
+        // The browser never captured, so the page never told the shop: a thief tells the shop anyway, with the call the
+        // page makes after a capture, for this approved order.
+        const { capture: tell } = learnRoutes(ctx.legit);
+        const legitShop = ctx.legit.shopOrder?.id ?? null;
+        const mine = p.shopOrder?.id ?? null;
+        if (tell && ctx.legit.paypalOrderId && legitShop && mine) {
+          const replay = withOrderId(withOrderId(tell, ctx.legit.paypalOrderId, p.paypalOrderId), legitShop, mine);
+          told = { path: replay.path, answer: await send(ctx, replay, replay.body) };
+        }
+      }
       const after = await settle(ctx);
-      const d = damage(before, after, targets(before, after, [p.paypalOrderId]));
+      const d = damage(before, after, targets(before, after, [p.paypalOrderId, p.shopOrder?.id]));
       const robbed = d.paidNow.length > 0 || d.labels > 0;
       const approvedEvent = ctx.tap.genuine("CHECKOUT.ORDER.APPROVED").find((x) => x.resourceId === p.paypalOrderId) ?? null;
-      const evidence = { paypalOrderId: p.paypalOrderId, paypalStatus: status, approvedWebhook: approvedEvent?.eventId ?? null, approvedWebhookAnswer: approvedEvent?.shopStatus ?? null, orders: d.orders, screenshots: p.screenshots };
+      const evidence = { paypalOrderId: p.paypalOrderId, paypalStatus: status, approvedWebhook: approvedEvent?.eventId ?? null, approvedWebhookAnswer: approvedEvent?.shopStatus ?? null, toldShop: told, orders: d.orders, screenshots: p.screenshots };
       if (robbed) return { verdict: "robbed", summary: `Order ${p.paypalOrderId} was approved but never captured, and the shop still marked it paid or shipped it.`, evidence };
+      if (!ctx.shop.profile.webhooks) return { verdict: "held", summary: `Buyer approved order ${p.paypalOrderId} and the capture was held back${told ? "; told the order was paid anyway, the shop checked with PayPal" : ""}: nothing paid, nothing shipped.`, evidence };
       const outcome: AttackOutcome = {
         id: "approved-not-captured",
         title: "Approval without payment",
@@ -508,6 +620,7 @@ export const ATTACKS: Attack[] = [
     what: "Get it shipped after the card is declined",
     rule: [5],
     async run(ctx) {
+      if (inBrowser(ctx)) return notApplicable("the shop never captures on its server; a capture PayPal declines in the browser never reaches it, and an approved payment that was never captured is the approval-without-payment robbery");
       const before = await settle(ctx);
       const mark = ctx.proxy.calls.length;
       ctx.proxy.arm({ id: "declined", method: "POST", path: /^\/v2\/checkout\/orders\/[^/]+\/capture$/, mockResponse: { mock_application_codes: "INSTRUMENT_DECLINED" }, times: 1 });
@@ -535,6 +648,7 @@ export const ATTACKS: Attack[] = [
     what: "Fake PayPal's 'payment completed' message",
     rule: [6],
     async run(ctx) {
+      if (!ctx.shop.profile.webhooks) return notApplicable("the shop has no webhook route, so there is no PayPal event to forge, replay or send late");
       const c = await control(ctx);
       if (!c.ok || !c.create) return noControl(c.why);
       const genuine = await genuineCompleted(ctx, false);
@@ -577,6 +691,7 @@ export const ATTACKS: Attack[] = [
     what: "Resend PayPal's real message to ship again",
     rule: [7, 8],
     async run(ctx) {
+      if (!ctx.shop.profile.webhooks) return notApplicable("the shop has no webhook route, so there is no PayPal event to forge, replay or send late");
       const genuine = await genuineCompleted(ctx);
       if (!genuine) return { verdict: "skipped", summary: "PayPal delivered no PAYMENT.CAPTURE.COMPLETED webhook about this shop's orders in time to replay.", evidence: {} };
       const before = await settle(ctx);
@@ -600,6 +715,7 @@ export const ATTACKS: Attack[] = [
     what: "Send 'approved' after 'completed' to roll an order back",
     rule: [9],
     async run(ctx) {
+      if (!ctx.shop.profile.webhooks) return notApplicable("the shop has no webhook route, so there is no PayPal event to forge, replay or send late");
       // A genuine "approved" event for an order of this shop that has since been paid: the real purchase's own, or
       // one from an earlier attack's order. PayPal's sandbox may still be on its way with them.
       const paidOrders = async () => (await settle(ctx)).filter((o) => o.paid);
@@ -641,6 +757,7 @@ export const ATTACKS: Attack[] = [
     what: "Capture twice at once to get two shipments",
     rule: [8, 10],
     async run(ctx) {
+      if (inBrowser(ctx)) return onePaymentTwoOrders(ctx);
       const { capture } = learnRoutes(ctx.legit);
       let orderId = approvedOrder.get(ctx);
       if (!orderId && capture) {
@@ -707,6 +824,60 @@ export const ATTACKS: Attack[] = [
   },
 ];
 
+/** Another product of the shop, for a bag with a negative line: read from the catalog the storefront itself reads. */
+async function anotherProduct(ctx: AttackContext, key: string, current: unknown): Promise<string | undefined> {
+  const r = await fetch(`${ctx.shop.url}${ctx.shop.profile.health}`).catch(() => null);
+  const body = r?.ok ? await r.json().catch(() => null) : null;
+  const seen: any[] = [];
+  const walk = (v: any) => {
+    if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === "object") {
+      if (typeof v[key] === "string" && v[key] !== current) seen.push(v[key]);
+      Object.values(v).forEach(walk);
+    }
+  };
+  walk(body);
+  return seen[0];
+}
+
+/**
+ * Where the browser captures and then tells the shop, a double click is one payment telling the shop twice: a purchase
+ * whose capture goes through but whose call to the shop is held back leaves a completed payment the shop never heard
+ * of; the same call is then sent for two fresh orders at once. A shop that lets one payment pay for two orders is robbed.
+ */
+async function onePaymentTwoOrders(ctx: AttackContext): Promise<Result> {
+  const c = await control(ctx);
+  if (!c.ok || !c.create) return noControl(c.why);
+  const { capture: tell } = learnRoutes(ctx.legit);
+  const legitShop = ctx.legit.shopOrder?.id ?? null;
+  if (!tell || !ctx.legit.paypalOrderId || !legitShop) return { verdict: "skipped", summary: "Could not learn the call that tells the shop about a payment.", evidence: {} };
+  const p = await purchase({ run: ctx.run, phase: "attack", shop: ctx.shop, tap: ctx.tap, items: ctx.items, label: `${prefix(ctx)}-attack-double-setup`, holdShopCall: true, expectPaid: false });
+  const status = p.paypalOrderId ? (await getOrder(p.paypalOrderId)).body?.status : null;
+  if (!p.paypalOrderId || !p.shopCallHeld || status !== "COMPLETED") return { verdict: "skipped", summary: `Could not make a completed payment the shop never heard of (${p.verdict}; PayPal says ${status ?? "nothing"}).`, evidence: { paypalOrderId: p.paypalOrderId, paypalStatus: status, held: p.shopCallHeld } };
+  const before = await settle(ctx);
+  const fresh: string[] = [];
+  for (let i = 0; i < 2; i++) {
+    const made = await send(ctx, c.create, c.create.body);
+    const own = shopIdFrom(made.body);
+    if (own) fresh.push(own);
+  }
+  if (fresh.length < 2) return { verdict: "skipped", summary: "The shop did not make two fresh orders to pay.", evidence: { fresh } };
+  const answers = await Promise.all(fresh.map((own) => {
+    const replay = withOrderId(withOrderId(tell, ctx.legit.paypalOrderId!, p.paypalOrderId!), legitShop, own);
+    return send(ctx, replay, replay.body).then((answer) => ({ path: replay.path, answer }));
+  }));
+  const after = await settle(ctx, 15_000);
+  const d = damage(before, after, targets(before, after, fresh));
+  const robbed = d.paidNow.length > 1;
+  return {
+    verdict: robbed ? "robbed" : "held",
+    summary: robbed
+      ? `One PayPal payment (order ${p.paypalOrderId}) paid for ${d.paidNow.length} orders sent at the same moment: ${d.paidNow.map((o) => o.id).join(", ")}.`
+      : `One PayPal payment (order ${p.paypalOrderId}) sent for two orders at the same moment: the shop marked ${d.paidNow.length === 1 ? "one of them" : "neither"} paid.`,
+    evidence: { paypalOrderId: p.paypalOrderId, requests: answers, orders: d.orders },
+  };
+}
+
 /**
  * A picture of the shop owner's back office, with the orders an attack touched outlined. None when the back office does
  * not answer with a page (an error status, or no back office at that address): an error page proves nothing.
@@ -739,7 +910,7 @@ async function backOfficePicture(ctx: AttackContext, file: string, highlight: Ar
 }
 
 async function record(ctx: AttackContext, a: Attack, outcome: AttackOutcome) {
-  if (outcome.verdict !== "skipped" && a.id !== "secret-leak") {
+  if (outcome.verdict !== "skipped" && outcome.verdict !== "n/a" && a.id !== "secret-leak") {
     const ev = outcome.evidence as any;
     const touched = Array.isArray(ev?.orders) ? ev.orders.map((o: any) => o.id) : [];
     const shot = await backOfficePicture(ctx, `${prefix(ctx)}-attack-${a.id}-backoffice.png`, [ev?.paypalOrderId, ev?.targetShopOrder, ev?.targetPayPalOrder, ev?.followThrough?.paypalOrderId, ev?.followThrough?.shopOrder, ...touched]);

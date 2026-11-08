@@ -1,0 +1,5140 @@
+[
+  {
+    "at": "2026-11-08T12:47:37.583Z",
+    "source": "paypal",
+    "eventId": "WH-1Y92486113404022L-4E517168WV296005C",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "0TK53224RP231522X",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "91e6c28c-db72-11f1-bdb3-b1d60d728b5e",
+      "paypal-transmission-sig": "JkL5ffw9zaf/QTeo17swiVrYRbrqzWJkf5LOdD2RmelJyuTym5jOwA7tGH1GAieiu35euiv0QT0B9D2OxdtSenBg2v/HsgmSsOPGurJy21O/Pb3ebb5F6e9qKbW6jS6N4yzZ3jyvDfYTwSodQodu8tbIh0TtugkuXxqp4zqrAqu7IShK7D9c9mlb6YQaeu3smCueTJcgNcrQYxaUpuqGb+iCE1VQScknUvyPMXuCwX1YMdCC9ECsDYKqEq4MlwqFyBGVZr8NfkC5xZlGAhl1E8X4HZ7XjyhvKVPKGKZfZUPw3pbEtPGOIMGCwAkg7J8f/w8sivg8Z8JKK6ErnPdHLQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:34Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-1Y92486113404022L-4E517168WV296005C",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:21.355Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 0.01 USD",
+      "resource": {
+        "id": "0TK53224RP231522X",
+        "amount": {
+          "currency_code": "USD",
+          "value": "0.01"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "0.01"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "0.01"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "0.00"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "24127842VR842350W"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:47:16Z",
+        "update_time": "2026-11-08T12:47:16Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1Y92486113404022L-4E517168WV296005C",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1Y92486113404022L-4E517168WV296005C/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:48:01.293Z",
+    "source": "paypal",
+    "eventId": "WH-4Y747999VF419762V-43W95807R42189421",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "24127842VR842350W",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "8ad9092f-db72-11f1-98c7-ef0f14d1cb44",
+      "paypal-transmission-sig": "qbeQoOijVTL6GZm16pvB9o+VGKuJ/H7z/f/ssfBaYgcS/5T++5MVGjRauEUOMcAN15CW0poU4cK5vLYb0rVbt7tl3zOPcktmYOdLFvf7Dg3afNXVd3Ws6QOX/jb9F3QGkoXfoezLQ8AE2SoCjWIM4MTZ9/i0IyLJ9EQ+5OwNcbiFPnukPhvDvATmy1JatCkXQXqEHppo42JMSzxZ2W+f9axmDXkZMT+8Cne9024gXbZ3c6rJjbk9kO57YiuFwmsVRQZ6n7nIMrlFaOe+5iG30aZEv++0yVXiLMMPv8DIDy6VInYWPQ8+Z3OaAsZfrrMvFjrpRY8BFJNWu27FN9IIWQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:22Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-4Y747999VF419762V-43W95807R42189421",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:22.543Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:47:16Z",
+        "create_time": "2026-11-08T12:47:16Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "0.01",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "0TK53224RP231522X",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "0.01"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "0.00"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:47:16Z",
+                  "update_time": "2026-11-08T12:47:16Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "24127842VR842350W",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:48:11.593Z",
+    "source": "paypal",
+    "eventId": "WH-1Y92486113404022L-4E517168WV296005C",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "0TK53224RP231522X",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "91e6c28c-db72-11f1-bdb3-b1d60d728b5e",
+      "paypal-transmission-sig": "JkL5ffw9zaf/QTeo17swiVrYRbrqzWJkf5LOdD2RmelJyuTym5jOwA7tGH1GAieiu35euiv0QT0B9D2OxdtSenBg2v/HsgmSsOPGurJy21O/Pb3ebb5F6e9qKbW6jS6N4yzZ3jyvDfYTwSodQodu8tbIh0TtugkuXxqp4zqrAqu7IShK7D9c9mlb6YQaeu3smCueTJcgNcrQYxaUpuqGb+iCE1VQScknUvyPMXuCwX1YMdCC9ECsDYKqEq4MlwqFyBGVZr8NfkC5xZlGAhl1E8X4HZ7XjyhvKVPKGKZfZUPw3pbEtPGOIMGCwAkg7J8f/w8sivg8Z8JKK6ErnPdHLQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:34Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-1Y92486113404022L-4E517168WV296005C",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:21.355Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 0.01 USD",
+      "resource": {
+        "id": "0TK53224RP231522X",
+        "amount": {
+          "currency_code": "USD",
+          "value": "0.01"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "0.01"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "0.01"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "0.00"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "24127842VR842350W"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:47:16Z",
+        "update_time": "2026-11-08T12:47:16Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1Y92486113404022L-4E517168WV296005C",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1Y92486113404022L-4E517168WV296005C/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:48:25.164Z",
+    "source": "paypal",
+    "eventId": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "86J64216HC207161B",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "afe71df3-db72-11f1-8118-79d328fd8091",
+      "paypal-transmission-sig": "XB6Z6TeCT7ZY6mfhSdoiViIS7bFqhvRk0UnXPbmteRQMO67tZySD76+b0EglnQ7szId7G4FegFBhY22gFV4o/v/l7JcTPV/BdYnTFrupPfNJ2kwOxRiej2p8Z/YRNymvmwjx8qPvvRpb0VG113rACel71tV9pPqV9m1KZloptks0KCaxoTGfSftZCIAgqIBTORUJdFOtqQOr6os0Q+MG+q6W/FPbDjutx2NRFTlWKJfhYQQADCm/q0SAoCu+GFg6ndL0G3R3zf5iVnSSjjRhXN5/s73ghPxtSCyCkJMqdjPLveOoElhbkaBh3AZC01kGjRw9ysMB+L/UBnpaJtXrCg==",
+      "paypal-transmission-time": "2026-11-08T12:48:24Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:48:24.640Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:04Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "86J64216HC207161B",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:48:27.399Z",
+    "source": "paypal",
+    "eventId": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "86J64216HC207161B",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "afe71df3-db72-11f1-8118-79d328fd8091",
+      "paypal-transmission-sig": "XB6Z6TeCT7ZY6mfhSdoiViIS7bFqhvRk0UnXPbmteRQMO67tZySD76+b0EglnQ7szId7G4FegFBhY22gFV4o/v/l7JcTPV/BdYnTFrupPfNJ2kwOxRiej2p8Z/YRNymvmwjx8qPvvRpb0VG113rACel71tV9pPqV9m1KZloptks0KCaxoTGfSftZCIAgqIBTORUJdFOtqQOr6os0Q+MG+q6W/FPbDjutx2NRFTlWKJfhYQQADCm/q0SAoCu+GFg6ndL0G3R3zf5iVnSSjjRhXN5/s73ghPxtSCyCkJMqdjPLveOoElhbkaBh3AZC01kGjRw9ysMB+L/UBnpaJtXrCg==",
+      "paypal-transmission-time": "2026-11-08T12:48:24Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:48:24.640Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:04Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "86J64216HC207161B",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:48:28.419Z",
+    "source": "paypal",
+    "eventId": "WH-4Y747999VF419762V-43W95807R42189421",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "24127842VR842350W",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "8ad9092f-db72-11f1-98c7-ef0f14d1cb44",
+      "paypal-transmission-sig": "qbeQoOijVTL6GZm16pvB9o+VGKuJ/H7z/f/ssfBaYgcS/5T++5MVGjRauEUOMcAN15CW0poU4cK5vLYb0rVbt7tl3zOPcktmYOdLFvf7Dg3afNXVd3Ws6QOX/jb9F3QGkoXfoezLQ8AE2SoCjWIM4MTZ9/i0IyLJ9EQ+5OwNcbiFPnukPhvDvATmy1JatCkXQXqEHppo42JMSzxZ2W+f9axmDXkZMT+8Cne9024gXbZ3c6rJjbk9kO57YiuFwmsVRQZ6n7nIMrlFaOe+5iG30aZEv++0yVXiLMMPv8DIDy6VInYWPQ8+Z3OaAsZfrrMvFjrpRY8BFJNWu27FN9IIWQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:22Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-4Y747999VF419762V-43W95807R42189421",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:22.543Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:47:16Z",
+        "create_time": "2026-11-08T12:47:16Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "0.01",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "0TK53224RP231522X",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "0.01"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "0.00"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:47:16Z",
+                  "update_time": "2026-11-08T12:47:16Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "24127842VR842350W",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:48:45.898Z",
+    "source": "unknown",
+    "eventId": null,
+    "eventType": null,
+    "resourceId": null,
+    "headers": {
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.60 Safari/537.36 Edge/12.246"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "body": ""
+  },
+  {
+    "at": "2026-11-08T12:48:53.378Z",
+    "source": "unknown",
+    "eventId": null,
+    "eventType": null,
+    "resourceId": null,
+    "headers": {
+      "user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "body": ""
+  },
+  {
+    "at": "2026-11-08T12:48:53.919Z",
+    "source": "paypal",
+    "eventId": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "86J64216HC207161B",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "afe71df3-db72-11f1-8118-79d328fd8091",
+      "paypal-transmission-sig": "XB6Z6TeCT7ZY6mfhSdoiViIS7bFqhvRk0UnXPbmteRQMO67tZySD76+b0EglnQ7szId7G4FegFBhY22gFV4o/v/l7JcTPV/BdYnTFrupPfNJ2kwOxRiej2p8Z/YRNymvmwjx8qPvvRpb0VG113rACel71tV9pPqV9m1KZloptks0KCaxoTGfSftZCIAgqIBTORUJdFOtqQOr6os0Q+MG+q6W/FPbDjutx2NRFTlWKJfhYQQADCm/q0SAoCu+GFg6ndL0G3R3zf5iVnSSjjRhXN5/s73ghPxtSCyCkJMqdjPLveOoElhbkaBh3AZC01kGjRw9ysMB+L/UBnpaJtXrCg==",
+      "paypal-transmission-time": "2026-11-08T12:48:24Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:48:24.640Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:04Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "86J64216HC207161B",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:48:55.178Z",
+    "source": "paypal",
+    "eventId": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "86J64216HC207161B",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "afe71df3-db72-11f1-8118-79d328fd8091",
+      "paypal-transmission-sig": "XB6Z6TeCT7ZY6mfhSdoiViIS7bFqhvRk0UnXPbmteRQMO67tZySD76+b0EglnQ7szId7G4FegFBhY22gFV4o/v/l7JcTPV/BdYnTFrupPfNJ2kwOxRiej2p8Z/YRNymvmwjx8qPvvRpb0VG113rACel71tV9pPqV9m1KZloptks0KCaxoTGfSftZCIAgqIBTORUJdFOtqQOr6os0Q+MG+q6W/FPbDjutx2NRFTlWKJfhYQQADCm/q0SAoCu+GFg6ndL0G3R3zf5iVnSSjjRhXN5/s73ghPxtSCyCkJMqdjPLveOoElhbkaBh3AZC01kGjRw9ysMB+L/UBnpaJtXrCg==",
+      "paypal-transmission-time": "2026-11-08T12:48:24Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:48:24.640Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:04Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "86J64216HC207161B",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:48:58.408Z",
+    "source": "unknown",
+    "eventId": null,
+    "eventType": null,
+    "resourceId": null,
+    "headers": {
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.5938.132 Safari/537.36"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "body": ""
+  },
+  {
+    "at": "2026-11-08T12:48:59.236Z",
+    "source": "unknown",
+    "eventId": null,
+    "eventType": null,
+    "resourceId": null,
+    "headers": {
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.5938.132 Safari/537.36"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "body": ""
+  },
+  {
+    "at": "2026-11-08T12:49:02.217Z",
+    "source": "paypal",
+    "eventId": "WH-4Y747999VF419762V-43W95807R42189421",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "24127842VR842350W",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "8ad9092f-db72-11f1-98c7-ef0f14d1cb44",
+      "paypal-transmission-sig": "qbeQoOijVTL6GZm16pvB9o+VGKuJ/H7z/f/ssfBaYgcS/5T++5MVGjRauEUOMcAN15CW0poU4cK5vLYb0rVbt7tl3zOPcktmYOdLFvf7Dg3afNXVd3Ws6QOX/jb9F3QGkoXfoezLQ8AE2SoCjWIM4MTZ9/i0IyLJ9EQ+5OwNcbiFPnukPhvDvATmy1JatCkXQXqEHppo42JMSzxZ2W+f9axmDXkZMT+8Cne9024gXbZ3c6rJjbk9kO57YiuFwmsVRQZ6n7nIMrlFaOe+5iG30aZEv++0yVXiLMMPv8DIDy6VInYWPQ8+Z3OaAsZfrrMvFjrpRY8BFJNWu27FN9IIWQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:22Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-4Y747999VF419762V-43W95807R42189421",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:22.543Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:47:16Z",
+        "create_time": "2026-11-08T12:47:16Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "0.01",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "0TK53224RP231522X",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "0.01"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "0.00"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:47:16Z",
+                  "update_time": "2026-11-08T12:47:16Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "24127842VR842350W",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:49:09.604Z",
+    "source": "paypal",
+    "eventId": "WH-9AF38908WA6738324-7LH55200BV680471G",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "5Y0962572C566470J",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "ca6b9a3b-db72-11f1-84a3-f735205cf723",
+      "paypal-transmission-sig": "18lWocycfhUKZJLle8Bi4iCB8L3ppBu/9cfxek94DxHZcnKdyWR9O3Es/KpbjP67dbVOT9Flm9pisBzPHbCKhplvcTL/FPAl3pikT5cC1E2NgyqzhSQ1Z+kyD9NynDkUpfaUyZzcV9AckNkNtLcatPi5Fy83eYIREoGKf9uPwaGCqDhPpcfo2FGtvgPbXGV/2KJxjeYm3/JGBpXaRgW2yzC5BRBTAuKptJ0KVW3Y43yPMY2H5nTmhatgYhkHgqZVyLscS34Uk4iY+sICTptZxOqQuXhl/hevBT350OPh717mnInNY5orn69zumjRKNsWxcAGaJvyGpaZscICbIlzmg==",
+      "paypal-transmission-time": "2026-11-08T12:49:09Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-9AF38908WA6738324-7LH55200BV680471G",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:49:09.126Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:49Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "5Y0962572C566470J",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:49:12.422Z",
+    "source": "paypal",
+    "eventId": "WH-9AF38908WA6738324-7LH55200BV680471G",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "5Y0962572C566470J",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "ca6b9a3b-db72-11f1-84a3-f735205cf723",
+      "paypal-transmission-sig": "18lWocycfhUKZJLle8Bi4iCB8L3ppBu/9cfxek94DxHZcnKdyWR9O3Es/KpbjP67dbVOT9Flm9pisBzPHbCKhplvcTL/FPAl3pikT5cC1E2NgyqzhSQ1Z+kyD9NynDkUpfaUyZzcV9AckNkNtLcatPi5Fy83eYIREoGKf9uPwaGCqDhPpcfo2FGtvgPbXGV/2KJxjeYm3/JGBpXaRgW2yzC5BRBTAuKptJ0KVW3Y43yPMY2H5nTmhatgYhkHgqZVyLscS34Uk4iY+sICTptZxOqQuXhl/hevBT350OPh717mnInNY5orn69zumjRKNsWxcAGaJvyGpaZscICbIlzmg==",
+      "paypal-transmission-time": "2026-11-08T12:49:09Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-9AF38908WA6738324-7LH55200BV680471G",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:49:09.126Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:49Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "5Y0962572C566470J",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:49:38.895Z",
+    "source": "paypal",
+    "eventId": "WH-9AF38908WA6738324-7LH55200BV680471G",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "5Y0962572C566470J",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "ca6b9a3b-db72-11f1-84a3-f735205cf723",
+      "paypal-transmission-sig": "18lWocycfhUKZJLle8Bi4iCB8L3ppBu/9cfxek94DxHZcnKdyWR9O3Es/KpbjP67dbVOT9Flm9pisBzPHbCKhplvcTL/FPAl3pikT5cC1E2NgyqzhSQ1Z+kyD9NynDkUpfaUyZzcV9AckNkNtLcatPi5Fy83eYIREoGKf9uPwaGCqDhPpcfo2FGtvgPbXGV/2KJxjeYm3/JGBpXaRgW2yzC5BRBTAuKptJ0KVW3Y43yPMY2H5nTmhatgYhkHgqZVyLscS34Uk4iY+sICTptZxOqQuXhl/hevBT350OPh717mnInNY5orn69zumjRKNsWxcAGaJvyGpaZscICbIlzmg==",
+      "paypal-transmission-time": "2026-11-08T12:49:09Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-9AF38908WA6738324-7LH55200BV680471G",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:49:09.126Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:49Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "5Y0962572C566470J",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:49:41.814Z",
+    "source": "paypal",
+    "eventId": "WH-9AF38908WA6738324-7LH55200BV680471G",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "5Y0962572C566470J",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "ca6b9a3b-db72-11f1-84a3-f735205cf723",
+      "paypal-transmission-sig": "18lWocycfhUKZJLle8Bi4iCB8L3ppBu/9cfxek94DxHZcnKdyWR9O3Es/KpbjP67dbVOT9Flm9pisBzPHbCKhplvcTL/FPAl3pikT5cC1E2NgyqzhSQ1Z+kyD9NynDkUpfaUyZzcV9AckNkNtLcatPi5Fy83eYIREoGKf9uPwaGCqDhPpcfo2FGtvgPbXGV/2KJxjeYm3/JGBpXaRgW2yzC5BRBTAuKptJ0KVW3Y43yPMY2H5nTmhatgYhkHgqZVyLscS34Uk4iY+sICTptZxOqQuXhl/hevBT350OPh717mnInNY5orn69zumjRKNsWxcAGaJvyGpaZscICbIlzmg==",
+      "paypal-transmission-time": "2026-11-08T12:49:09Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-9AF38908WA6738324-7LH55200BV680471G",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:49:09.126Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:49Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "5Y0962572C566470J",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:50:03.834Z",
+    "source": "paypal",
+    "eventId": "WH-4Y747999VF419762V-43W95807R42189421",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "24127842VR842350W",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "8ad9092f-db72-11f1-98c7-ef0f14d1cb44",
+      "paypal-transmission-sig": "qbeQoOijVTL6GZm16pvB9o+VGKuJ/H7z/f/ssfBaYgcS/5T++5MVGjRauEUOMcAN15CW0poU4cK5vLYb0rVbt7tl3zOPcktmYOdLFvf7Dg3afNXVd3Ws6QOX/jb9F3QGkoXfoezLQ8AE2SoCjWIM4MTZ9/i0IyLJ9EQ+5OwNcbiFPnukPhvDvATmy1JatCkXQXqEHppo42JMSzxZ2W+f9axmDXkZMT+8Cne9024gXbZ3c6rJjbk9kO57YiuFwmsVRQZ6n7nIMrlFaOe+5iG30aZEv++0yVXiLMMPv8DIDy6VInYWPQ8+Z3OaAsZfrrMvFjrpRY8BFJNWu27FN9IIWQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:22Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-4Y747999VF419762V-43W95807R42189421",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:22.543Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:47:16Z",
+        "create_time": "2026-11-08T12:47:16Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "0.01",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "0TK53224RP231522X",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "0.01"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "0.00"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:47:16Z",
+                  "update_time": "2026-11-08T12:47:16Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "24127842VR842350W",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:50:21.529Z",
+    "source": "paypal",
+    "eventId": "WH-1Y92486113404022L-4E517168WV296005C",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "0TK53224RP231522X",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "91e6c28c-db72-11f1-bdb3-b1d60d728b5e",
+      "paypal-transmission-sig": "JkL5ffw9zaf/QTeo17swiVrYRbrqzWJkf5LOdD2RmelJyuTym5jOwA7tGH1GAieiu35euiv0QT0B9D2OxdtSenBg2v/HsgmSsOPGurJy21O/Pb3ebb5F6e9qKbW6jS6N4yzZ3jyvDfYTwSodQodu8tbIh0TtugkuXxqp4zqrAqu7IShK7D9c9mlb6YQaeu3smCueTJcgNcrQYxaUpuqGb+iCE1VQScknUvyPMXuCwX1YMdCC9ECsDYKqEq4MlwqFyBGVZr8NfkC5xZlGAhl1E8X4HZ7XjyhvKVPKGKZfZUPw3pbEtPGOIMGCwAkg7J8f/w8sivg8Z8JKK6ErnPdHLQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:34Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-1Y92486113404022L-4E517168WV296005C",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:21.355Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 0.01 USD",
+      "resource": {
+        "id": "0TK53224RP231522X",
+        "amount": {
+          "currency_code": "USD",
+          "value": "0.01"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "0.01"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "0.01"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "0.00"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "24127842VR842350W"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:47:16Z",
+        "update_time": "2026-11-08T12:47:16Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1Y92486113404022L-4E517168WV296005C",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1Y92486113404022L-4E517168WV296005C/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:50:56.434Z",
+    "source": "paypal",
+    "eventId": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "86J64216HC207161B",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "afe71df3-db72-11f1-8118-79d328fd8091",
+      "paypal-transmission-sig": "XB6Z6TeCT7ZY6mfhSdoiViIS7bFqhvRk0UnXPbmteRQMO67tZySD76+b0EglnQ7szId7G4FegFBhY22gFV4o/v/l7JcTPV/BdYnTFrupPfNJ2kwOxRiej2p8Z/YRNymvmwjx8qPvvRpb0VG113rACel71tV9pPqV9m1KZloptks0KCaxoTGfSftZCIAgqIBTORUJdFOtqQOr6os0Q+MG+q6W/FPbDjutx2NRFTlWKJfhYQQADCm/q0SAoCu+GFg6ndL0G3R3zf5iVnSSjjRhXN5/s73ghPxtSCyCkJMqdjPLveOoElhbkaBh3AZC01kGjRw9ysMB+L/UBnpaJtXrCg==",
+      "paypal-transmission-time": "2026-11-08T12:48:24Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:48:24.640Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:04Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "86J64216HC207161B",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:50:57.794Z",
+    "source": "paypal",
+    "eventId": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "86J64216HC207161B",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "afe71df3-db72-11f1-8118-79d328fd8091",
+      "paypal-transmission-sig": "XB6Z6TeCT7ZY6mfhSdoiViIS7bFqhvRk0UnXPbmteRQMO67tZySD76+b0EglnQ7szId7G4FegFBhY22gFV4o/v/l7JcTPV/BdYnTFrupPfNJ2kwOxRiej2p8Z/YRNymvmwjx8qPvvRpb0VG113rACel71tV9pPqV9m1KZloptks0KCaxoTGfSftZCIAgqIBTORUJdFOtqQOr6os0Q+MG+q6W/FPbDjutx2NRFTlWKJfhYQQADCm/q0SAoCu+GFg6ndL0G3R3zf5iVnSSjjRhXN5/s73ghPxtSCyCkJMqdjPLveOoElhbkaBh3AZC01kGjRw9ysMB+L/UBnpaJtXrCg==",
+      "paypal-transmission-time": "2026-11-08T12:48:24Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:48:24.640Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:04Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/86J64216HC207161B/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "86J64216HC207161B",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FW48340Y9007712E-2NA76175Y8642281J/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:51:05.306Z",
+    "source": "paypal",
+    "eventId": "WH-4Y747999VF419762V-43W95807R42189421",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "24127842VR842350W",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "8ad9092f-db72-11f1-98c7-ef0f14d1cb44",
+      "paypal-transmission-sig": "qbeQoOijVTL6GZm16pvB9o+VGKuJ/H7z/f/ssfBaYgcS/5T++5MVGjRauEUOMcAN15CW0poU4cK5vLYb0rVbt7tl3zOPcktmYOdLFvf7Dg3afNXVd3Ws6QOX/jb9F3QGkoXfoezLQ8AE2SoCjWIM4MTZ9/i0IyLJ9EQ+5OwNcbiFPnukPhvDvATmy1JatCkXQXqEHppo42JMSzxZ2W+f9axmDXkZMT+8Cne9024gXbZ3c6rJjbk9kO57YiuFwmsVRQZ6n7nIMrlFaOe+5iG30aZEv++0yVXiLMMPv8DIDy6VInYWPQ8+Z3OaAsZfrrMvFjrpRY8BFJNWu27FN9IIWQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:22Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-4Y747999VF419762V-43W95807R42189421",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:22.543Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:47:16Z",
+        "create_time": "2026-11-08T12:47:16Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "0.01",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "0TK53224RP231522X",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "0.01"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "0.01"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "0.00"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:47:16Z",
+                  "update_time": "2026-11-08T12:47:16Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "24127842VR842350W",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4Y747999VF419762V-43W95807R42189421/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:51:42.166Z",
+    "source": "paypal",
+    "eventId": "WH-9AF38908WA6738324-7LH55200BV680471G",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "5Y0962572C566470J",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "ca6b9a3b-db72-11f1-84a3-f735205cf723",
+      "paypal-transmission-sig": "18lWocycfhUKZJLle8Bi4iCB8L3ppBu/9cfxek94DxHZcnKdyWR9O3Es/KpbjP67dbVOT9Flm9pisBzPHbCKhplvcTL/FPAl3pikT5cC1E2NgyqzhSQ1Z+kyD9NynDkUpfaUyZzcV9AckNkNtLcatPi5Fy83eYIREoGKf9uPwaGCqDhPpcfo2FGtvgPbXGV/2KJxjeYm3/JGBpXaRgW2yzC5BRBTAuKptJ0KVW3Y43yPMY2H5nTmhatgYhkHgqZVyLscS34Uk4iY+sICTptZxOqQuXhl/hevBT350OPh717mnInNY5orn69zumjRKNsWxcAGaJvyGpaZscICbIlzmg==",
+      "paypal-transmission-time": "2026-11-08T12:49:09Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-9AF38908WA6738324-7LH55200BV680471G",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:49:09.126Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:49Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "5Y0962572C566470J",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:51:51.797Z",
+    "source": "paypal",
+    "eventId": "WH-9AF38908WA6738324-7LH55200BV680471G",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "5Y0962572C566470J",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "ca6b9a3b-db72-11f1-84a3-f735205cf723",
+      "paypal-transmission-sig": "18lWocycfhUKZJLle8Bi4iCB8L3ppBu/9cfxek94DxHZcnKdyWR9O3Es/KpbjP67dbVOT9Flm9pisBzPHbCKhplvcTL/FPAl3pikT5cC1E2NgyqzhSQ1Z+kyD9NynDkUpfaUyZzcV9AckNkNtLcatPi5Fy83eYIREoGKf9uPwaGCqDhPpcfo2FGtvgPbXGV/2KJxjeYm3/JGBpXaRgW2yzC5BRBTAuKptJ0KVW3Y43yPMY2H5nTmhatgYhkHgqZVyLscS34Uk4iY+sICTptZxOqQuXhl/hevBT350OPh717mnInNY5orn69zumjRKNsWxcAGaJvyGpaZscICbIlzmg==",
+      "paypal-transmission-time": "2026-11-08T12:49:09Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-9AF38908WA6738324-7LH55200BV680471G",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:49:09.126Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:48:49Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5Y0962572C566470J/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "5Y0962572C566470J",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9AF38908WA6738324-7LH55200BV680471G/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:52:48.235Z",
+    "source": "paypal",
+    "eventId": "WH-8217794092856025L-4DN558828V5017150",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "2YS65254FP292743H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "4cb888c2-db73-11f1-bdb3-7d316aab4573",
+      "paypal-transmission-sig": "YDxn4ecSq83+FtSwa94BXZL2DUaxQVaUTkX4GT4Oa0sQdAa+CmldGGDedzSKppE8Q3naFAfYLw6SyfKzfiF3r/AXYGPUfPp6kFAXm8+FaiRPvrsqCSmK6kTS3KrFc52XC07opZEnNY6EkXk0WB2nQyjfkCb1nxaHi/agrvGtrFKbwEQxkEdPKH3VYupd2nfWixSeecXgnzLcZExqWwcsKqSuO0eS6h/6APv3uK55FMP8eBrbrmbYrou40XCFjCY510b23S9wqsI8H/Pys81z3WRNd6U47zQ3j0G2NqUfpJHHH8p1+KBeqQMGzU32YXxuIJh6z43R8esOF2BXtEkvhw==",
+      "paypal-transmission-time": "2026-11-08T12:52:48Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-8217794092856025L-4DN558828V5017150",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:47.712Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:52:27Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "2YS65254FP292743H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:52:50.381Z",
+    "source": "paypal",
+    "eventId": "WH-8217794092856025L-4DN558828V5017150",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "2YS65254FP292743H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "4cb888c2-db73-11f1-bdb3-7d316aab4573",
+      "paypal-transmission-sig": "YDxn4ecSq83+FtSwa94BXZL2DUaxQVaUTkX4GT4Oa0sQdAa+CmldGGDedzSKppE8Q3naFAfYLw6SyfKzfiF3r/AXYGPUfPp6kFAXm8+FaiRPvrsqCSmK6kTS3KrFc52XC07opZEnNY6EkXk0WB2nQyjfkCb1nxaHi/agrvGtrFKbwEQxkEdPKH3VYupd2nfWixSeecXgnzLcZExqWwcsKqSuO0eS6h/6APv3uK55FMP8eBrbrmbYrou40XCFjCY510b23S9wqsI8H/Pys81z3WRNd6U47zQ3j0G2NqUfpJHHH8p1+KBeqQMGzU32YXxuIJh6z43R8esOF2BXtEkvhw==",
+      "paypal-transmission-time": "2026-11-08T12:52:48Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-8217794092856025L-4DN558828V5017150",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:47.712Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:52:27Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "2YS65254FP292743H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:53:06.343Z",
+    "source": "paypal",
+    "eventId": "WH-3FE40045R93343630-1FY323769G239644Y",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "1NY60089YS417712D",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "56521d82-db73-11f1-9e97-5bad54eb93af",
+      "paypal-transmission-sig": "SgvF1lZD9qfAITv0/wK8xLlER8wZH40AfxJNDS7QxgtQIGubSqwvr9J/ej1NpTpVuo+Ic06rqh9T9PDPG9UmbWrlwO3SdMWPNHYllMQwNXVuF9Syv/nQwm9k048uFqqC8v42LlTDG+1aTSSBSiwyxn7n1w8K0zKhS+S+2LNv2TCWJUuqxJW1/tyBe6opv8XYNvPJGXZ5hzY2gTxnbwc93jbbpqfcvom4WL9cgdNaiEMHLnbII4sViYPusAKIy2JEaBH9WjmET257kDc2a+O7YSSw+CajIWS41uuwgCJe7s6RXv6AP1oeeT+X44n61zfA0O3R1knjo/L06u2n5FZOaA==",
+      "paypal-transmission-time": "2026-11-08T12:53:04Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FE40045R93343630-1FY323769G239644Y",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:51.589Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 459.99 USD",
+      "resource": {
+        "id": "1NY60089YS417712D",
+        "amount": {
+          "currency_code": "USD",
+          "value": "459.99"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "459.99"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "16.54"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "443.45"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "2YS65254FP292743H"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:52:47Z",
+        "update_time": "2026-11-08T12:52:47Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/1NY60089YS417712D",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/1NY60089YS417712D/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FE40045R93343630-1FY323769G239644Y",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FE40045R93343630-1FY323769G239644Y/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:53:17.418Z",
+    "source": "paypal",
+    "eventId": "WH-8217794092856025L-4DN558828V5017150",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "2YS65254FP292743H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "4cb888c2-db73-11f1-bdb3-7d316aab4573",
+      "paypal-transmission-sig": "YDxn4ecSq83+FtSwa94BXZL2DUaxQVaUTkX4GT4Oa0sQdAa+CmldGGDedzSKppE8Q3naFAfYLw6SyfKzfiF3r/AXYGPUfPp6kFAXm8+FaiRPvrsqCSmK6kTS3KrFc52XC07opZEnNY6EkXk0WB2nQyjfkCb1nxaHi/agrvGtrFKbwEQxkEdPKH3VYupd2nfWixSeecXgnzLcZExqWwcsKqSuO0eS6h/6APv3uK55FMP8eBrbrmbYrou40XCFjCY510b23S9wqsI8H/Pys81z3WRNd6U47zQ3j0G2NqUfpJHHH8p1+KBeqQMGzU32YXxuIJh6z43R8esOF2BXtEkvhw==",
+      "paypal-transmission-time": "2026-11-08T12:52:48Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-8217794092856025L-4DN558828V5017150",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:47.712Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:52:27Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "2YS65254FP292743H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:53:41.159Z",
+    "source": "paypal",
+    "eventId": "WH-3FE40045R93343630-1FY323769G239644Y",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "1NY60089YS417712D",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "56521d82-db73-11f1-9e97-5bad54eb93af",
+      "paypal-transmission-sig": "SgvF1lZD9qfAITv0/wK8xLlER8wZH40AfxJNDS7QxgtQIGubSqwvr9J/ej1NpTpVuo+Ic06rqh9T9PDPG9UmbWrlwO3SdMWPNHYllMQwNXVuF9Syv/nQwm9k048uFqqC8v42LlTDG+1aTSSBSiwyxn7n1w8K0zKhS+S+2LNv2TCWJUuqxJW1/tyBe6opv8XYNvPJGXZ5hzY2gTxnbwc93jbbpqfcvom4WL9cgdNaiEMHLnbII4sViYPusAKIy2JEaBH9WjmET257kDc2a+O7YSSw+CajIWS41uuwgCJe7s6RXv6AP1oeeT+X44n61zfA0O3R1knjo/L06u2n5FZOaA==",
+      "paypal-transmission-time": "2026-11-08T12:53:04Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FE40045R93343630-1FY323769G239644Y",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:51.589Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 459.99 USD",
+      "resource": {
+        "id": "1NY60089YS417712D",
+        "amount": {
+          "currency_code": "USD",
+          "value": "459.99"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "459.99"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "16.54"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "443.45"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "2YS65254FP292743H"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:52:47Z",
+        "update_time": "2026-11-08T12:52:47Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/1NY60089YS417712D",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/1NY60089YS417712D/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FE40045R93343630-1FY323769G239644Y",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FE40045R93343630-1FY323769G239644Y/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:53:43.137Z",
+    "source": "paypal",
+    "eventId": "WH-96612463EH776532G-8XN53762EB9091848",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "8XK241512F383323H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "6d76a559-db73-11f1-8118-014b6157657c",
+      "paypal-transmission-sig": "OFhyyO1UjtL+q4SwXdAiDta+yJqZJychU0R6dI7Y0MI2lIwF99NjxvY0xiBJmiabM22qiU7ITHRnKo3kwwzUZIWI7DkSjjq6MZ7ZZXe6K7Qz8TnDVvcB/+r/RFZ/eFGwNpIWTlFCehOekrYayim+8fXvzsn2KCRoE8LEZHIYjRy/MD6Fo+3iBbBW40ALijF6xsAzSV4XEqa/OQxekO8i5I0qLvhIvY/lmpYnzZ+BBpPINoKE4QtozFpLVhTQKcO6LQjqBiMLUFufn/X37IkkPIBF45KOskxLCgDKNGxK5iCOP04yGi6RvUlfG3mywDKrc+YK8RSj4c1K3/Qhkgnu9g==",
+      "paypal-transmission-time": "2026-11-08T12:53:42Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-96612463EH776532G-8XN53762EB9091848",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:53:42.649Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:53:41Z",
+        "create_time": "2026-11-08T12:53:41Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "4PU57275NC3247642",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "459.99"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "459.99"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "16.54"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "443.45"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:53:41Z",
+                  "update_time": "2026-11-08T12:53:41Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "8XK241512F383323H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:53:45.443Z",
+    "source": "paypal",
+    "eventId": "WH-96612463EH776532G-8XN53762EB9091848",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "8XK241512F383323H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "6d76a559-db73-11f1-8118-014b6157657c",
+      "paypal-transmission-sig": "OFhyyO1UjtL+q4SwXdAiDta+yJqZJychU0R6dI7Y0MI2lIwF99NjxvY0xiBJmiabM22qiU7ITHRnKo3kwwzUZIWI7DkSjjq6MZ7ZZXe6K7Qz8TnDVvcB/+r/RFZ/eFGwNpIWTlFCehOekrYayim+8fXvzsn2KCRoE8LEZHIYjRy/MD6Fo+3iBbBW40ALijF6xsAzSV4XEqa/OQxekO8i5I0qLvhIvY/lmpYnzZ+BBpPINoKE4QtozFpLVhTQKcO6LQjqBiMLUFufn/X37IkkPIBF45KOskxLCgDKNGxK5iCOP04yGi6RvUlfG3mywDKrc+YK8RSj4c1K3/Qhkgnu9g==",
+      "paypal-transmission-time": "2026-11-08T12:53:42Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-96612463EH776532G-8XN53762EB9091848",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:53:42.649Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:53:41Z",
+        "create_time": "2026-11-08T12:53:41Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "4PU57275NC3247642",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "459.99"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "459.99"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "16.54"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "443.45"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:53:41Z",
+                  "update_time": "2026-11-08T12:53:41Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "8XK241512F383323H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:54:21.260Z",
+    "source": "paypal",
+    "eventId": "WH-96612463EH776532G-8XN53762EB9091848",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "8XK241512F383323H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "6d76a559-db73-11f1-8118-014b6157657c",
+      "paypal-transmission-sig": "OFhyyO1UjtL+q4SwXdAiDta+yJqZJychU0R6dI7Y0MI2lIwF99NjxvY0xiBJmiabM22qiU7ITHRnKo3kwwzUZIWI7DkSjjq6MZ7ZZXe6K7Qz8TnDVvcB/+r/RFZ/eFGwNpIWTlFCehOekrYayim+8fXvzsn2KCRoE8LEZHIYjRy/MD6Fo+3iBbBW40ALijF6xsAzSV4XEqa/OQxekO8i5I0qLvhIvY/lmpYnzZ+BBpPINoKE4QtozFpLVhTQKcO6LQjqBiMLUFufn/X37IkkPIBF45KOskxLCgDKNGxK5iCOP04yGi6RvUlfG3mywDKrc+YK8RSj4c1K3/Qhkgnu9g==",
+      "paypal-transmission-time": "2026-11-08T12:53:42Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-96612463EH776532G-8XN53762EB9091848",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:53:42.649Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:53:41Z",
+        "create_time": "2026-11-08T12:53:41Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "4PU57275NC3247642",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "459.99"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "459.99"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "16.54"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "443.45"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:53:41Z",
+                  "update_time": "2026-11-08T12:53:41Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "8XK241512F383323H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:54:22.841Z",
+    "source": "paypal",
+    "eventId": "WH-96612463EH776532G-8XN53762EB9091848",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "8XK241512F383323H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "6d76a559-db73-11f1-8118-014b6157657c",
+      "paypal-transmission-sig": "OFhyyO1UjtL+q4SwXdAiDta+yJqZJychU0R6dI7Y0MI2lIwF99NjxvY0xiBJmiabM22qiU7ITHRnKo3kwwzUZIWI7DkSjjq6MZ7ZZXe6K7Qz8TnDVvcB/+r/RFZ/eFGwNpIWTlFCehOekrYayim+8fXvzsn2KCRoE8LEZHIYjRy/MD6Fo+3iBbBW40ALijF6xsAzSV4XEqa/OQxekO8i5I0qLvhIvY/lmpYnzZ+BBpPINoKE4QtozFpLVhTQKcO6LQjqBiMLUFufn/X37IkkPIBF45KOskxLCgDKNGxK5iCOP04yGi6RvUlfG3mywDKrc+YK8RSj4c1K3/Qhkgnu9g==",
+      "paypal-transmission-time": "2026-11-08T12:53:42Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-96612463EH776532G-8XN53762EB9091848",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:53:42.649Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:53:41Z",
+        "create_time": "2026-11-08T12:53:41Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "4PU57275NC3247642",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "459.99"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "459.99"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "16.54"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "443.45"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:53:41Z",
+                  "update_time": "2026-11-08T12:53:41Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "8XK241512F383323H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:54:23.378Z",
+    "source": "paypal",
+    "eventId": "WH-8217794092856025L-4DN558828V5017150",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "2YS65254FP292743H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "4cb888c2-db73-11f1-bdb3-7d316aab4573",
+      "paypal-transmission-sig": "YDxn4ecSq83+FtSwa94BXZL2DUaxQVaUTkX4GT4Oa0sQdAa+CmldGGDedzSKppE8Q3naFAfYLw6SyfKzfiF3r/AXYGPUfPp6kFAXm8+FaiRPvrsqCSmK6kTS3KrFc52XC07opZEnNY6EkXk0WB2nQyjfkCb1nxaHi/agrvGtrFKbwEQxkEdPKH3VYupd2nfWixSeecXgnzLcZExqWwcsKqSuO0eS6h/6APv3uK55FMP8eBrbrmbYrou40XCFjCY510b23S9wqsI8H/Pys81z3WRNd6U47zQ3j0G2NqUfpJHHH8p1+KBeqQMGzU32YXxuIJh6z43R8esOF2BXtEkvhw==",
+      "paypal-transmission-time": "2026-11-08T12:52:48Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-8217794092856025L-4DN558828V5017150",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:47.712Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:52:27Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "2YS65254FP292743H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:54:28.441Z",
+    "source": "paypal",
+    "eventId": "WH-1R0431008X850405H-90787167254482531",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "4PU57275NC3247642",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "86d6021e-db73-11f1-84a3-cd48a417ac52",
+      "paypal-transmission-sig": "NHjIorLJveaxibCtfWRqo4Xh9uZ1HsBBQatxS3Z096nrJkZ8WX2/ZL29PIkjl62U2fN03OxQgszHe3L6AgmdnlMQs8LF18KPBuOxO6pKOtUdOiY8EUulIv7L3uBqEdP3CdRQcXZmbQosCMjlERSVbbjcldpbxmGRhcS417X8a/gSq2I4WBSq/L2l7FvAQXzFVM4e18p/McuJD5wsHO6ONXmzllr9bPq/xWj9xbkFMRAs8Gw1KmhDO3KCxcb2W7fkgwUovasJTtAusHjXEElMYP7US9rPisU2ryEgNZ/IXASuoK4XTupX8SdvEW7b/Xb681TESpqGVLTCtFHPkiJIvw==",
+      "paypal-transmission-time": "2026-11-08T12:54:25Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-1R0431008X850405H-90787167254482531",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:54:14.451Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 459.99 USD",
+      "resource": {
+        "id": "4PU57275NC3247642",
+        "amount": {
+          "currency_code": "USD",
+          "value": "459.99"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "459.99"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "16.54"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "443.45"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "8XK241512F383323H"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:53:41Z",
+        "update_time": "2026-11-08T12:53:41Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1R0431008X850405H-90787167254482531",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1R0431008X850405H-90787167254482531/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:54:56.076Z",
+    "source": "paypal",
+    "eventId": "WH-1R0431008X850405H-90787167254482531",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "4PU57275NC3247642",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "86d6021e-db73-11f1-84a3-cd48a417ac52",
+      "paypal-transmission-sig": "NHjIorLJveaxibCtfWRqo4Xh9uZ1HsBBQatxS3Z096nrJkZ8WX2/ZL29PIkjl62U2fN03OxQgszHe3L6AgmdnlMQs8LF18KPBuOxO6pKOtUdOiY8EUulIv7L3uBqEdP3CdRQcXZmbQosCMjlERSVbbjcldpbxmGRhcS417X8a/gSq2I4WBSq/L2l7FvAQXzFVM4e18p/McuJD5wsHO6ONXmzllr9bPq/xWj9xbkFMRAs8Gw1KmhDO3KCxcb2W7fkgwUovasJTtAusHjXEElMYP7US9rPisU2ryEgNZ/IXASuoK4XTupX8SdvEW7b/Xb681TESpqGVLTCtFHPkiJIvw==",
+      "paypal-transmission-time": "2026-11-08T12:54:25Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-1R0431008X850405H-90787167254482531",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:54:14.451Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 459.99 USD",
+      "resource": {
+        "id": "4PU57275NC3247642",
+        "amount": {
+          "currency_code": "USD",
+          "value": "459.99"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "459.99"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "16.54"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "443.45"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "8XK241512F383323H"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:53:41Z",
+        "update_time": "2026-11-08T12:53:41Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1R0431008X850405H-90787167254482531",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1R0431008X850405H-90787167254482531/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:55:21.634Z",
+    "source": "paypal",
+    "eventId": "WH-8217794092856025L-4DN558828V5017150",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "2YS65254FP292743H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "4cb888c2-db73-11f1-bdb3-7d316aab4573",
+      "paypal-transmission-sig": "YDxn4ecSq83+FtSwa94BXZL2DUaxQVaUTkX4GT4Oa0sQdAa+CmldGGDedzSKppE8Q3naFAfYLw6SyfKzfiF3r/AXYGPUfPp6kFAXm8+FaiRPvrsqCSmK6kTS3KrFc52XC07opZEnNY6EkXk0WB2nQyjfkCb1nxaHi/agrvGtrFKbwEQxkEdPKH3VYupd2nfWixSeecXgnzLcZExqWwcsKqSuO0eS6h/6APv3uK55FMP8eBrbrmbYrou40XCFjCY510b23S9wqsI8H/Pys81z3WRNd6U47zQ3j0G2NqUfpJHHH8p1+KBeqQMGzU32YXxuIJh6z43R8esOF2BXtEkvhw==",
+      "paypal-transmission-time": "2026-11-08T12:52:48Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-8217794092856025L-4DN558828V5017150",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:47.712Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:52:27Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "2YS65254FP292743H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:55:51.682Z",
+    "source": "paypal",
+    "eventId": "WH-3FE40045R93343630-1FY323769G239644Y",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "1NY60089YS417712D",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "56521d82-db73-11f1-9e97-5bad54eb93af",
+      "paypal-transmission-sig": "SgvF1lZD9qfAITv0/wK8xLlER8wZH40AfxJNDS7QxgtQIGubSqwvr9J/ej1NpTpVuo+Ic06rqh9T9PDPG9UmbWrlwO3SdMWPNHYllMQwNXVuF9Syv/nQwm9k048uFqqC8v42LlTDG+1aTSSBSiwyxn7n1w8K0zKhS+S+2LNv2TCWJUuqxJW1/tyBe6opv8XYNvPJGXZ5hzY2gTxnbwc93jbbpqfcvom4WL9cgdNaiEMHLnbII4sViYPusAKIy2JEaBH9WjmET257kDc2a+O7YSSw+CajIWS41uuwgCJe7s6RXv6AP1oeeT+X44n61zfA0O3R1knjo/L06u2n5FZOaA==",
+      "paypal-transmission-time": "2026-11-08T12:53:04Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-3FE40045R93343630-1FY323769G239644Y",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:51.589Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 459.99 USD",
+      "resource": {
+        "id": "1NY60089YS417712D",
+        "amount": {
+          "currency_code": "USD",
+          "value": "459.99"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "459.99"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "16.54"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "443.45"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "2YS65254FP292743H"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:52:47Z",
+        "update_time": "2026-11-08T12:52:47Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/1NY60089YS417712D",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/1NY60089YS417712D/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FE40045R93343630-1FY323769G239644Y",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3FE40045R93343630-1FY323769G239644Y/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:56:24.805Z",
+    "source": "paypal",
+    "eventId": "WH-96612463EH776532G-8XN53762EB9091848",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "8XK241512F383323H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "6d76a559-db73-11f1-8118-014b6157657c",
+      "paypal-transmission-sig": "OFhyyO1UjtL+q4SwXdAiDta+yJqZJychU0R6dI7Y0MI2lIwF99NjxvY0xiBJmiabM22qiU7ITHRnKo3kwwzUZIWI7DkSjjq6MZ7ZZXe6K7Qz8TnDVvcB/+r/RFZ/eFGwNpIWTlFCehOekrYayim+8fXvzsn2KCRoE8LEZHIYjRy/MD6Fo+3iBbBW40ALijF6xsAzSV4XEqa/OQxekO8i5I0qLvhIvY/lmpYnzZ+BBpPINoKE4QtozFpLVhTQKcO6LQjqBiMLUFufn/X37IkkPIBF45KOskxLCgDKNGxK5iCOP04yGi6RvUlfG3mywDKrc+YK8RSj4c1K3/Qhkgnu9g==",
+      "paypal-transmission-time": "2026-11-08T12:53:42Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-96612463EH776532G-8XN53762EB9091848",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:53:42.649Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:53:41Z",
+        "create_time": "2026-11-08T12:53:41Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "4PU57275NC3247642",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "459.99"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "459.99"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "16.54"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "443.45"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:53:41Z",
+                  "update_time": "2026-11-08T12:53:41Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "8XK241512F383323H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:56:31.506Z",
+    "source": "paypal",
+    "eventId": "WH-8217794092856025L-4DN558828V5017150",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "2YS65254FP292743H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "4cb888c2-db73-11f1-bdb3-7d316aab4573",
+      "paypal-transmission-sig": "YDxn4ecSq83+FtSwa94BXZL2DUaxQVaUTkX4GT4Oa0sQdAa+CmldGGDedzSKppE8Q3naFAfYLw6SyfKzfiF3r/AXYGPUfPp6kFAXm8+FaiRPvrsqCSmK6kTS3KrFc52XC07opZEnNY6EkXk0WB2nQyjfkCb1nxaHi/agrvGtrFKbwEQxkEdPKH3VYupd2nfWixSeecXgnzLcZExqWwcsKqSuO0eS6h/6APv3uK55FMP8eBrbrmbYrou40XCFjCY510b23S9wqsI8H/Pys81z3WRNd6U47zQ3j0G2NqUfpJHHH8p1+KBeqQMGzU32YXxuIJh6z43R8esOF2BXtEkvhw==",
+      "paypal-transmission-time": "2026-11-08T12:52:48Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-8217794092856025L-4DN558828V5017150",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:52:47.712Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "create_time": "2026-11-08T12:52:27Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2YS65254FP292743H/capture",
+            "rel": "capture",
+            "method": "POST"
+          }
+        ],
+        "id": "2YS65254FP292743H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "APPROVED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8217794092856025L-4DN558828V5017150/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:56:31.855Z",
+    "source": "paypal",
+    "eventId": "WH-96612463EH776532G-8XN53762EB9091848",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "8XK241512F383323H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "6d76a559-db73-11f1-8118-014b6157657c",
+      "paypal-transmission-sig": "OFhyyO1UjtL+q4SwXdAiDta+yJqZJychU0R6dI7Y0MI2lIwF99NjxvY0xiBJmiabM22qiU7ITHRnKo3kwwzUZIWI7DkSjjq6MZ7ZZXe6K7Qz8TnDVvcB/+r/RFZ/eFGwNpIWTlFCehOekrYayim+8fXvzsn2KCRoE8LEZHIYjRy/MD6Fo+3iBbBW40ALijF6xsAzSV4XEqa/OQxekO8i5I0qLvhIvY/lmpYnzZ+BBpPINoKE4QtozFpLVhTQKcO6LQjqBiMLUFufn/X37IkkPIBF45KOskxLCgDKNGxK5iCOP04yGi6RvUlfG3mywDKrc+YK8RSj4c1K3/Qhkgnu9g==",
+      "paypal-transmission-time": "2026-11-08T12:53:42Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHR-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-96612463EH776532G-8XN53762EB9091848",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:53:42.649Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:53:41Z",
+        "create_time": "2026-11-08T12:53:41Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "4PU57275NC3247642",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "459.99"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "459.99"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "16.54"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "443.45"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/4PU57275NC3247642/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:53:41Z",
+                  "update_time": "2026-11-08T12:53:41Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8XK241512F383323H",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "8XK241512F383323H",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-96612463EH776532G-8XN53762EB9091848/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:56:33.048Z",
+    "source": "paypal",
+    "eventId": "WH-7G003703XC899882D-2UE872315R630511N",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "9CX44531H8801221E",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "d295a3b6-db73-11f1-8118-2d73f41aa06e",
+      "paypal-transmission-sig": "rAO7PBHZuJFIJw+F426lrVCCsLR6a0VG4JRyDLkN86FDK2e3OsmVc2MuTuYAotYzOgDG3xlofoJgvhdh1cG6JuCiAvm2i6vRxPg3qImLe6GW1l+AdN+o1kPcVFKBxMzmALhnKLxy5jkSXjL0kUsbeOMxfDYq5TalAUql3zYMnKuUImcIG3VKHT69zKXAnVWWEDSC/AYBY6QTfLcuPhN1lTSq0nRSudL3i1QAcNyDX4edg/2zLBsS4dtROHPr6rCk/+5G+p1xPyA3BiNVmgZB3G6JDbT20GHUvRf/woWwnvh4zkYuAXWDpxiVTySEpElQwDqeEawiemr9wbEDrOZ32A==",
+      "paypal-transmission-time": "2026-11-08T12:56:32Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-7G003703XC899882D-2UE872315R630511N",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:56:32.321Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:56:24Z",
+        "create_time": "2026-11-08T12:56:24Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "8KY65901AV135115H",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "459.99"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "459.99"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "16.54"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "443.45"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/8KY65901AV135115H",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/8KY65901AV135115H/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9CX44531H8801221E",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:56:24Z",
+                  "update_time": "2026-11-08T12:56:24Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9CX44531H8801221E",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "9CX44531H8801221E",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-7G003703XC899882D-2UE872315R630511N",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-7G003703XC899882D-2UE872315R630511N/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:56:35.419Z",
+    "source": "paypal",
+    "eventId": "WH-7G003703XC899882D-2UE872315R630511N",
+    "eventType": "CHECKOUT.ORDER.APPROVED",
+    "resourceId": "9CX44531H8801221E",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "d295a3b6-db73-11f1-8118-2d73f41aa06e",
+      "paypal-transmission-sig": "rAO7PBHZuJFIJw+F426lrVCCsLR6a0VG4JRyDLkN86FDK2e3OsmVc2MuTuYAotYzOgDG3xlofoJgvhdh1cG6JuCiAvm2i6vRxPg3qImLe6GW1l+AdN+o1kPcVFKBxMzmALhnKLxy5jkSXjL0kUsbeOMxfDYq5TalAUql3zYMnKuUImcIG3VKHT69zKXAnVWWEDSC/AYBY6QTfLcuPhN1lTSq0nRSudL3i1QAcNyDX4edg/2zLBsS4dtROHPr6rCk/+5G+p1xPyA3BiNVmgZB3G6JDbT20GHUvRf/woWwnvh4zkYuAXWDpxiVTySEpElQwDqeEawiemr9wbEDrOZ32A==",
+      "paypal-transmission-time": "2026-11-08T12:56:32Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-7G003703XC899882D-2UE872315R630511N",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:56:32.321Z",
+      "resource_type": "checkout-order",
+      "resource_version": "2.0",
+      "event_type": "CHECKOUT.ORDER.APPROVED",
+      "summary": "An order has been approved by buyer",
+      "resource": {
+        "update_time": "2026-11-08T12:56:24Z",
+        "create_time": "2026-11-08T12:56:24Z",
+        "purchase_units": [
+          {
+            "reference_id": "default",
+            "amount": {
+              "currency_code": "USD",
+              "value": "459.99",
+              "breakdown": {}
+            },
+            "payee": {
+              "email_address": "sandbox-merchant@business.example.com",
+              "merchant_id": "DD3R9KG8TPPH2"
+            },
+            "shipping": {
+              "name": {
+                "full_name": "John Doe"
+              },
+              "address": {
+                "address_line_1": "2211 N First St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              }
+            },
+            "payments": {
+              "captures": [
+                {
+                  "id": "8KY65901AV135115H",
+                  "status": "COMPLETED",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "459.99"
+                  },
+                  "final_capture": true,
+                  "seller_protection": {
+                    "status": "ELIGIBLE",
+                    "dispute_categories": [
+                      "ITEM_NOT_RECEIVED",
+                      "UNAUTHORIZED_TRANSACTION"
+                    ]
+                  },
+                  "seller_receivable_breakdown": {
+                    "gross_amount": {
+                      "currency_code": "USD",
+                      "value": "459.99"
+                    },
+                    "paypal_fee": {
+                      "currency_code": "USD",
+                      "value": "16.54"
+                    },
+                    "net_amount": {
+                      "currency_code": "USD",
+                      "value": "443.45"
+                    }
+                  },
+                  "links": [
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/8KY65901AV135115H",
+                      "rel": "self",
+                      "method": "GET"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/payments/captures/8KY65901AV135115H/refund",
+                      "rel": "refund",
+                      "method": "POST"
+                    },
+                    {
+                      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9CX44531H8801221E",
+                      "rel": "up",
+                      "method": "GET"
+                    }
+                  ],
+                  "create_time": "2026-11-08T12:56:24Z",
+                  "update_time": "2026-11-08T12:56:24Z"
+                }
+              ]
+            }
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9CX44531H8801221E",
+            "rel": "self",
+            "method": "GET"
+          }
+        ],
+        "id": "9CX44531H8801221E",
+        "payment_source": {
+          "paypal": {
+            "email_address": "sandbox-buyer@personal.example.com",
+            "account_id": "V7ERP7YJL2X38",
+            "account_status": "VERIFIED",
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "address": {
+              "country_code": "US"
+            }
+          }
+        },
+        "intent": "CAPTURE",
+        "payer": {
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "email_address": "sandbox-buyer@personal.example.com",
+          "payer_id": "V7ERP7YJL2X38",
+          "address": {
+            "country_code": "US"
+          }
+        },
+        "status": "COMPLETED"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-7G003703XC899882D-2UE872315R630511N",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-7G003703XC899882D-2UE872315R630511N/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:56:37.074Z",
+    "source": "paypal",
+    "eventId": "WH-478546724F563035P-6PA16352FY750543S",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "8KY65901AV135115H",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "d38fbab0-db73-11f1-bdb3-c9cbb4627524",
+      "paypal-transmission-sig": "hC4rDr2VSp3bpPmrAsxE0zT5bNbenqlU/XnSaSjZOEK06Zpsl23ghUEgD9nJA/cpMHHjmrfau/Iz4exCkPXx4AJZ4ozLL6hKI0N/Au7WU6jT87z0PNIBGnUGjqJBTI/hlTkzwcNyCPcFwqdLN/Wt+/gBttpqsTyfMY+vbc/TkJar/B1yFcIKHXsnTp6YbdODsAKY8oB4KMAVlAniamhePgF6vjZHgkRBPy4ysbH7M3S+Vcs2GX9ofhqSJT5BrBaYT9wzVczdSBugbD+91drq0sGVl4b93TaVZOBnwBYqFvQ+ysOgSAITzuqSM3ZxO2MzHZPWvARYRRUU+qcKn0o54g==",
+      "paypal-transmission-time": "2026-11-08T12:56:34Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "paypalVerified": true,
+    "body": {
+      "id": "WH-478546724F563035P-6PA16352FY750543S",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:56:29.158Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 459.99 USD",
+      "resource": {
+        "id": "8KY65901AV135115H",
+        "amount": {
+          "currency_code": "USD",
+          "value": "459.99"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "459.99"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "16.54"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "443.45"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "9CX44531H8801221E"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:56:24Z",
+        "update_time": "2026-11-08T12:56:24Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/8KY65901AV135115H",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/8KY65901AV135115H/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9CX44531H8801221E",
+            "rel": "up",
+            "method": "GET"
+          }
+        ]
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-478546724F563035P-6PA16352FY750543S",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-478546724F563035P-6PA16352FY750543S/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T12:56:37.993Z",
+    "source": "attacker",
+    "eventId": "WH-1Y92486113404022L-4E517168WV296005C",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "resourceId": "0TK53224RP231522X",
+    "headers": {
+      "paypal-auth-algo": "SHA256withRSA",
+      "paypal-cert-url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "paypal-transmission-id": "91e6c28c-db72-11f1-bdb3-b1d60d728b5e",
+      "paypal-transmission-sig": "JkL5ffw9zaf/QTeo17swiVrYRbrqzWJkf5LOdD2RmelJyuTym5jOwA7tGH1GAieiu35euiv0QT0B9D2OxdtSenBg2v/HsgmSsOPGurJy21O/Pb3ebb5F6e9qKbW6jS6N4yzZ3jyvDfYTwSodQodu8tbIh0TtugkuXxqp4zqrAqu7IShK7D9c9mlb6YQaeu3smCueTJcgNcrQYxaUpuqGb+iCE1VQScknUvyPMXuCwX1YMdCC9ECsDYKqEq4MlwqFyBGVZr8NfkC5xZlGAhl1E8X4HZ7XjyhvKVPKGKZfZUPw3pbEtPGOIMGCwAkg7J8f/w8sivg8Z8JKK6ErnPdHLQ==",
+      "paypal-transmission-time": "2026-11-08T12:47:34Z",
+      "content-type": "application/json",
+      "user-agent": "PayPal/AUHD-1.0-1"
+    },
+    "shopStatus": 404,
+    "shopBody": "{\"message\":\"Not Found - /\",\"stack\":null}",
+    "body": {
+      "id": "WH-1Y92486113404022L-4E517168WV296005C",
+      "event_version": "1.0",
+      "create_time": "2026-11-08T12:47:21.355Z",
+      "resource_type": "capture",
+      "resource_version": "2.0",
+      "event_type": "PAYMENT.CAPTURE.COMPLETED",
+      "summary": "Payment completed for $ 0.01 USD",
+      "resource": {
+        "id": "0TK53224RP231522X",
+        "amount": {
+          "currency_code": "USD",
+          "value": "459.99"
+        },
+        "final_capture": true,
+        "seller_protection": {
+          "status": "ELIGIBLE",
+          "dispute_categories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "seller_receivable_breakdown": {
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "0.01"
+          },
+          "paypal_fee": {
+            "currency_code": "USD",
+            "value": "0.01"
+          },
+          "net_amount": {
+            "currency_code": "USD",
+            "value": "0.00"
+          }
+        },
+        "status": "COMPLETED",
+        "supplementary_data": {
+          "related_ids": {
+            "order_id": "4GV229463S672805L"
+          }
+        },
+        "payee": {
+          "email_address": "sandbox-merchant@business.example.com",
+          "merchant_id": "DD3R9KG8TPPH2"
+        },
+        "create_time": "2026-11-08T12:47:16Z",
+        "update_time": "2026-11-08T12:47:16Z",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/0TK53224RP231522X/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/24127842VR842350W",
+            "rel": "up",
+            "method": "GET"
+          }
+        ],
+        "custom_id": "6af07185cc824b9400d76bc2"
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1Y92486113404022L-4E517168WV296005C",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1Y92486113404022L-4E517168WV296005C/resend",
+          "rel": "resend",
+          "method": "POST"
+        }
+      ]
+    }
+  }
+]

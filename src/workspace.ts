@@ -87,6 +87,14 @@ export function diff(shopDir: string): { stat: string; patch: string } {
 }
 
 export function runTests(shopDir: string): { ok: boolean; output: string } {
+  const pkg = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(shopDir, "package.json"), "utf8"));
+    } catch {
+      return {};
+    }
+  })();
+  if (!pkg.scripts?.test) return { ok: true, output: "The shop has no test script, so there were no tests to run." };
   try {
     return { ok: true, output: sh("npm", ["test", "--silent"], shopDir) };
   } catch (err) {

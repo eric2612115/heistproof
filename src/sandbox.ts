@@ -35,7 +35,7 @@ export async function openSandbox(run: Run, phase: Phase, shopDir: string, round
     const proxyUrl = await proxy.start(PORTS.paypalProxy);
     cleanup.push(() => proxy.stop());
     const shopUrl = `http://127.0.0.1:${PORTS.shop}`;
-    const tap = new WebhookTap(`${shopUrl}${loadProfile(shopDir).webhooks}`);
+    const tap = new WebhookTap(`${shopUrl}${loadProfile(shopDir).webhooks ?? "/"}`);
     await tap.start(PORTS.webhookTap);
     cleanup.push(() => tap.stop());
     let webhookUrl: string;

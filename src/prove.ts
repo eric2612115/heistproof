@@ -29,6 +29,8 @@ export type PurchaseResult = {
   approved: boolean;
   /** Heistproof blocked the page's capture request after approval (an attack's setup). */
   captureBlocked: boolean;
+  /** The page's call telling the shop about the payment was held back (holdShopCall). */
+  shopCallHeld?: boolean;
   shopOrder: ShopOrder | null;
   calls: ShopCall[];
   screenshots: string[];
@@ -93,12 +95,20 @@ async function payButton(page: Page, method: "paypal" | "venmo" | "paylater") {
 const money = (s: string | null | undefined) => (s ? s.replace(/[^0-9.]/g, "") : null);
 
 /** Opens the shop like a shopper, fills the bag and returns the page with the checkout open. `watch` sees the page before it loads. */
-export async function openCheckout(shop: ShopProcess, items: Array<{ sku: string; qty: number }>, watch?: (page: Page) => void): Promise<Page> {
+export async function openCheckout(shop: ShopProcess, items: Array<{ sku: string; qty: number }>, watch?: (page: Page) => void | Promise<void>): Promise<Page> {
   const ctx = await browser();
   const page = await ctx.newPage();
-  watch?.(page);
+  await watch?.(page);
   const { bag } = shop.profile;
+  // Where the way to the PayPal button is scripted (signing in, a shipping form), every purchase is a new shopper: no
+  // sign-in or bag left over from an earlier purchase, or from an earlier run whose database is gone.
+  const scripted = Boolean(shop.profile.checkout?.length);
+  if (scripted) await ctx.clearCookies({ domain: new URL(shop.url).hostname }).catch(() => {});
   await page.goto(shop.url, { waitUntil: "domcontentloaded" });
+  if (scripted) {
+    await page.evaluate(() => (localStorage.clear(), sessionStorage.clear())).catch(() => {});
+    await page.reload({ waitUntil: "domcontentloaded" });
+  }
   if (bag.storageKey) {
     await page.evaluate(([key, value]) => localStorage.setItem(key, value), [bag.storageKey, JSON.stringify(items)] as const);
     await page.reload({ waitUntil: "networkidle" });
@@ -107,6 +117,16 @@ export async function openCheckout(shop: ShopProcess, items: Array<{ sku: string
     if (bag.add) for (const item of items) for (let i = 0; i < item.qty; i++) await page.click(bag.add.replace("{sku}", item.sku));
   }
   if (bag.open) await page.click(bag.open).catch(() => {});
+  // A shop whose way to the PayPal button is longer (signing in, a shipping form, placing the order) scripts it.
+  for (const step of shop.profile.checkout ?? []) {
+    if (step.unless && (await page.locator(step.unless).first().isVisible().catch(() => false))) continue;
+    if (step.goto) await page.goto(new URL(step.goto, shop.url).toString(), { waitUntil: "domcontentloaded" });
+    else if (step.fill) await page.locator(step.fill).first().fill(step.value ?? "", { timeout: 20_000 });
+    else if (step.select) await page.locator(step.select).first().selectOption(step.value ?? "", { timeout: 20_000 });
+    else if (step.click) await page.locator(step.click).first().click({ timeout: 20_000 });
+    else if (step.waitFor) await page.locator(step.waitFor).first().waitFor({ state: "visible", timeout: 30_000 });
+    await page.waitForTimeout(pace(400));
+  }
   await page.waitForTimeout(pace(800));
   return page;
 }
@@ -128,8 +148,10 @@ type PurchaseOptions = {
   items: Array<{ sku: string; qty: number }>;
   method?: "paypal" | "venmo" | "paylater";
   label: string;
-  /** Called after the buyer approves and before the page's capture request leaves; return "abort" to block it. */
+  /** Called after the buyer approves and before the capture request leaves (the shop's, or the browser's own); return "abort" to block it. */
   onBeforeCapture?: (orderId: string) => Promise<"continue" | "abort">;
+  /** Where the browser captures: let the capture go through, then hold back the page's call telling the shop (a payment the shop never heard about). */
+  holdShopCall?: boolean;
   /** The attacker's edit of the page's create-order request body, as a thief would do in the browser's dev tools. */
   tamperCreate?: (body: any) => any;
   /** Skip the amount check (the attacker wants the wrong amount). */
@@ -230,6 +252,7 @@ async function purchaseOnce(opts: PurchaseOptions, box: { result?: PurchaseResul
     captureStatus: null,
     approved: false,
     captureBlocked: false,
+    shopCallHeld: false,
     shopOrder: null,
     calls,
     screenshots: shots,
@@ -242,7 +265,9 @@ async function purchaseOnce(opts: PurchaseOptions, box: { result?: PurchaseResul
   box.result = result;
   const known = new Set((await shopOrders(shop).catch(() => [] as ShopOrder[])).map((o) => o.id));
 
-  const page = await openCheckout(shop, opts.items, (p) => {
+  const origin = new URL(shop.url).origin;
+  let approvedOrderId: string | null = null;
+  const page = await openCheckout(shop, opts.items, async (p) => {
     // What the shopper's browser complained about: handed to the coding agent when the checkout breaks.
     p.on("console", (m) => {
       if (m.type() === "error" && !/permissions policy|favicon/i.test(m.text())) result.consoleErrors.push(m.text().slice(0, 300));
@@ -254,56 +279,75 @@ async function purchaseOnce(opts: PurchaseOptions, box: { result?: PurchaseResul
     p.on("requestfailed", (req) => {
       if (/paypal/.test(new URL(req.url()).hostname)) result.failedRequests!.push(`${req.url().slice(0, 120)} (${req.failure()?.errorText ?? "failed"})`);
     });
-  });
-  const origin = new URL(shop.url).origin;
-  let approvedOrderId: string | null = null;
-  await page.route(`${origin}/**`, async (route) => {
-    const req = route.request();
-    if (req.method() === "POST" && !approvedOrderId && opts.tamperCreate) {
-      let body: any = null;
-      try {
-        body = JSON.parse(req.postData() ?? "");
-      } catch {
-        /* not JSON */
+    // Routes and the recorder go in before the first step: a scripted checkout creates the shop's order on the way.
+    await p.route(`${origin}/**`, async (route) => {
+      const req = route.request();
+      if (req.method() === "POST" && !approvedOrderId && opts.tamperCreate) {
+        let body: any = null;
+        try {
+          body = JSON.parse(req.postData() ?? "");
+        } catch {
+          /* not JSON */
+        }
+        if (itemList(body)) {
+          const tampered = opts.tamperCreate(body);
+          run.emit(phase, "prove.tampered", { label, path: new URL(req.url()).pathname, body: tampered });
+          return route.continue({ postData: JSON.stringify(tampered) });
+        }
       }
-      if (itemList(body)) {
-        const tampered = opts.tamperCreate(body);
-        run.emit(phase, "prove.tampered", { label, path: new URL(req.url()).pathname, body: tampered });
-        return route.continue({ postData: JSON.stringify(tampered) });
-      }
-    }
-    if (req.method() === "POST" && approvedOrderId && opts.onBeforeCapture && (req.url().includes(approvedOrderId) || (req.postData() ?? "").includes(approvedOrderId))) {
-      if ((await opts.onBeforeCapture(approvedOrderId)) === "abort") {
-        result.captureBlocked = true;
-        run.emit(phase, "prove.capture_blocked", { label, url: new URL(req.url()).pathname });
+      if (["POST", "PUT", "PATCH"].includes(req.method()) && approvedOrderId && opts.holdShopCall && (req.url().includes(approvedOrderId) || (req.postData() ?? "").includes(approvedOrderId))) {
+        result.shopCallHeld = true;
+        run.emit(phase, "prove.shop_call_held", { label, url: new URL(req.url()).pathname });
         return route.abort("failed");
       }
+      if (req.method() === "POST" && approvedOrderId && opts.onBeforeCapture && shop.profile.capture !== "browser" && (req.url().includes(approvedOrderId) || (req.postData() ?? "").includes(approvedOrderId))) {
+        if ((await opts.onBeforeCapture(approvedOrderId)) === "abort") {
+          result.captureBlocked = true;
+          run.emit(phase, "prove.capture_blocked", { label, url: new URL(req.url()).pathname });
+          return route.abort("failed");
+        }
+      }
+      return route.continue();
+    });
+    // Where the browser captures the payment itself, the capture request goes to PayPal from the page: hold it there.
+    if (shop.profile.capture === "browser") {
+      await p.route(
+        (url) => /(^|\.)paypal\.com$/.test(url.hostname) && /capture/i.test(url.pathname),
+        async (route) => {
+          const req = route.request();
+          if (approvedOrderId && opts.onBeforeCapture && (req.url().includes(approvedOrderId) || (req.postData() ?? "").includes(approvedOrderId)) && (await opts.onBeforeCapture(approvedOrderId)) === "abort") {
+            result.captureBlocked = true;
+            run.emit(phase, "prove.capture_blocked", { label, url: new URL(req.url()).pathname });
+            return route.abort("failed");
+          }
+          return route.continue();
+        },
+      );
     }
-    return route.continue();
-  });
-  page.on("response", async (res) => {
-    const req = res.request();
-    if (!req.url().startsWith(origin) || req.method() !== "POST") return;
-    let body: unknown = req.postData();
-    try {
-      body = JSON.parse(String(body));
-    } catch {
-      /* raw */
-    }
-    let response: unknown = null;
-    try {
-      response = await res.json();
-    } catch {
-      /* not json */
-    }
-    // A request still in flight when the page moves on has no full header list: fall back to what the page set on it.
-    const headers = Object.fromEntries(Object.entries(await req.allHeaders().catch(() => req.headers())).filter(([k]) => /^(x-[\w-]+|content-type|authorization)$/i.test(k)));
-    calls.push({ method: req.method(), path: new URL(req.url()).pathname, body, status: res.status(), response, headers });
+    p.on("response", async (res) => {
+      const req = res.request();
+      if (!req.url().startsWith(origin) || !["POST", "PUT", "PATCH"].includes(req.method())) return;
+      let body: unknown = req.postData();
+      try {
+        body = JSON.parse(String(body));
+      } catch {
+        /* raw */
+      }
+      let response: unknown = null;
+      try {
+        response = await res.json();
+      } catch {
+        /* not json */
+      }
+      // A request still in flight when the page moves on has no full header list: fall back to what the page set on it.
+      const headers = Object.fromEntries(Object.entries(await req.allHeaders().catch(() => req.headers())).filter(([k]) => /^(x-[\w-]+|content-type|authorization)$/i.test(k)));
+      calls.push({ method: req.method(), path: new URL(req.url()).pathname, body, status: res.status(), response, headers });
+    });
   });
 
   result.bagTotal = money(await page.locator(shop.profile.bag.total).first().textContent().catch(() => null));
-  // JS SDK v6 renders web components; v5 renders each button inside a PayPal iframe.
-  await visible(page, "paypal-button, venmo-button, paypal-pay-later-button, iframe[src*='/smart/buttons']", pace(20_000));
+  // JS SDK v6 renders web components; v5 renders each button inside a PayPal iframe (its src attribute can stay empty).
+  await visible(page, "paypal-button, venmo-button, paypal-pay-later-button, iframe[src*='/smart/buttons'], iframe[name^='__zoid__paypal_buttons']", pace(20_000));
   await page.waitForTimeout(pace(1500));
   for (const name of ["paypal", "venmo", "paylater"] as const) result.buttons[name] = Boolean(await payButton(page, name));
   result.payLaterMessage = await page

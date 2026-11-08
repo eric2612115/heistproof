@@ -59,10 +59,14 @@ export async function reconcile(shop: ShopProcess, calls: ProxiedCall[], legit: 
     return records.get(id);
   };
   const completed = (r: any) => ((r?.purchase_units?.[0]?.payments?.captures ?? []) as any[]).filter((c) => c.status === "COMPLETED");
+  // Where the shopper's browser creates the PayPal order, Heistproof never sees it being made: any order the shop's
+  // records name that this PayPal app can read is one of ours.
+  const browserMade = shop.profile.capture === "browser";
+  const isOurs = async (id: string) => ours.has(id) || (browserMade && Boolean((await record(id))?.id === id));
   const capturesOf = async (o: ShopOrder) => {
     const ids = [...new Set(JSON.stringify(o).match(PAYPAL_ID) ?? [])];
     const found: any[] = [];
-    for (const id of ids.filter((x) => ours.has(x))) found.push(...completed(await record(id)));
+    for (const id of ids) if (await isOurs(id)) found.push(...completed(await record(id)));
     // A shop may keep only the capture's id: find the PayPal order that holds it.
     if (!found.length) for (const id of ours) for (const c of completed(await record(id))) if (ids.includes(c.id)) found.push(c);
     return found;
@@ -83,7 +87,9 @@ export async function reconcile(shop: ShopProcess, calls: ProxiedCall[], legit: 
     // Only PayPal's part of the books: an order that names none of this shop's PayPal orders or captures was paid another
     // way (the card form, say), and PayPal's records cannot vouch for it either way.
     const ids = [...new Set(JSON.stringify(o).match(PAYPAL_ID) ?? [])];
-    if (!ids.some((id) => ours.has(id)) && !(await capturesOf(o)).length) {
+    let named = false;
+    for (const id of ids) if (await isOurs(id)) named = true;
+    if (!named && !(await capturesOf(o)).length) {
       // A shop that takes only PayPal (heistproof.json "payments": ["paypal"]) has no other way to be paid.
       if (paypalOnly) mismatches.push({ order: o.id, problem: `${o.status} with ${o.shipments} parcel(s), but it names no PayPal payment, and this shop takes only PayPal` });
       else otherPaid++;

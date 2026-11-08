@@ -1,92 +1,82 @@
 diff --git a/lib/paypal.js b/lib/paypal.js
-index 9762d8e..1b1ff57 100644
+index e6389f5..d4a7431 100644
 --- a/lib/paypal.js
 +++ b/lib/paypal.js
-@@ -264,6 +264,11 @@ export function createPayPalService({
+@@ -232,6 +232,11 @@ export function createPayPalService({
            id: paypalOrderId,
-           payPalRequestId: shopOrder.id,
+           payPalRequestId: `capture-${shopOrderId}`,
            prefer: "return=representation",
-+          // Empty JSON body is required: omitting `body` makes the SDK send
-+          // no body and no Content-Type, which the real PayPal sandbox
-+          // rejects with 415 UNSUPPORTED_MEDIA_TYPE (debug f844956bdd0a9).
-+          // `body: {}` sends "{}" as application/json with no fields set.
++          // Real PayPal sandbox rejects a bodiless capture (no Content-Type)
++          // with 415 UNSUPPORTED_MEDIA_TYPE. Send an empty JSON object so the
++          // SDK sends Content-Type: application/json and body "{}".
++          // paymentSource inside the body remains unset.
 +          body: {},
          });
-       } catch (err) {
-         if (isAlreadyCaptured(err) || isUnknown(translateError(err))) {
+         if (!order || typeof order !== "object") {
+           throw new PayPalServiceError(FIXED.unknown, { status: 502, unknown: true });
 diff --git a/paypal-plan.md b/paypal-plan.md
-index c2d93bd..82ff7d3 100644
+index 42eae36..23d6c4c 100644
 --- a/paypal-plan.md
 +++ b/paypal-plan.md
-@@ -49,7 +49,7 @@ getOrder `Orders.GetOrderRequest`: `id` (path, required), `fields` (query, optio
- - `OrderRequest` (`order-request.ts`): `intent: CheckoutPaymentIntent` required (`CheckoutPaymentIntent.Capture = "CAPTURE"`), `purchaseUnits: PurchaseUnitRequest[]` required; `processingInstruction?`, `payer?`, `paymentSource?`, `applicationContext?` optional.
- - `PurchaseUnitRequest`: `amount: AmountWithBreakdown` required; `customId?`, `invoiceId?`, `items?: ItemRequest[]`, others optional. `AmountWithBreakdown`: `currencyCode: string` required, `value: string` required (decimal dollars string), `breakdown?: AmountBreakdown`; `AmountBreakdown.itemTotal?: Money`; `Money`: `currencyCode`+`value` required strings. `ItemRequest`: `name` required, `unitAmount: Money` required, `quantity: string` required, `sku?` optional.
- - `Order` (response, ALL members optional — assert the ones we use or treat as unknown): `id?`, `status?: OrderStatus` (`CREATED/SAVED/APPROVED/VOIDED/COMPLETED/PAYER_ACTION_REQUIRED`), `purchaseUnits?: PurchaseUnit[]`. `PurchaseUnit.customId?`, `amount?`, `payments?: PaymentCollection`; `PaymentCollection.captures?: OrdersCapture[]`; `OrdersCapture`: `status?: CaptureStatus` (`COMPLETED/DECLINED/PARTIALLY_REFUNDED/PENDING/REFUNDED/FAILED`), `id?`, `amount?: Money`, `customId?`, `invoiceId?`. A truncated 2xx decodes silently with `undefined` members and a malformed 2xx rejects `DecodeError` (kind `"decode"`, not an ApiError) — both are "unknown", never "failed"/"absent".
--- `OrderCaptureRequest`: only `paymentSource?` — we send no body fields (body omitted entirely).
-+- `OrderCaptureRequest`: only `paymentSource?` — we send an empty object (`body: {}`), no fields. Omitting `body` entirely makes the SDK send no body and no `Content-Type`, which the real sandbox rejects with `415 UNSUPPORTED_MEDIA_TYPE` ("The request payload is not supported", debug `f844956bdd0a9`, order `0EE7442332287661H`) — PayPal's real answer wins over the spec's "optional body" marking.
+@@ -98,7 +98,8 @@ settable); retries of one call reuse it, a new call mints a new one — hence th
+ - Signature: `captureOrder(request: Orders.CaptureOrderRequest, options?): ApiPromise<Order, Orders.CaptureOrderError>`
+ - Fields: `id` (path, required); optional headers `payPalMockResponse`, `payPalRequestId`, `prefer`
+   (default `"return=minimal"`), `payPalClientMetadataId`, `payPalAuthAssertion`; `body?: OrderCaptureRequest`
+-  (only member `paymentSource?` — nothing requires it, body omitted entirely).
++  (only member `paymentSource?` — nothing requires it, but the body itself must be sent as an empty
++  object `{}`, see 1b.3: the real sandbox rejects a bodiless capture with `415 UNSUPPORTED_MEDIA_TYPE`).
+ - Returns `Order`. Payment facts live at
+   `purchaseUnits[].payments.captures[]: OrdersCapture` (`src/models/orders-capture.ts`):
+   `status?: CaptureStatus` (`Completed === "COMPLETED"`, `Pending === "PENDING"`, `Declined`, …),
+@@ -216,7 +217,7 @@ asserted by a second test per write (bad-credentials token refusal ⇒ no `getOr
+ | --- | --- | --- |
+ | `payPalRequestId` | The DUPLICATE CLAIMS row for captureOrder (claim reference) | ✅ set it from that row |
+ | `prefer` | Rule 4: capture response must carry `payments.captures[]` (status/amount/custom_id) to verify before marking paid | ✅ `"return=representation"` |
+-| `body` (`OrderCaptureRequest.paymentSource?`) | nothing | ❌ omit the body entirely |
++| `body` (`OrderCaptureRequest.paymentSource?`) | Real PayPal sandbox (harness, order `9JF068826A073763J`): a capture with the body omitted carries no body and no `Content-Type` (SDK `map/operations/orders.md`: “omit it and the request carries no body and no `Content-Type` header at all”) and is rejected `415 UNSUPPORTED_MEDIA_TYPE` (“The request payload is not supported”, debug id `f6507972aed1f`), leaving the shop order pending/unfulfilled. PayPal's real answer wins over the earlier “omit entirely” assumption. | ✅ set it to `{}` (empty object — SDK then sends `Content-Type: application/json` and `"{}"`); `paymentSource` inside it stays unset |
+ | `payPalMockResponse`, `payPalClientMetadataId`, `payPalAuthAssertion` | nothing | ❌ leave them out |
  
- ### Webhook verification — NOT an SDK operation
- 
-@@ -106,12 +106,12 @@ captureOrder:
- | `id` (required) | task | ✅ PayPal order id from route |
- | `payPalRequestId` | DUPLICATE CLAIMS/UNKNOWN rows (stable reference per shop order capture) | ✅ shop order id |
- | `prefer` | need full capture details in response (as above) | ✅ `"return=representation"` |
--| `body` (`OrderCaptureRequest.paymentSource?`) | nothing | ❌ omit body entirely |
-+| `body` (`OrderCaptureRequest.paymentSource?`) | Real sandbox capture contract: no body/no `Content-Type` → `415 UNSUPPORTED_MEDIA_TYPE` (debug `f844956bdd0a9`); an empty JSON body satisfies it with no `paymentSource` fields set | ✅ send `body: {}` (`"{}"` as `application/json`) |
- | mock/metadata/auth-assertion headers | nothing | ❌ leave out |
- 
- getOrder: only `id` ✅; `fields`, mock, auth-assertion ❌.
- 
--Proof test: fake-fetch asserts the exact wire body keys and that `paypal-mock-response`/partner/metadata headers are absent (SDK's own `Idempotency-Key`/auth headers are the SDK's, not ours).
-+Proof test: fake-fetch asserts the exact wire body keys and that `paypal-mock-response`/partner/metadata headers are absent (SDK's own `Idempotency-Key`/auth headers are the SDK's, not ours). Capture proof: the fake mirrors the real sandbox 415 for a bodyless / non-JSON capture, and a test asserts the capture wire call sends `Content-Type: application/json` with raw body `"{}"`.
- 
- ## 1b.4 WHEN THE API SAYS NO (createOrder / captureOrder / getOrder — same ladder at the service boundary)
- 
+ `getOrder` (`Orders.GetOrderRequest`): `fields`, `payPalMockResponse`, `payPalAuthAssertion` —
 diff --git a/test/paypal.test.js b/test/paypal.test.js
-index c41c647..9bb8822 100644
+index 2ac0cca..01a57da 100644
 --- a/test/paypal.test.js
 +++ b/test/paypal.test.js
-@@ -52,6 +52,16 @@ function makeFakePayPal() {
+@@ -65,6 +65,11 @@ function makeFakePayPal() {
      }
-     const captureMatch = url.pathname.match(/^\/v2\/checkout\/orders\/([^/]+)\/capture$/);
-     if (captureMatch && request.method === "POST") {
-+      // Mirror the real sandbox (debug f844956bdd0a9): a capture with no
-+      // JSON payload / no application/json Content-Type is a 415, not a capture.
-+      if (!request.headers.get("content-type")?.includes("application/json")) {
-+        return json(415, {
-+          name: "UNSUPPORTED_MEDIA_TYPE",
-+          message: "The request payload is not supported",
-+          debug_id: "f844956bdd0a9",
-+          details: [{ issue: "UNSUPPORTED_MEDIA_TYPE", description: "The request payload is not supported" }],
-+        });
+     const capMatch = /^\/v2\/checkout\/orders\/([^/]+)\/capture$/.exec(path);
+     if (capMatch && request.method === "POST") {
++      // Real PayPal sandbox: a capture with no body / no Content-Type is
++      // rejected with 415 UNSUPPORTED_MEDIA_TYPE (see harness report).
++      if (!request.headers.get("content-type")?.includes("application/json") || !body) {
++        return json(415, { name: "UNSUPPORTED_MEDIA_TYPE", message: "The request payload is not supported", debug_id: "dbg-415" });
 +      }
-       hooks.onCapture?.(call);
-       if (state.captureDelay) await sleep(state.captureDelay);
        switch (state.captureMode) {
-@@ -240,6 +250,26 @@ test("capture with a COMPLETED capture for the exact amount fulfils once; a repe
+         case "success": return json(200, captureOrderJson({ id: capMatch[1], custom: state.custom, value: state.value }));
+         case "pending": return json(200, captureOrderJson({ id: capMatch[1], custom: state.custom, value: state.value, captureStatus: "PENDING" }));
+@@ -222,6 +227,26 @@ test("capture verifies amount/custom_id and fulfils exactly once; second and con
    } finally { await shop.close(); }
  });
  
-+test("capture sends an empty JSON body (real sandbox rejects a bodyless capture with 415)", async () => {
++test("capture sends an empty JSON object (not a bodiless request) and completes the purchase", async () => {
 +  const fake = makeFakePayPal();
 +  const shop = await startShop(fake);
 +  try {
-+    const { orderId } = await createPayPalOrder(shop);
++    const { orderId } = await createViaHttp(shop, fake);
 +    const res = await post(`${shop.base}/api/paypal/orders/PAYPAL-ORDER-1/capture`);
-+    // Without the JSON body the fake — like the real sandbox — answers
-+    // 415 UNSUPPORTED_MEDIA_TYPE and the order would stay pending.
-+    assert.equal(res.status, 200, await res.clone().text().catch(() => ""));
-+    assert.equal((await res.json()).status, "fulfilled");
++    // Regression for real-sandbox 415 UNSUPPORTED_MEDIA_TYPE: omitting the
++    // SDK body sends no Content-Type and no payload, and PayPal rejects it,
++    // leaving the shop order pending with 0 labels.
++    assert.equal(res.status, 200);
 +    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
 +    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
-+
-+    const captureCall = fake.calls.find((c) => c.path.endsWith("/capture"));
-+    assert.ok(captureCall.headers.get("content-type")?.includes("application/json"), "capture must send Content-Type: application/json");
-+    assert.equal(captureCall.rawBody, "{}");
-+    assert.deepEqual(captureCall.body, {});
++    const captureCalls = callsTo(fake, "/capture", "POST");
++    assert.equal(captureCalls.length, 1);
++    assert.match(captureCalls[0].request.headers.get("content-type") ?? "", /application\/json/);
++    assert.equal(captureCalls[0].body, "{}");
++    assert.deepEqual(JSON.parse(captureCalls[0].body), {});
 +  } finally { await shop.close(); }
 +});
 +
- test("two captures at once ship once", async () => {
-   const fake = makeFakePayPal();
-   fake.state.captureDelay = 30;
+ test("the same PayPal order cannot be bound to two shop orders", async () => {
+   const fake = makeFakePayPal(); // fake always returns PAYPAL-ORDER-1
+   const shop = await startShop(fake);

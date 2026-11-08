@@ -30,7 +30,7 @@ test("the full run: PayPal refused the agent's first capture, the agent fixed it
 
 test("the 415 is not chance: every earlier full run hit the same refusal at capture", () => {
   assert.ok(refusedCapture(calls(path.join("archive", "2026-11-07-full-run"), "prove-paypal-calls.json")), "2026-11-07");
-  for (const id of ["2026-11-08-full-run-earlier", "2026-11-08-full-run-third", "2026-11-08-full-run-fourth"]) assert.ok(refusedCapture(calls(path.join("archive", id), "round0-paypal-calls.json")), id);
+  for (const id of ["2026-11-08-full-run-earlier", "2026-11-08-full-run-third", "2026-11-08-full-run-fourth", "2026-11-08-full-run-fifth"]) assert.ok(refusedCapture(calls(path.join("archive", id), "round0-paypal-calls.json")), id);
 });
 
 test("the same model without any PayPal skills wrote a checkout that was safe at the first try", () => {

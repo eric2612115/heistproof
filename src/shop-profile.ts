@@ -22,11 +22,22 @@ export type ShopProfile = {
   admin: { orders: string; keyHeader: string; page: string };
   /** Field names in that orders list, and the statuses that mean the shop considers an order paid. */
   orders: { id: string; status: string; paid: string[]; shipments: string; reference: string; total?: string; totalUnit?: "cents" | "dollars" };
-  /** Where the shop receives PayPal's webhooks. */
-  webhooks: string;
+  /** Where the shop receives PayPal's webhooks; null for a shop that has no webhook route. */
+  webhooks: string | null;
+  /**
+   * The shopper's path from the storefront to the PayPal button, for shops where it takes more than filling a bag:
+   * signing in, a shipping form, a place-order step. Each step is one of { goto }, { click }, { fill, value },
+   * { select, value } or { waitFor }, with Playwright selectors.
+   */
+  checkout?: CheckoutStep[];
+  /** Where the PayPal payment is captured: by the shop's server (the default), or by the shopper's browser, which then tells the shop. */
+  capture?: "server" | "browser";
   /** How the shop takes money. ["paypal"] means PayPal only: any order paid without a PayPal capture is then a mismatch. */
   payments?: string[];
 };
+
+/** One step on the way to the PayPal button. `unless`: skip the step when this is already on the page (a signed-in shopper skips signing in). */
+export type CheckoutStep = { goto?: string; click?: string; fill?: string; select?: string; value?: string; waitFor?: string; unless?: string };
 
 export const FOGLINE: ShopProfile = {
   start: ["node", "server.js"],
@@ -51,8 +62,10 @@ export function loadProfile(dir: string): ShopProfile {
     bag: given.bag ? { ...given.bag, total: given.bag.total ?? FOGLINE.bag.total } : FOGLINE.bag,
     admin: { ...FOGLINE.admin, ...given.admin },
     orders: { ...FOGLINE.orders, ...given.orders },
-    webhooks: given.webhooks ?? FOGLINE.webhooks,
+    webhooks: given.webhooks === null ? null : (given.webhooks ?? FOGLINE.webhooks),
     payments: given.payments,
+    checkout: given.checkout,
+    capture: given.capture ?? "server",
   };
 }
 

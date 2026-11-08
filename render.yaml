@@ -1,0 +1,14 @@
+# Render Blueprint — hosts Heistproof's console as a static site (no server, no keys, sandbox data only).
+# Deploy: create a Render account, connect this repo, and Render reads this file. The build runs the project's own
+# static export (scripts/build-site.mjs) and publishes the `site/` folder.
+services:
+  - type: web
+    name: heistproof-console
+    runtime: static
+    buildCommand: npm ci && node scripts/build-site.mjs site --url https://heistproof-console.onrender.com/
+    staticPublishPath: site
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff

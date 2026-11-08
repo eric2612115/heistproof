@@ -8,7 +8,7 @@
     "verdict": "PayPal would charge $4900.00 for a $49.00 bag.",
     "environment": null,
     "bagTotal": "49.00",
-    "paypalOrderId": "3KR135790P2476137",
+    "paypalOrderId": "5XH77902V0252363N",
     "paypalAmount": {
       "value": "4900.00",
       "currency": "USD"
@@ -18,6 +18,7 @@
     "captureStatus": null,
     "approved": false,
     "captureBlocked": false,
+    "shopCallHeld": false,
     "shopOrder": null,
     "calls": [
       {
@@ -33,8 +34,8 @@
         },
         "status": 200,
         "response": {
-          "id": "3KR135790P2476137",
-          "orderId": "FOG-EA599B"
+          "id": "5XH77902V0252363N",
+          "orderId": "FOG-7A1E7E"
         },
         "headers": {
           "content-type": "application/json"
@@ -70,12 +71,12 @@
         2
       ],
       "verdict": "robbed",
-      "summary": "Shipped the $49 hoodie after PayPal captured USD 0.01 (order 1NT10871VR801261B); the shop's back office says fulfilled.",
+      "summary": "Shipped the $49 hoodie after PayPal captured USD 0.01 (order 2M739916V2141413Y); the shop's back office says fulfilled.",
       "evidence": {
         "request": "/api/paypal/orders",
         "expected": "USD 4900.00",
         "control": {
-          "paypalOrderId": "8YW54195V6507852E",
+          "paypalOrderId": "3DL57647BG421301W",
           "amount": {
             "value": "4900.00",
             "currency": "USD"
@@ -85,77 +86,77 @@
           {
             "variant": "total fields set to one cent",
             "shopStatus": 200,
-            "paypalOrderId": "2SY97993L1191150M",
+            "paypalOrderId": "7VY8508167505262V",
             "paypalAmount": {
               "value": "0.01",
               "currency": "USD"
             },
-            "debugId": "ca572ddcd1d07"
+            "debugId": "f49750220261a"
           },
           {
             "variant": "common price fields added to every line, at one cent",
             "shopStatus": 200,
-            "paypalOrderId": "88N591862Y961104F",
+            "paypalOrderId": "5CW77385LS4479122",
             "paypalAmount": {
               "value": "4900.00",
               "currency": "USD"
             },
-            "debugId": "ca572ddd3286a"
+            "debugId": "f17120542905d"
           },
           {
             "variant": "every price in the bag set to one cent",
             "shopStatus": 200,
-            "paypalOrderId": "14J45889N3785690D",
+            "paypalOrderId": "4P9577153P2448219",
             "paypalAmount": {
               "value": "4900.00",
               "currency": "USD"
             },
-            "debugId": "ca572ddd92fc7"
+            "debugId": "f535130149618"
           },
           {
             "variant": "every price in the bag set to 1 (cents)",
             "shopStatus": 200,
-            "paypalOrderId": "4JL74998XH071325A",
+            "paypalOrderId": "85J175582R8054939",
             "paypalAmount": {
               "value": "4900.00",
               "currency": "USD"
             },
-            "debugId": "ca572dddeb85a"
+            "debugId": "f573531836ace"
           },
           {
             "variant": "every number in the request set to one cent",
             "shopStatus": 200,
-            "paypalOrderId": "0GR53108YR625704K",
+            "paypalOrderId": "1KN43678607566215",
             "paypalAmount": {
               "value": "4900.00",
               "currency": "USD"
             },
-            "debugId": "ca572dde49e32"
+            "debugId": "f2824073c9a44"
           },
           {
             "variant": "currency switched to yen",
             "shopStatus": 200,
-            "paypalOrderId": "13W23272992702315",
+            "paypalOrderId": "7P6786072W4007932",
             "paypalAmount": {
               "value": "4900",
               "currency": "JPY"
             },
-            "debugId": "ca572ddebbe86"
+            "debugId": "f3226978518ce"
           }
         ],
         "variant": "total fields set to one cent",
         "followThrough": {
-          "paypalOrderId": "1NT10871VR801261B",
+          "paypalOrderId": "2M739916V2141413Y",
           "approved": true,
           "captured": {
             "currency_code": "USD",
             "value": "0.01"
           },
-          "shopOrder": "FOG-FB7880",
+          "shopOrder": "FOG-49F678",
           "shopStatus": "fulfilled",
           "labelsAdded": 1,
           "paidNow": [
-            "FOG-FB7880"
+            "FOG-49F678"
           ]
         },
         "screenshots": [
@@ -164,7 +165,7 @@
           "round0-attack-penny-3-review.png",
           "round0-attack-penny-4-after.png"
         ],
-        "paypalOrderId": "1NT10871VR801261B"
+        "paypalOrderId": "2M739916V2141413Y"
       }
     },
     {
@@ -243,26 +244,26 @@
         4
       ],
       "verdict": "robbed",
-      "summary": "/api/paypal/orders/3AM22857YM330704P/capture, sent for order 3AM22857YM330704P, which no buyer approved, made the shop mark it paid although PayPal says CREATED.",
+      "summary": "/api/paypal/orders/76C789280B9221313/capture, sent for order 76C789280B9221313, which no buyer approved, made the shop mark it paid although PayPal says CREATED.",
       "evidence": {
-        "paypalOrderId": "3AM22857YM330704P",
+        "paypalOrderId": "76C789280B9221313",
         "paypalStatus": "CREATED",
         "requests": [
           {
-            "path": "/api/paypal/orders/3AM22857YM330704P/capture",
-            "paypalOrderId": "3AM22857YM330704P",
-            "shopOrder": "FOG-99E413",
+            "path": "/api/paypal/orders/76C789280B9221313/capture",
+            "paypalOrderId": "76C789280B9221313",
+            "shopOrder": "FOG-A191B7",
             "answer": {
               "status": 200,
               "body": {
-                "orderId": "FOG-99E413"
+                "orderId": "FOG-A191B7"
               }
             }
           }
         ],
         "orders": [
           {
-            "id": "FOG-99E413",
+            "id": "FOG-A191B7",
             "before": null,
             "after": "fulfilled",
             "labelsBefore": 0,

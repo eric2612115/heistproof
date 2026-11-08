@@ -18,6 +18,7 @@ const CHECKED = {
   "fogline-after": "The coding agent's checkout, checked again",
   "copper-kettle": "Copper Kettle, careful, built differently",
   "copper-kettle-binding": "Copper Kettle with one planted mistake only the AI thief can see",
+  "proshop-v2-before": "ProShop v2, a real open-source shop (400+ forks), before its author's 2023 fix",
 };
 const rounds = (n) => (n === 1 ? "1 round" : `${n} rounds`);
 function checkout(mode, template, fixes) {
@@ -27,7 +28,7 @@ function checkout(mode, template, fixes) {
   return CHECKED[template] ?? template;
 }
 /** The story order: the agent's run, its control, the robbed checkouts, the fix, then the rest. */
-const RANK = (mode, template) => ({ heistproof: 0, baseline: 1 })[mode] ?? (mode === "existing" ? 4 : { "fogline-afternoon": 2, "fogline-naive": 3, "copper-kettle": 5, "copper-kettle-binding": 6, "fogline-after": 7 }[template] ?? 8);
+const RANK = (mode, template) => ({ heistproof: 0, baseline: 1 })[mode] ?? (mode === "existing" ? 4 : { "proshop-v2-before": 1.5, "fogline-afternoon": 2, "fogline-naive": 3, "copper-kettle": 5, "copper-kettle-binding": 6, "fogline-after": 7 }[template] ?? 8);
 
 export function rows() {
   const dir = path.join(root, "runs");
@@ -42,10 +43,11 @@ export function rows() {
     const last = all.at(-1) ?? { attacks: [] };
     const robbed = last.attacks.filter((a) => a.verdict === "robbed").length;
     const held = last.attacks.filter((a) => a.verdict === "held").length;
-    const other = last.attacks.length - robbed - held;
+    const na = last.attacks.filter((a) => a.verdict === "n/a").length;
+    const other = last.attacks.length - robbed - held - na;
     const scripted = robbed
-      ? `**${robbed} got through**, ${held} blocked${last.attacks.length < 10 ? ` (${last.attacks.length} of 10 ran)` : ""}`
-      : `${held} of 10 blocked${other ? `, ${other} could not run` : ""}${last.attacks.length < 10 ? `, ${10 - last.attacks.length} not run` : ""}`;
+      ? `**${robbed} got through**, ${held} blocked${na ? `, ${na} do not apply` : ""}${last.attacks.length < 10 ? ` (${last.attacks.length} of 10 ran)` : ""}`
+      : `${held} of 10 blocked${na ? `, ${na} do not apply` : ""}${other ? `, ${other} could not run` : ""}${last.attacks.length < 10 ? `, ${10 - last.attacks.length} not run` : ""}`;
     const thief = last.thief;
     const got = thief?.plans?.filter((p) => p.verdict === "robbed").length ?? 0;
     const repeat = thief?.plans?.filter((p) => p.verdict === "repeat").length ?? 0;

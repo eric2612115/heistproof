@@ -1,0 +1,4541 @@
+[
+  {
+    "at": "2026-11-08T06:03:31.631Z",
+    "method": "POST",
+    "path": "/v1/oauth2/token",
+    "status": 200,
+    "debugId": "f67646643e30d",
+    "requestContentType": "application/x-www-form-urlencoded"
+  },
+  {
+    "at": "2026-11-08T06:03:32.948Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f43256116bda9",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-C3C91F",
+          "custom_id": "KC-C3C91F",
+          "invoice_id": "KC-C3C91F-0bbd",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "4SB597749C5269217",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=4SB597749C5269217",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:03:48.450Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/4SB597749C5269217/capture",
+    "status": 201,
+    "debugId": "f1401013b3ed6",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "id": "4SB597749C5269217",
+      "status": "COMPLETED",
+      "payment_source": {
+        "paypal": {
+          "email_address": "sandbox-buyer@personal.example.com",
+          "account_id": "V7ERP7YJL2X38",
+          "account_status": "VERIFIED",
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "address": {
+            "country_code": "US"
+          }
+        }
+      },
+      "purchase_units": [
+        {
+          "reference_id": "KC-C3C91F",
+          "shipping": {
+            "name": {
+              "full_name": "John Doe"
+            },
+            "address": {
+              "address_line_1": "2211 N First St",
+              "admin_area_2": "San Jose",
+              "admin_area_1": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            }
+          },
+          "payments": {
+            "captures": [
+              {
+                "id": "8RK062132J345092R",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "64.00"
+                },
+                "final_capture": true,
+                "seller_protection": {
+                  "status": "ELIGIBLE",
+                  "dispute_categories": [
+                    "ITEM_NOT_RECEIVED",
+                    "UNAUTHORIZED_TRANSACTION"
+                  ]
+                },
+                "seller_receivable_breakdown": {
+                  "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "paypal_fee": {
+                    "currency_code": "USD",
+                    "value": "2.72"
+                  },
+                  "net_amount": {
+                    "currency_code": "USD",
+                    "value": "61.28"
+                  }
+                },
+                "invoice_id": "KC-C3C91F-0bbd",
+                "custom_id": "KC-C3C91F",
+                "links": [
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+                    "rel": "self",
+                    "method": "GET"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+                    "rel": "refund",
+                    "method": "POST"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ],
+                "create_time": "2026-11-08T06:03:47Z",
+                "update_time": "2026-11-08T06:03:47Z"
+              }
+            ]
+          }
+        }
+      ],
+      "payer": {
+        "name": {
+          "given_name": "John",
+          "surname": "Doe"
+        },
+        "email_address": "sandbox-buyer@personal.example.com",
+        "payer_id": "V7ERP7YJL2X38",
+        "address": {
+          "country_code": "US"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:03:59.447Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f2838563d9e47",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "2c8473f3-db3a-11f1-9e97-db335d5362ba",
+      "transmission_sig": "fKNNlKlK+bjehNYsTRq7DVRE3KbPtG5ZCWkeloP8j/ZknOnIPElHMhPpIOp/R1kzD0TXrketJuTTJWDD3LgKhiUQCDkUGDO67HwUWU3CNbMvch4rlSgxMIxIK9nW/hkCIfjwBrgxtGPDrXUgdizQHOMx7HpcWvnGbNKk/7uU0hscI/zEMpOWw/TZhwO36FcEYs5SXJPnWdtG3JEDyQ+hdmPhnPYZV1iReoOxpt70HLrCdyIaa6za3mfy/2T6eTKIt3MmOAftC40iWIAl+HTV+jlYWBgluuE5ytzUjiByDKBDiiK2Wthr2YPxknpLJTkWqFMo7kdXCQcm4SdeWQL0kw==",
+      "transmission_time": "2026-11-08T06:03:52Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-2DK92147JB162032M-7X527730G63224837",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:03:52.504Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "update_time": "2026-11-08T06:03:47Z",
+          "create_time": "2026-11-08T06:03:47Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-C3C91F",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-C3C91F",
+              "invoice_id": "KC-C3C91F-0bbd",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "1",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              },
+              "payments": {
+                "captures": [
+                  {
+                    "id": "8RK062132J345092R",
+                    "status": "COMPLETED",
+                    "amount": {
+                      "currency_code": "USD",
+                      "value": "64.00"
+                    },
+                    "final_capture": true,
+                    "seller_protection": {
+                      "status": "ELIGIBLE",
+                      "dispute_categories": [
+                        "ITEM_NOT_RECEIVED",
+                        "UNAUTHORIZED_TRANSACTION"
+                      ]
+                    },
+                    "seller_receivable_breakdown": {
+                      "gross_amount": {
+                        "currency_code": "USD",
+                        "value": "64.00"
+                      },
+                      "paypal_fee": {
+                        "currency_code": "USD",
+                        "value": "2.72"
+                      },
+                      "net_amount": {
+                        "currency_code": "USD",
+                        "value": "61.28"
+                      }
+                    },
+                    "invoice_id": "KC-C3C91F-0bbd",
+                    "custom_id": "KC-C3C91F",
+                    "links": [
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+                        "rel": "self",
+                        "method": "GET"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+                        "rel": "refund",
+                        "method": "POST"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+                        "rel": "up",
+                        "method": "GET"
+                      }
+                    ],
+                    "create_time": "2026-11-08T06:03:47Z",
+                    "update_time": "2026-11-08T06:03:47Z"
+                  }
+                ]
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "self",
+              "method": "GET"
+            }
+          ],
+          "id": "4SB597749C5269217",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "COMPLETED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2DK92147JB162032M-7X527730G63224837",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2DK92147JB162032M-7X527730G63224837/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:23.442Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f58849787a3ae",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-34F01D",
+          "custom_id": "KC-34F01D",
+          "invoice_id": "KC-34F01D-605b",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "41E5968990481901U",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/41E5968990481901U",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=41E5968990481901U",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/41E5968990481901U",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/41E5968990481901U/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:24.540Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f13322510c56b",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-2FEF66",
+          "custom_id": "KC-2FEF66",
+          "invoice_id": "KC-2FEF66-f8e9",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "7JN54110FF156493M",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7JN54110FF156493M",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=7JN54110FF156493M",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7JN54110FF156493M",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7JN54110FF156493M/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:25.620Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f226376a042b9",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-6AAAFD",
+          "custom_id": "KC-6AAAFD",
+          "invoice_id": "KC-6AAAFD-0a0d",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "1VS2463654227780P",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1VS2463654227780P",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=1VS2463654227780P",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1VS2463654227780P",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1VS2463654227780P/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:26.671Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f6361998bd75c",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-667613",
+          "custom_id": "KC-667613",
+          "invoice_id": "KC-667613-2c29",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "55555406T7287804T",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/55555406T7287804T",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=55555406T7287804T",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/55555406T7287804T",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/55555406T7287804T/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:27.758Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f230175120aa8",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-90EB7E",
+          "custom_id": "KC-90EB7E",
+          "invoice_id": "KC-90EB7E-ad42",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "3MC02990412258841",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3MC02990412258841",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=3MC02990412258841",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3MC02990412258841",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3MC02990412258841/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:28.059Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f67329455ca8e",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "3f3e00c6-db3a-11f1-bdb3-4b489823879c",
+      "transmission_sig": "hsfS83ixvV9Trwg7XtvgIkpXhfZvtsbXKz/Jn0ZXsLJbeqw89Rmydv0C3yoom7YkP2wAnLEakGBT9lSRqai/7NQThYVVx0Npg/5oM7g87NLDiHDVSduSkQ5kRvY/J/VNhJP4pc+bHW5u2eX2xMB8p3ZhM5b3qCULE7A+bNfF9HoFqClKlx8+DJMFTt4iUaeGhOHEM9a3oE0x6Rtmc7G4evYVKToGFU8+ciJsMOIcDqE8Sd10mp/gMZAYF1PkmJGO7F3vNvjoLIUxwmz8Lh4yzWwZj0ZQuUBHRLir9k6UqBzujCJL9X1tF5fLtjvvZqbTN+sHmZhC5LwFFWSbZTIe6Q==",
+      "transmission_time": "2026-11-08T06:04:24Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-41K62719S45755419-9B286117VR4644910",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:04:13.667Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "8RK062132J345092R",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-C3C91F-0bbd",
+          "custom_id": "KC-C3C91F",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "4SB597749C5269217"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:03:47Z",
+          "update_time": "2026-11-08T06:03:47Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:28.818Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f673294d66505",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-6E4686",
+          "custom_id": "KC-6E4686",
+          "invoice_id": "KC-6E4686-06d5",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "2PR21139V9437921Y",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2PR21139V9437921Y",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=2PR21139V9437921Y",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2PR21139V9437921Y",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2PR21139V9437921Y/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:29.889Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f266119fb4b07",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-9433EE",
+          "custom_id": "KC-9433EE",
+          "invoice_id": "KC-9433EE-1bc8",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "9YN7539676150571D",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9YN7539676150571D",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=9YN7539676150571D",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9YN7539676150571D",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9YN7539676150571D/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:39.686Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f4620250f01f4",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-F9A6AD",
+          "custom_id": "KC-F9A6AD",
+          "invoice_id": "KC-F9A6AD-92e5",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "9J877606728997215",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9J877606728997215",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=9J877606728997215",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9J877606728997215",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9J877606728997215/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:41.797Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/9J877606728997215/capture",
+    "status": 422,
+    "debugId": "f697336895300",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "name": "UNPROCESSABLE_ENTITY",
+      "details": [
+        {
+          "issue": "ORDER_NOT_APPROVED",
+          "description": "Payer has not yet approved the Order for payment. Please redirect the payer to the 'rel':'approve' url returned as part of the HATEOAS links within the Create Order call or provide a valid payment_source in the request."
+        }
+      ],
+      "message": "The requested action could not be performed, semantically incorrect, or failed business validation.",
+      "debug_id": "f697336895300",
+      "links": [
+        {
+          "href": "https://developer.paypal.com/api/rest/reference/orders/v2/errors/#ORDER_NOT_APPROVED",
+          "rel": "information_link",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:04:54.280Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f231747a19747",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-FEB913",
+          "custom_id": "KC-FEB913",
+          "invoice_id": "KC-FEB913-25b5",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "1XE61001JJ724604M",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=1XE61001JJ724604M",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:05:13.882Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f873618f46538",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "5c1dd0d0-db3a-11f1-8118-a71791ac076f",
+      "transmission_sig": "y6gnOYb50hH15EUTNG1wDd3sivvG9bS9eNZjwCw7m9eOA1/v6eK2IZ19NCBGSRVtZBhB1P2FWinPvu4CDrGidg2t/mto5Ck+9uXOAvbJpgHxYzODp7ZO0bLiX4O/x33yqgB9wsoQUYYvcibpDKZ4gCVO1mSl+kNAIE9SasF6b9XXJA3lv2c46WUUAGLGpGf6IcNum4CJaORS62YRxbqkJWdbbgUFIGkG43od3feQpuURAOhTsSzeKNaggZ+OGj8CksRt9gIb6RZcwmlt6f38aXewHTn9a3CnEcvlzT0zOJeo+Qv6q/pHaDexzb3myB2EazQJxGmftAAwD3gw8ADjeQ==",
+      "transmission_time": "2026-11-08T06:05:12Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-7EC46401CE858101E-7UK45304PV767184J",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:05:12.359Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "create_time": "2026-11-08T06:04:53Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-FEB913",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-FEB913",
+              "invoice_id": "KC-FEB913-25b5",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "1",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M",
+              "rel": "update",
+              "method": "PATCH"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M/capture",
+              "rel": "capture",
+              "method": "POST"
+            }
+          ],
+          "id": "1XE61001JJ724604M",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "APPROVED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-7EC46401CE858101E-7UK45304PV767184J",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-7EC46401CE858101E-7UK45304PV767184J/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:05:29.132Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f274446bd95cd",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-CF8220",
+          "custom_id": "KC-CF8220",
+          "invoice_id": "KC-CF8220-f20f",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "0WS18563XC816811G",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0WS18563XC816811G",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=0WS18563XC816811G",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0WS18563XC816811G",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0WS18563XC816811G/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:05:45.801Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/0WS18563XC816811G/capture",
+    "status": 422,
+    "debugId": "f226750d20fa8",
+    "injected": "{\"mock_application_codes\":\"INSTRUMENT_DECLINED\"}",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "name": "UNPROCESSABLE_ENTITY",
+      "details": [
+        {
+          "issue": "INSTRUMENT_DECLINED",
+          "description": "The instrument presented  was either declined by the processor or bank, or it can't be used for this payment."
+        }
+      ],
+      "message": "The requested action could not be performed, semantically incorrect, or failed business validation.",
+      "debug_id": "3fc230ceac4f5",
+      "links": [
+        {
+          "href": "https://developer.paypal.com/docs/api/orders/v2/#error-INSTRUMENT_DECLINED",
+          "rel": "information_link",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:05:48.247Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f638034c381c4",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "709fc14f-db3a-11f1-8118-038236d4578b",
+      "transmission_sig": "m4GGpzhaKXU2hVbtFVrVuTpapYwX7RGEO7G5rI9eteqQZhYwI+4vXkhhy5Sq4X5j0LfgqSi/OjxUHlYwvt+cJGgU1BKqjmJDDCnv2VHQ435kROuSe3Xr3I3kMDJQoooe1C1kLE+H0a2KCKgA+1y8Cb4XVPOleWN0lgaWYGrTvhptdwZmNFbdnClXcT+NT8a8yoRs8lI+ar5wkkQLg+29/BojRfEkIIYUql3WCo2fP9oQ7EMQvRa6YhLgxzbX/pmMCM53KX06RL43qX5vTPLxrreSupSncCHtUZFeoHxX999S75dZ2nx/4mdJEoTT8fD9sEYYwaYLCoU59K0bPIRD1Q==",
+      "transmission_time": "2026-11-08T06:05:46Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-3AV12853X2808351E-9J218693PN570761C",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:05:46.795Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "create_time": "2026-11-08T06:05:28Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-CF8220",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-CF8220",
+              "invoice_id": "KC-CF8220-f20f",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "1",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0WS18563XC816811G",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0WS18563XC816811G",
+              "rel": "update",
+              "method": "PATCH"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0WS18563XC816811G/capture",
+              "rel": "capture",
+              "method": "POST"
+            }
+          ],
+          "id": "0WS18563XC816811G",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "APPROVED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3AV12853X2808351E-9J218693PN570761C",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3AV12853X2808351E-9J218693PN570761C/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:06:04.727Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/1XE61001JJ724604M/capture",
+    "status": 201,
+    "debugId": "f3557224df9ac",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "id": "1XE61001JJ724604M",
+      "status": "COMPLETED",
+      "payment_source": {
+        "paypal": {
+          "email_address": "sandbox-buyer@personal.example.com",
+          "account_id": "V7ERP7YJL2X38",
+          "account_status": "VERIFIED",
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "address": {
+            "country_code": "US"
+          }
+        }
+      },
+      "purchase_units": [
+        {
+          "reference_id": "KC-FEB913",
+          "shipping": {
+            "name": {
+              "full_name": "John Doe"
+            },
+            "address": {
+              "address_line_1": "2211 N First St",
+              "admin_area_2": "San Jose",
+              "admin_area_1": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            }
+          },
+          "payments": {
+            "captures": [
+              {
+                "id": "3R693479LH002772S",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "64.00"
+                },
+                "final_capture": true,
+                "seller_protection": {
+                  "status": "ELIGIBLE",
+                  "dispute_categories": [
+                    "ITEM_NOT_RECEIVED",
+                    "UNAUTHORIZED_TRANSACTION"
+                  ]
+                },
+                "seller_receivable_breakdown": {
+                  "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "paypal_fee": {
+                    "currency_code": "USD",
+                    "value": "2.72"
+                  },
+                  "net_amount": {
+                    "currency_code": "USD",
+                    "value": "61.28"
+                  }
+                },
+                "invoice_id": "KC-FEB913-25b5",
+                "custom_id": "KC-FEB913",
+                "links": [
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/3R693479LH002772S",
+                    "rel": "self",
+                    "method": "GET"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/3R693479LH002772S/refund",
+                    "rel": "refund",
+                    "method": "POST"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ],
+                "create_time": "2026-11-08T06:06:04Z",
+                "update_time": "2026-11-08T06:06:04Z"
+              }
+            ]
+          }
+        }
+      ],
+      "payer": {
+        "name": {
+          "given_name": "John",
+          "surname": "Doe"
+        },
+        "email_address": "sandbox-buyer@personal.example.com",
+        "payer_id": "V7ERP7YJL2X38",
+        "address": {
+          "country_code": "US"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:06:12.462Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f9193276d631f",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-505195",
+          "custom_id": "KC-505195",
+          "invoice_id": "KC-505195-11dd",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "7AX80068UA195622H",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7AX80068UA195622H",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=7AX80068UA195622H",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7AX80068UA195622H",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7AX80068UA195622H/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:06:14.782Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f5871345e28c1",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "3f3e00c6-db3a-11f1-bdb3-4b489823879c",
+      "transmission_sig": "hsfS83ixvV9Trwg7XtvgIkpXhfZvtsbXKz/Jn0ZXsLJbeqw89Rmydv0C3yoom7YkP2wAnLEakGBT9lSRqai/7NQThYVVx0Npg/5oM7g87NLDiHDVSduSkQ5kRvY/J/VNhJP4pc+bHW5u2eX2xMB8p3ZhM5b3qCULE7A+bNfF9HoFqClKlx8+DJMFTt4iUaeGhOHEM9a3oE0x6Rtmc7G4evYVKToGFU8+ciJsMOIcDqE8Sd10mp/gMZAYF1PkmJGO7F3vNvjoLIUxwmz8Lh4yzWwZj0ZQuUBHRLir9k6UqBzujCJL9X1tF5fLtjvvZqbTN+sHmZhC5LwFFWSbZTIe6Q==",
+      "transmission_time": "2026-11-08T06:04:24Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-FORGED-1794117973992",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:04:13.667Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "FORGED1794117973992",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-505195",
+          "custom_id": "KC-505195",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "7AX80068UA195622H"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:03:47Z",
+          "update_time": "2026-11-08T06:03:47Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "FAILURE"
+    }
+  },
+  {
+    "at": "2026-11-08T06:06:17.396Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f26336200f7ab",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "80a52a9f-db3a-11f1-9e97-f93684567f3e",
+      "transmission_sig": "vAAtl7n6I4thn7B8p9EMY0A30peV3InbrQR3AvnwjafVTYB1O/ZMIuhr6Vcs1L0uDNW6Lip7uOxBdH7mX4RW1SL8V5wvk9vlScTHac0sEM4erSz4Tz4/5B8fZJhSU3e+c5NvltxbFREwePafjW6TA+NlBcVg1nAMZkJ3C39VpjL+EmEWBbqQU8IasKX6HqU2exeYBL4bXEMlIuKu5gqbw9cpIl1VSG/3/fajJUcvzLr0gMz3VtWHh/naAgPP4Dh7SCFoVIR/HTtvS3pDq/yqt8M3sMCrOubdAIFe+2ddjlEr4GMkMEDIeFy2JAP5xz+qxKd51c9v6mUQtWXhZIFKYA==",
+      "transmission_time": "2026-11-08T06:06:13Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-2NA63554GB072671N-3W433759G9417043K",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:06:08.428Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "3R693479LH002772S",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-FEB913-25b5",
+          "custom_id": "KC-FEB913",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "1XE61001JJ724604M"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:06:04Z",
+          "update_time": "2026-11-08T06:06:04Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/3R693479LH002772S",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/3R693479LH002772S/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1XE61001JJ724604M",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2NA63554GB072671N-3W433759G9417043K",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2NA63554GB072671N-3W433759G9417043K/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:06:21.585Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f123855e469c6",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "3f3e00c6-db3a-11f1-bdb3-4b489823879c",
+      "transmission_sig": "hsfS83ixvV9Trwg7XtvgIkpXhfZvtsbXKz/Jn0ZXsLJbeqw89Rmydv0C3yoom7YkP2wAnLEakGBT9lSRqai/7NQThYVVx0Npg/5oM7g87NLDiHDVSduSkQ5kRvY/J/VNhJP4pc+bHW5u2eX2xMB8p3ZhM5b3qCULE7A+bNfF9HoFqClKlx8+DJMFTt4iUaeGhOHEM9a3oE0x6Rtmc7G4evYVKToGFU8+ciJsMOIcDqE8Sd10mp/gMZAYF1PkmJGO7F3vNvjoLIUxwmz8Lh4yzWwZj0ZQuUBHRLir9k6UqBzujCJL9X1tF5fLtjvvZqbTN+sHmZhC5LwFFWSbZTIe6Q==",
+      "transmission_time": "2026-11-08T06:04:24Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-41K62719S45755419-9B286117VR4644910",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:04:13.667Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "8RK062132J345092R",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-C3C91F-0bbd",
+          "custom_id": "KC-C3C91F",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "4SB597749C5269217"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:03:47Z",
+          "update_time": "2026-11-08T06:03:47Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:06:21.943Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f250251928d74",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "3f3e00c6-db3a-11f1-bdb3-4b489823879c",
+      "transmission_sig": "hsfS83ixvV9Trwg7XtvgIkpXhfZvtsbXKz/Jn0ZXsLJbeqw89Rmydv0C3yoom7YkP2wAnLEakGBT9lSRqai/7NQThYVVx0Npg/5oM7g87NLDiHDVSduSkQ5kRvY/J/VNhJP4pc+bHW5u2eX2xMB8p3ZhM5b3qCULE7A+bNfF9HoFqClKlx8+DJMFTt4iUaeGhOHEM9a3oE0x6Rtmc7G4evYVKToGFU8+ciJsMOIcDqE8Sd10mp/gMZAYF1PkmJGO7F3vNvjoLIUxwmz8Lh4yzWwZj0ZQuUBHRLir9k6UqBzujCJL9X1tF5fLtjvvZqbTN+sHmZhC5LwFFWSbZTIe6Q==",
+      "transmission_time": "2026-11-08T06:04:24Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-41K62719S45755419-9B286117VR4644910",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:04:13.667Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "8RK062132J345092R",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-C3C91F-0bbd",
+          "custom_id": "KC-C3C91F",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "4SB597749C5269217"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:03:47Z",
+          "update_time": "2026-11-08T06:03:47Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:06:22.841Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f250251a6e29f",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "3f3e00c6-db3a-11f1-bdb3-4b489823879c",
+      "transmission_sig": "hsfS83ixvV9Trwg7XtvgIkpXhfZvtsbXKz/Jn0ZXsLJbeqw89Rmydv0C3yoom7YkP2wAnLEakGBT9lSRqai/7NQThYVVx0Npg/5oM7g87NLDiHDVSduSkQ5kRvY/J/VNhJP4pc+bHW5u2eX2xMB8p3ZhM5b3qCULE7A+bNfF9HoFqClKlx8+DJMFTt4iUaeGhOHEM9a3oE0x6Rtmc7G4evYVKToGFU8+ciJsMOIcDqE8Sd10mp/gMZAYF1PkmJGO7F3vNvjoLIUxwmz8Lh4yzWwZj0ZQuUBHRLir9k6UqBzujCJL9X1tF5fLtjvvZqbTN+sHmZhC5LwFFWSbZTIe6Q==",
+      "transmission_time": "2026-11-08T06:04:24Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-41K62719S45755419-9B286117VR4644910",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:04:13.667Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "8RK062132J345092R",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-C3C91F-0bbd",
+          "custom_id": "KC-C3C91F",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "4SB597749C5269217"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:03:47Z",
+          "update_time": "2026-11-08T06:03:47Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:06:31.228Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f578182a434c1",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "2c8473f3-db3a-11f1-9e97-db335d5362ba",
+      "transmission_sig": "fKNNlKlK+bjehNYsTRq7DVRE3KbPtG5ZCWkeloP8j/ZknOnIPElHMhPpIOp/R1kzD0TXrketJuTTJWDD3LgKhiUQCDkUGDO67HwUWU3CNbMvch4rlSgxMIxIK9nW/hkCIfjwBrgxtGPDrXUgdizQHOMx7HpcWvnGbNKk/7uU0hscI/zEMpOWw/TZhwO36FcEYs5SXJPnWdtG3JEDyQ+hdmPhnPYZV1iReoOxpt70HLrCdyIaa6za3mfy/2T6eTKIt3MmOAftC40iWIAl+HTV+jlYWBgluuE5ytzUjiByDKBDiiK2Wthr2YPxknpLJTkWqFMo7kdXCQcm4SdeWQL0kw==",
+      "transmission_time": "2026-11-08T06:03:52Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-2DK92147JB162032M-7X527730G63224837",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:03:52.504Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "update_time": "2026-11-08T06:03:47Z",
+          "create_time": "2026-11-08T06:03:47Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-C3C91F",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-C3C91F",
+              "invoice_id": "KC-C3C91F-0bbd",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "1",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              },
+              "payments": {
+                "captures": [
+                  {
+                    "id": "8RK062132J345092R",
+                    "status": "COMPLETED",
+                    "amount": {
+                      "currency_code": "USD",
+                      "value": "64.00"
+                    },
+                    "final_capture": true,
+                    "seller_protection": {
+                      "status": "ELIGIBLE",
+                      "dispute_categories": [
+                        "ITEM_NOT_RECEIVED",
+                        "UNAUTHORIZED_TRANSACTION"
+                      ]
+                    },
+                    "seller_receivable_breakdown": {
+                      "gross_amount": {
+                        "currency_code": "USD",
+                        "value": "64.00"
+                      },
+                      "paypal_fee": {
+                        "currency_code": "USD",
+                        "value": "2.72"
+                      },
+                      "net_amount": {
+                        "currency_code": "USD",
+                        "value": "61.28"
+                      }
+                    },
+                    "invoice_id": "KC-C3C91F-0bbd",
+                    "custom_id": "KC-C3C91F",
+                    "links": [
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+                        "rel": "self",
+                        "method": "GET"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+                        "rel": "refund",
+                        "method": "POST"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+                        "rel": "up",
+                        "method": "GET"
+                      }
+                    ],
+                    "create_time": "2026-11-08T06:03:47Z",
+                    "update_time": "2026-11-08T06:03:47Z"
+                  }
+                ]
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "self",
+              "method": "GET"
+            }
+          ],
+          "id": "4SB597749C5269217",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "COMPLETED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2DK92147JB162032M-7X527730G63224837",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2DK92147JB162032M-7X527730G63224837/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:10:27.104Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "ca5726a23be73",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-37068E",
+          "custom_id": "KC-37068E",
+          "invoice_id": "KC-37068E-5f5e",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "3GC71400H3888713S",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3GC71400H3888713S",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=3GC71400H3888713S",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3GC71400H3888713S",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3GC71400H3888713S/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:10:50.103Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/3GC71400H3888713S/capture",
+    "status": 201,
+    "debugId": "ca5726aafdf1e",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "id": "3GC71400H3888713S",
+      "status": "COMPLETED",
+      "payment_source": {
+        "paypal": {
+          "email_address": "sandbox-buyer@personal.example.com",
+          "account_id": "V7ERP7YJL2X38",
+          "account_status": "VERIFIED",
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "address": {
+            "country_code": "US"
+          }
+        }
+      },
+      "purchase_units": [
+        {
+          "reference_id": "KC-37068E",
+          "shipping": {
+            "name": {
+              "full_name": "John Doe"
+            },
+            "address": {
+              "address_line_1": "2211 N First St",
+              "admin_area_2": "San Jose",
+              "admin_area_1": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            }
+          },
+          "payments": {
+            "captures": [
+              {
+                "id": "3Y9794746U083550D",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "64.00"
+                },
+                "final_capture": true,
+                "seller_protection": {
+                  "status": "ELIGIBLE",
+                  "dispute_categories": [
+                    "ITEM_NOT_RECEIVED",
+                    "UNAUTHORIZED_TRANSACTION"
+                  ]
+                },
+                "seller_receivable_breakdown": {
+                  "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "paypal_fee": {
+                    "currency_code": "USD",
+                    "value": "2.72"
+                  },
+                  "net_amount": {
+                    "currency_code": "USD",
+                    "value": "61.28"
+                  }
+                },
+                "invoice_id": "KC-37068E-5f5e",
+                "custom_id": "KC-37068E",
+                "links": [
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/3Y9794746U083550D",
+                    "rel": "self",
+                    "method": "GET"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/3Y9794746U083550D/refund",
+                    "rel": "refund",
+                    "method": "POST"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3GC71400H3888713S",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ],
+                "create_time": "2026-11-08T06:10:49Z",
+                "update_time": "2026-11-08T06:10:49Z"
+              }
+            ]
+          }
+        }
+      ],
+      "payer": {
+        "name": {
+          "given_name": "John",
+          "surname": "Doe"
+        },
+        "email_address": "sandbox-buyer@personal.example.com",
+        "payer_id": "V7ERP7YJL2X38",
+        "address": {
+          "country_code": "US"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3GC71400H3888713S",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:10:53.621Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726acb5c38",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "26f06c7b-db3b-11f1-bdb3-7be10ef462bf",
+      "transmission_sig": "BQF+689cmkUlctZIl1iavRj0vY2ZCr1PNOnE/VkCOkoPQjNWoINwBVPZclkPcK4V11aepddw21cF85cOFtuwIATNymG/ob+1Z/NCzq67rRQiYKjWf1HmULfL7WFka4nzHory9E+lhhKNUvEfN1/1lo6H0v4V4NXVl78bciFeDSSBp0ZQwU2uibFhLQ2oglkbaYt4UdKvoIS8lYB6h2W8ts+moeCH3WRLRHiG9OVwbjbK1FWjuetiibUCoQ88Ju4SNAp3XOzw2E73c+VQNN7QcTVSFGiggEAttuoijj/uGUCTakAkZL6uI3LhWqXgXj6qtFJhEeMc7KjYPJNynze3ig==",
+      "transmission_time": "2026-11-08T06:10:52Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-9YC459336J230560N-7GK39273FA348434A",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:10:52.646Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "update_time": "2026-11-08T06:10:49Z",
+          "create_time": "2026-11-08T06:10:49Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-37068E",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-37068E",
+              "invoice_id": "KC-37068E-5f5e",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "1",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              },
+              "payments": {
+                "captures": [
+                  {
+                    "id": "3Y9794746U083550D",
+                    "status": "COMPLETED",
+                    "amount": {
+                      "currency_code": "USD",
+                      "value": "64.00"
+                    },
+                    "final_capture": true,
+                    "seller_protection": {
+                      "status": "ELIGIBLE",
+                      "dispute_categories": [
+                        "ITEM_NOT_RECEIVED",
+                        "UNAUTHORIZED_TRANSACTION"
+                      ]
+                    },
+                    "seller_receivable_breakdown": {
+                      "gross_amount": {
+                        "currency_code": "USD",
+                        "value": "64.00"
+                      },
+                      "paypal_fee": {
+                        "currency_code": "USD",
+                        "value": "2.72"
+                      },
+                      "net_amount": {
+                        "currency_code": "USD",
+                        "value": "61.28"
+                      }
+                    },
+                    "invoice_id": "KC-37068E-5f5e",
+                    "custom_id": "KC-37068E",
+                    "links": [
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/3Y9794746U083550D",
+                        "rel": "self",
+                        "method": "GET"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/3Y9794746U083550D/refund",
+                        "rel": "refund",
+                        "method": "POST"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3GC71400H3888713S",
+                        "rel": "up",
+                        "method": "GET"
+                      }
+                    ],
+                    "create_time": "2026-11-08T06:10:49Z",
+                    "update_time": "2026-11-08T06:10:49Z"
+                  }
+                ]
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3GC71400H3888713S",
+              "rel": "self",
+              "method": "GET"
+            }
+          ],
+          "id": "3GC71400H3888713S",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "COMPLETED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9YC459336J230560N-7GK39273FA348434A",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9YC459336J230560N-7GK39273FA348434A/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:01.076Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726afa5c65",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "29e01264-db3b-11f1-bdb3-2bdbfdbcd781",
+      "transmission_sig": "hL8IOf9erIcSCjzKECg4d1ZzVT6d0492m9TU/x42i15hpe7hQhrMMiz2T8IJG79QQfjP8vn8Bu5utvuEx5gegHsOU2fQlspnW/SR4bIwbqA8hIhgvQWQU1VA+elbOQNM9DFb8xC+YXw7HGD0dgj4GCCXANE+LzG1y08xuYJWSxQsCOb8mZAPG2AKG5anF+k1x3o9apC0QWWIDfQG/Luh2ijmIwSPbgD4WdqCbTE5SPtkUw7Y/oWydQtUIFk24LcZPAZLvtzsXJ+dG4QChUzGMlz2zNV56v8EdHJ+bH6FaOJOooM4/uzzlbVPZAxMPtOKg12+Lkea8ChWRCVNo6Lehg==",
+      "transmission_time": "2026-11-08T06:10:57Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-4CR3795298712583V-5MK80477F7862653B",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:10:53.867Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "3Y9794746U083550D",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-37068E-5f5e",
+          "custom_id": "KC-37068E",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "3GC71400H3888713S"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:10:49Z",
+          "update_time": "2026-11-08T06:10:49Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/3Y9794746U083550D",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/3Y9794746U083550D/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3GC71400H3888713S",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CR3795298712583V-5MK80477F7862653B",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CR3795298712583V-5MK80477F7862653B/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:04.846Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "ca5726b0ff8c7",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-EC60BA",
+          "custom_id": "KC-EC60BA",
+          "invoice_id": "KC-EC60BA-ec50",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "7TY8696117609180W",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7TY8696117609180W",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=7TY8696117609180W",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7TY8696117609180W",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7TY8696117609180W/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:10.320Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "ca5726b322d49",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-9699C6",
+          "custom_id": "KC-9699C6",
+          "invoice_id": "KC-9699C6-00fe",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "4G797929NV550180F",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G797929NV550180F",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=4G797929NV550180F",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G797929NV550180F",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G797929NV550180F/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:33.181Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726bc2fe48",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "3ea7e582-db3b-11f1-bdb3-9d646c474623",
+      "transmission_sig": "2HCxwCJnGJtw2NjQBJDs7/3O9nzLXbEgBjJ5ckbsnlbz3JnJMDAZwF9A53WRA8NFZcRgPZmEou3gQuhKOU4cHimPKqR4JNG2NnDgLdeMNIxbhmUiEQfEcvf7OEhrcwQ1JkaEfiafFL1x1fIzPH2/poz7mkyoxmwb8wy8wqdk9cfQ39hoPIRDI2eetmNxM3y+TRttOu6XRxoz97UtbqHvJegU555bZfkb04lcPiTgnaCusHFnvxEPCG66toAf9EIQmw3IQRY626B64givxSFAtCTce28oX9cE2sZUXj8gI54MXt0VYGjb/A3GF3muRIJ3qAReX4QpfHWkrf/MxTyvXg==",
+      "transmission_time": "2026-11-08T06:11:32Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-8GW107297U3770618-01W638383F106380Y",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:11:32.431Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "create_time": "2026-11-08T06:11:10Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-9699C6",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-9699C6",
+              "invoice_id": "KC-9699C6-00fe",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "1",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G797929NV550180F",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G797929NV550180F",
+              "rel": "update",
+              "method": "PATCH"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G797929NV550180F/capture",
+              "rel": "capture",
+              "method": "POST"
+            }
+          ],
+          "id": "4G797929NV550180F",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "APPROVED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8GW107297U3770618-01W638383F106380Y",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-8GW107297U3770618-01W638383F106380Y/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:36.782Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "ca5726bd78a55",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-01FCAB",
+          "custom_id": "KC-01FCAB",
+          "invoice_id": "KC-01FCAB-0e29",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "3CP085613R7867328",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3CP085613R7867328",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=3CP085613R7867328",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3CP085613R7867328",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3CP085613R7867328/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:37.325Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/3CP085613R7867328/capture",
+    "status": 422,
+    "debugId": "ca5726bdb3ded",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "name": "UNPROCESSABLE_ENTITY",
+      "details": [
+        {
+          "issue": "ORDER_NOT_APPROVED",
+          "description": "Payer has not yet approved the Order for payment. Please redirect the payer to the 'rel':'approve' url returned as part of the HATEOAS links within the Create Order call or provide a valid payment_source in the request."
+        }
+      ],
+      "message": "The requested action could not be performed, semantically incorrect, or failed business validation.",
+      "debug_id": "ca5726bdb3ded",
+      "links": [
+        {
+          "href": "https://developer.paypal.com/api/rest/reference/orders/v2/errors/#ORDER_NOT_APPROVED",
+          "rel": "information_link",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:38.235Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/4SB597749C5269217/capture",
+    "status": 201,
+    "debugId": "ca5726bdf0af1",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "id": "4SB597749C5269217",
+      "status": "COMPLETED",
+      "payment_source": {
+        "paypal": {
+          "email_address": "sandbox-buyer@personal.example.com",
+          "account_id": "V7ERP7YJL2X38",
+          "account_status": "VERIFIED",
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "address": {
+            "country_code": "US"
+          }
+        }
+      },
+      "purchase_units": [
+        {
+          "reference_id": "KC-C3C91F",
+          "shipping": {
+            "name": {
+              "full_name": "John Doe"
+            },
+            "address": {
+              "address_line_1": "2211 N First St",
+              "admin_area_2": "San Jose",
+              "admin_area_1": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            }
+          },
+          "payments": {
+            "captures": [
+              {
+                "id": "8RK062132J345092R",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "64.00"
+                },
+                "final_capture": true,
+                "seller_protection": {
+                  "status": "ELIGIBLE",
+                  "dispute_categories": [
+                    "ITEM_NOT_RECEIVED",
+                    "UNAUTHORIZED_TRANSACTION"
+                  ]
+                },
+                "seller_receivable_breakdown": {
+                  "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "paypal_fee": {
+                    "currency_code": "USD",
+                    "value": "2.72"
+                  },
+                  "net_amount": {
+                    "currency_code": "USD",
+                    "value": "61.28"
+                  }
+                },
+                "invoice_id": "KC-C3C91F-0bbd",
+                "custom_id": "KC-C3C91F",
+                "links": [
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+                    "rel": "self",
+                    "method": "GET"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+                    "rel": "refund",
+                    "method": "POST"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ],
+                "create_time": "2026-11-08T06:03:47Z",
+                "update_time": "2026-11-08T06:03:47Z"
+              }
+            ]
+          }
+        }
+      ],
+      "payer": {
+        "name": {
+          "given_name": "John",
+          "surname": "Doe"
+        },
+        "email_address": "sandbox-buyer@personal.example.com",
+        "payer_id": "V7ERP7YJL2X38",
+        "address": {
+          "country_code": "US"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:45.543Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "ca5726c0e7b33",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-EB8914",
+          "custom_id": "KC-EB8914",
+          "invoice_id": "KC-EB8914-e54e",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "6W772168AX570683M",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6W772168AX570683M",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=6W772168AX570683M",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6W772168AX570683M",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6W772168AX570683M/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:46.320Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726c14ff8b",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "2c8473f3-db3a-11f1-9e97-db335d5362ba",
+      "transmission_sig": "fKNNlKlK+bjehNYsTRq7DVRE3KbPtG5ZCWkeloP8j/ZknOnIPElHMhPpIOp/R1kzD0TXrketJuTTJWDD3LgKhiUQCDkUGDO67HwUWU3CNbMvch4rlSgxMIxIK9nW/hkCIfjwBrgxtGPDrXUgdizQHOMx7HpcWvnGbNKk/7uU0hscI/zEMpOWw/TZhwO36FcEYs5SXJPnWdtG3JEDyQ+hdmPhnPYZV1iReoOxpt70HLrCdyIaa6za3mfy/2T6eTKIt3MmOAftC40iWIAl+HTV+jlYWBgluuE5ytzUjiByDKBDiiK2Wthr2YPxknpLJTkWqFMo7kdXCQcm4SdeWQL0kw==",
+      "transmission_time": "2026-11-08T06:03:52Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-2DK92147JB162032M-7X527730G63224837",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:03:52.504Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "update_time": "2026-11-08T06:03:47Z",
+          "create_time": "2026-11-08T06:03:47Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-EB8914",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-EB8914",
+              "invoice_id": "KC-EB8914-0bbd",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "1",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              },
+              "payments": {
+                "captures": [
+                  {
+                    "id": "8RK062132J345092R",
+                    "status": "COMPLETED",
+                    "amount": {
+                      "currency_code": "USD",
+                      "value": "64.00"
+                    },
+                    "final_capture": true,
+                    "seller_protection": {
+                      "status": "ELIGIBLE",
+                      "dispute_categories": [
+                        "ITEM_NOT_RECEIVED",
+                        "UNAUTHORIZED_TRANSACTION"
+                      ]
+                    },
+                    "seller_receivable_breakdown": {
+                      "gross_amount": {
+                        "currency_code": "USD",
+                        "value": "64.00"
+                      },
+                      "paypal_fee": {
+                        "currency_code": "USD",
+                        "value": "2.72"
+                      },
+                      "net_amount": {
+                        "currency_code": "USD",
+                        "value": "61.28"
+                      }
+                    },
+                    "invoice_id": "KC-C3C91F-0bbd",
+                    "custom_id": "KC-C3C91F",
+                    "links": [
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+                        "rel": "self",
+                        "method": "GET"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+                        "rel": "refund",
+                        "method": "POST"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+                        "rel": "up",
+                        "method": "GET"
+                      }
+                    ],
+                    "create_time": "2026-11-08T06:03:47Z",
+                    "update_time": "2026-11-08T06:03:47Z"
+                  }
+                ]
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "self",
+              "method": "GET"
+            }
+          ],
+          "id": "4SB597749C5269217",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "COMPLETED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2DK92147JB162032M-7X527730G63224837",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2DK92147JB162032M-7X527730G63224837/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "FAILURE"
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:47.094Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726c19cfe9",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "3f3e00c6-db3a-11f1-bdb3-4b489823879c",
+      "transmission_sig": "hsfS83ixvV9Trwg7XtvgIkpXhfZvtsbXKz/Jn0ZXsLJbeqw89Rmydv0C3yoom7YkP2wAnLEakGBT9lSRqai/7NQThYVVx0Npg/5oM7g87NLDiHDVSduSkQ5kRvY/J/VNhJP4pc+bHW5u2eX2xMB8p3ZhM5b3qCULE7A+bNfF9HoFqClKlx8+DJMFTt4iUaeGhOHEM9a3oE0x6Rtmc7G4evYVKToGFU8+ciJsMOIcDqE8Sd10mp/gMZAYF1PkmJGO7F3vNvjoLIUxwmz8Lh4yzWwZj0ZQuUBHRLir9k6UqBzujCJL9X1tF5fLtjvvZqbTN+sHmZhC5LwFFWSbZTIe6Q==",
+      "transmission_time": "2026-11-08T06:04:24Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-41K62719S45755419-9B286117VR4644910",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:04:13.667Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "8RK062132J345092R",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-EB8914-0bbd",
+          "custom_id": "KC-EB8914",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "6W772168AX570683M"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:03:47Z",
+          "update_time": "2026-11-08T06:03:47Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/8RK062132J345092R/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4SB597749C5269217",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41K62719S45755419-9B286117VR4644910/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "FAILURE"
+    }
+  },
+  {
+    "at": "2026-11-08T06:11:59.751Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "ca5726c6709b7",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-145E1A",
+          "custom_id": "KC-145E1A",
+          "invoice_id": "KC-145E1A-b792",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "64.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "1",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "50M57084V31109252",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=50M57084V31109252",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:12:23.166Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "ca5726cf97b95",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-971A2D",
+          "custom_id": "KC-971A2D",
+          "invoice_id": "KC-971A2D-b603",
+          "amount": {
+            "currency_code": "USD",
+            "value": "640.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "640.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "10",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "20L0147917332914K",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/20L0147917332914K",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=20L0147917332914K",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/20L0147917332914K",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/20L0147917332914K/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:12:24.008Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726d007d20",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "59d5999b-db3b-11f1-98c7-fda175c1e8dd",
+      "transmission_sig": "R+TSgAKV+MPkjz3m4yoPsSRPL1Ut0qGfp0sTyxWVQfYfsWplIo0JtVXJT9rQqCW1OnlTFzUkJeI/DJe0xmF3grVA1HmGgKLHilFGb5SwT/Wkzf7yZkqr/5zDwe4ObXlnni1JDUFzQvHJ9DCVv4khAecLqUkrTmI8OQKrKhNcIvJ3/NH6Fi3QFZpHbLl2JfGTNzbzZawLuRc7ortoCdE0xFsiuvCiILVhzPh60pjKqL08pCd5JotXd5VLmaXVDJ29i/lHflQAvgjp4fbrU03y1Yq+eJU0ii7+WJVq5ow91dwLtS9vSEAwIgkBh7A/8ZpA9P6sQaV4uqsP2Q4IGj4ISw==",
+      "transmission_time": "2026-11-08T06:12:18Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-7BH12833M46818941-7N74674352173531S",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:12:18.048Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "create_time": "2026-11-08T06:11:59Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-145E1A",
+              "amount": {
+                "currency_code": "USD",
+                "value": "64.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-145E1A",
+              "invoice_id": "KC-145E1A-b792",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "1",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252",
+              "rel": "update",
+              "method": "PATCH"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252/capture",
+              "rel": "capture",
+              "method": "POST"
+            }
+          ],
+          "id": "50M57084V31109252",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "APPROVED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-7BH12833M46818941-7N74674352173531S",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-7BH12833M46818941-7N74674352173531S/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:12:24.677Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/50M57084V31109252/capture",
+    "status": 201,
+    "debugId": "ca5726cfcfb69",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "id": "50M57084V31109252",
+      "status": "COMPLETED",
+      "payment_source": {
+        "paypal": {
+          "email_address": "sandbox-buyer@personal.example.com",
+          "account_id": "V7ERP7YJL2X38",
+          "account_status": "VERIFIED",
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "address": {
+            "country_code": "US"
+          }
+        }
+      },
+      "purchase_units": [
+        {
+          "reference_id": "KC-145E1A",
+          "shipping": {
+            "name": {
+              "full_name": "John Doe"
+            },
+            "address": {
+              "address_line_1": "2211 N First St",
+              "admin_area_2": "San Jose",
+              "admin_area_1": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            }
+          },
+          "payments": {
+            "captures": [
+              {
+                "id": "3M757187UY4512632",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "64.00"
+                },
+                "final_capture": true,
+                "seller_protection": {
+                  "status": "ELIGIBLE",
+                  "dispute_categories": [
+                    "ITEM_NOT_RECEIVED",
+                    "UNAUTHORIZED_TRANSACTION"
+                  ]
+                },
+                "seller_receivable_breakdown": {
+                  "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "paypal_fee": {
+                    "currency_code": "USD",
+                    "value": "2.72"
+                  },
+                  "net_amount": {
+                    "currency_code": "USD",
+                    "value": "61.28"
+                  }
+                },
+                "invoice_id": "KC-145E1A-b792",
+                "custom_id": "KC-145E1A",
+                "links": [
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/3M757187UY4512632",
+                    "rel": "self",
+                    "method": "GET"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/3M757187UY4512632/refund",
+                    "rel": "refund",
+                    "method": "POST"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ],
+                "create_time": "2026-11-08T06:12:23Z",
+                "update_time": "2026-11-08T06:12:23Z"
+              }
+            ]
+          }
+        }
+      ],
+      "payer": {
+        "name": {
+          "given_name": "John",
+          "surname": "Doe"
+        },
+        "email_address": "sandbox-buyer@personal.example.com",
+        "payer_id": "V7ERP7YJL2X38",
+        "address": {
+          "country_code": "US"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:12:46.693Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726d8e5c93",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "692c24e9-db3b-11f1-bdb3-cf262e048061",
+      "transmission_sig": "YfmZXYlFA8IuH1zm3/4Y8NHsGIvknpBKMTmTF3nEguDf+o5W7xWk+9JAlpC8Uw4iHpnE12klcuvjUTxVDF0+x7d6qUG0rzFWoM7FPqYwOXXwG5640Op1HCHABeHa0CrpoNa5XRSrdFuomUNqYZqnxc/QSuaKaeVcU7kErhgCvQNMtWqxpJKU2TdYFE+rxxkWK90CJtjvXf4IIe+09XRjkwpJYMKrX+w7qRbmIQFJ/IpR0qDwYnZVRSmzN0tmwmG8FC2f9OXqNgSKRyJiqRb5cpG3iZf6pEw73l/bF410N24VeM7kvCs7En8jhCr0vi64kSkv5O7qH/WkO4pSiF2X9Q==",
+      "transmission_time": "2026-11-08T06:12:43Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-4KY534024R140120V-7DF67418NN672392V",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:12:31.740Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 64.0 USD",
+        "resource": {
+          "id": "3M757187UY4512632",
+          "amount": {
+            "currency_code": "USD",
+            "value": "64.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "64.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.72"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "61.28"
+            }
+          },
+          "invoice_id": "KC-145E1A-b792",
+          "custom_id": "KC-145E1A",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "50M57084V31109252"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:12:23Z",
+          "update_time": "2026-11-08T06:12:23Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/3M757187UY4512632",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/3M757187UY4512632/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50M57084V31109252",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4KY534024R140120V-7DF67418NN672392V",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4KY534024R140120V-7DF67418NN672392V/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:12:59.575Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "ca5726ddbf8af",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "KC-9FF96D",
+          "custom_id": "KC-9FF96D",
+          "invoice_id": "KC-9FF96D-ea5b",
+          "amount": {
+            "currency_code": "USD",
+            "value": "192.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "192.00"
+              }
+            }
+          },
+          "items": [
+            {
+              "name": "Copper Kettle",
+              "sku": "KC-KETTLE",
+              "quantity": "3",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "64.00"
+              },
+              "category": "PHYSICAL_GOODS"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "16G29779G6183521K",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/16G29779G6183521K",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=16G29779G6183521K",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/16G29779G6183521K",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/16G29779G6183521K/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:13:16.601Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/16G29779G6183521K/capture",
+    "status": 201,
+    "debugId": "ca5726e438d21",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "id": "16G29779G6183521K",
+      "status": "COMPLETED",
+      "payment_source": {
+        "paypal": {
+          "email_address": "sandbox-buyer@personal.example.com",
+          "account_id": "V7ERP7YJL2X38",
+          "account_status": "VERIFIED",
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "address": {
+            "country_code": "US"
+          }
+        }
+      },
+      "purchase_units": [
+        {
+          "reference_id": "KC-9FF96D",
+          "shipping": {
+            "name": {
+              "full_name": "John Doe"
+            },
+            "address": {
+              "address_line_1": "2211 N First St",
+              "admin_area_2": "San Jose",
+              "admin_area_1": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            }
+          },
+          "payments": {
+            "captures": [
+              {
+                "id": "5LE962509P7650228",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "192.00"
+                },
+                "final_capture": true,
+                "seller_protection": {
+                  "status": "ELIGIBLE",
+                  "dispute_categories": [
+                    "ITEM_NOT_RECEIVED",
+                    "UNAUTHORIZED_TRANSACTION"
+                  ]
+                },
+                "seller_receivable_breakdown": {
+                  "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "192.00"
+                  },
+                  "paypal_fee": {
+                    "currency_code": "USD",
+                    "value": "7.19"
+                  },
+                  "net_amount": {
+                    "currency_code": "USD",
+                    "value": "184.81"
+                  }
+                },
+                "invoice_id": "KC-9FF96D-ea5b",
+                "custom_id": "KC-9FF96D",
+                "links": [
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/5LE962509P7650228",
+                    "rel": "self",
+                    "method": "GET"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/5LE962509P7650228/refund",
+                    "rel": "refund",
+                    "method": "POST"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/16G29779G6183521K",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ],
+                "create_time": "2026-11-08T06:13:15Z",
+                "update_time": "2026-11-08T06:13:15Z"
+              }
+            ]
+          }
+        }
+      ],
+      "payer": {
+        "name": {
+          "given_name": "John",
+          "surname": "Doe"
+        },
+        "email_address": "sandbox-buyer@personal.example.com",
+        "payer_id": "V7ERP7YJL2X38",
+        "address": {
+          "country_code": "US"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/16G29779G6183521K",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T06:13:17.426Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726e4e49f0",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "7cc14446-db3b-11f1-8118-cd32eb89de2d",
+      "transmission_sig": "rTUPnfyKNZ0RYgAyTPat1QHMIT5gIqTBqID2o8hGxSHTPLjx30srSENz9ULU9DhILF138XG4BmJJkA5vC6Bj0b0nFM7TSvxD2Lb8saHswPjh9+7867rHnxxpQh60HFa7UKCn3QSopderH2VoIVbtpOP8dCfqf2DEVPEDrfPiNSXGhj4e69hV+Dio/dm2pxgaxquOvqgYm7og35SDyIA7Mh7jhGGAjZEAWKE/CZeay5/JenGx2JRsNiZZL/r04Deo/NjCrUYtF9+KhMJc1yt7gte6RFj4xWBFpSPQplLVPm5nFJFY0Ratd7zkFr/VHB3dg7QlKzB+wycqSfITsQhDjQ==",
+      "transmission_time": "2026-11-08T06:13:16Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-9MU76474UJ078682G-8VN75567R2649272X",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:13:16.644Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "update_time": "2026-11-08T06:13:15Z",
+          "create_time": "2026-11-08T06:13:15Z",
+          "purchase_units": [
+            {
+              "reference_id": "KC-9FF96D",
+              "amount": {
+                "currency_code": "USD",
+                "value": "192.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "192.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "KC-9FF96D",
+              "invoice_id": "KC-9FF96D-ea5b",
+              "items": [
+                {
+                  "name": "Copper Kettle",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "64.00"
+                  },
+                  "quantity": "3",
+                  "sku": "KC-KETTLE",
+                  "category": "PHYSICAL_GOODS"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              },
+              "payments": {
+                "captures": [
+                  {
+                    "id": "5LE962509P7650228",
+                    "status": "COMPLETED",
+                    "amount": {
+                      "currency_code": "USD",
+                      "value": "192.00"
+                    },
+                    "final_capture": true,
+                    "seller_protection": {
+                      "status": "ELIGIBLE",
+                      "dispute_categories": [
+                        "ITEM_NOT_RECEIVED",
+                        "UNAUTHORIZED_TRANSACTION"
+                      ]
+                    },
+                    "seller_receivable_breakdown": {
+                      "gross_amount": {
+                        "currency_code": "USD",
+                        "value": "192.00"
+                      },
+                      "paypal_fee": {
+                        "currency_code": "USD",
+                        "value": "7.19"
+                      },
+                      "net_amount": {
+                        "currency_code": "USD",
+                        "value": "184.81"
+                      }
+                    },
+                    "invoice_id": "KC-9FF96D-ea5b",
+                    "custom_id": "KC-9FF96D",
+                    "links": [
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/5LE962509P7650228",
+                        "rel": "self",
+                        "method": "GET"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/5LE962509P7650228/refund",
+                        "rel": "refund",
+                        "method": "POST"
+                      },
+                      {
+                        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/16G29779G6183521K",
+                        "rel": "up",
+                        "method": "GET"
+                      }
+                    ],
+                    "create_time": "2026-11-08T06:13:15Z",
+                    "update_time": "2026-11-08T06:13:15Z"
+                  }
+                ]
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/16G29779G6183521K",
+              "rel": "self",
+              "method": "GET"
+            }
+          ],
+          "id": "16G29779G6183521K",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "COMPLETED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9MU76474UJ078682G-8VN75567R2649272X",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9MU76474UJ078682G-8VN75567R2649272X/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T06:13:47.016Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca5726f075e4b",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "8d380c11-db3b-11f1-84a3-d37dba7556ce",
+      "transmission_sig": "R06/MQPBC/OMeG64Ch9Qciw6Pyq9xPnt06u0U2TDzlMBY0UBXigA7EMSWoL0wWr4/jlWrZgw8HMaylNOJBf1U1blvkxwdDQXM5NnOWzrITIzr6JFk5zbmmicYyPZFsWQyxSBb4AgdlIZ3D1MeZCxUfyfXW6ikG3R5A+c7MoCfrYlqYxnPjaZgfebsYNaSZ2qfkqfdw+KxAvNLMTKk7yCf8N2EPILwjvaIvzybI8F49Gochn9PVl6DwkEqxmIDc7O5ZszBUxpoqu10LKq3/3Qopgn5Idgl0VCm0yiFhaWKEL+M333Rvae6qQEA/Nezlop3PPrrMi7F49GH+KKqiyE3A==",
+      "transmission_time": "2026-11-08T06:13:44Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-1WP107043V2977457-91F80998GC8862229",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T06:13:33.541Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 192.0 USD",
+        "resource": {
+          "id": "5LE962509P7650228",
+          "amount": {
+            "currency_code": "USD",
+            "value": "192.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "192.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "7.19"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "184.81"
+            }
+          },
+          "invoice_id": "KC-9FF96D-ea5b",
+          "custom_id": "KC-9FF96D",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "16G29779G6183521K"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T06:13:15Z",
+          "update_time": "2026-11-08T06:13:15Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/5LE962509P7650228",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/5LE962509P7650228/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/16G29779G6183521K",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1WP107043V2977457-91F80998GC8862229",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1WP107043V2977457-91F80998GC8862229/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  }
+]

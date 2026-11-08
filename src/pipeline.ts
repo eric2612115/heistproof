@@ -13,7 +13,7 @@ import type { Run, Phase } from "./events.ts";
 
 export type PayPalError = { call: string; status: number; name: string | null; issue: string | null; message: string | null; debugId: string | null };
 /** How the shop answered PayPal's genuine, signed PAYMENT.CAPTURE.COMPLETED event for its own order ("verified" in older runs means accepted). */
-export type WebhookStatus = "accepted" | "verified" | "refused" | "not-delivered";
+export type WebhookStatus = "accepted" | "verified" | "refused" | "not-delivered" | "no-route";
 export type Round = { round: number; offline?: boolean; tests: boolean; prove: PurchaseResult; attacks: AttackOutcome[]; webhookVerified?: boolean; webhook?: WebhookStatus; webhookEvent?: string | null; paypalErrors?: PayPalError[]; books?: Books; thief?: ThiefReport };
 
 export type Verdict = "safe" | "unsafe" | "incomplete";
@@ -34,7 +34,7 @@ export function verdictOf(r: Round): Verdict {
   // events. Only the sandbox can tell whether that shop accepts PayPal's real ones.
   if (r.webhook === "refused" && r.offline) return "incomplete";
   if (!r.prove.ok) return environmentProblem(r) ? "incomplete" : "unsafe";
-  const held = new Set(r.attacks.filter((a) => a.verdict === "held").map((a) => a.id));
+  const held = new Set(r.attacks.filter((a) => a.verdict === "held" || a.verdict === "n/a").map((a) => a.id));
   if (ALL_ATTACKS.some((id) => !held.has(id))) return "incomplete";
   if (r.thief?.plans.some((p) => p.verdict === "error")) return "incomplete";
   // Safe also needs the books: matched to PayPal's records, every paid order backed. Books that could not be read or
@@ -120,7 +120,7 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     const orders = await shopOrders(sandbox.shop).catch(() => []);
     const ours = sandbox.tap.genuine("PAYMENT.CAPTURE.COMPLETED").filter((d) => d.resourceId === legit.captureId || shopOrderFor(d, orders, legit));
     const best = ours.find((d) => d.resourceId === legit.captureId) ?? ours[0];
-    const webhook: WebhookStatus = !best ? "not-delivered" : best.shopStatus >= 200 && best.shopStatus < 300 ? "accepted" : "refused";
+    const webhook: WebhookStatus = !sandbox.shop.profile.webhooks ? "no-route" : !best ? "not-delivered" : best.shopStatus >= 200 && best.shopStatus < 300 ? "accepted" : "refused";
     if (sandbox.tap.resends.length) run.emit("prove", "webhook.resends", { round, resends: sandbox.tap.resends });
     run.emit("prove", "prove.webhook", { round, status: webhook, eventId: best?.eventId ?? null, resourceId: best?.resourceId ?? null, shopStatus: best?.shopStatus ?? null, paypalVerified: best?.paypalVerified ?? null, ok: webhook === "accepted" });
     const result: Round = { round, offline: Boolean(sandbox.standIn), tests: tests.ok, prove: legit, attacks, webhook, webhookEvent: best?.eventId ?? null, paypalErrors, books, thief };

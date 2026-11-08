@@ -3,7 +3,7 @@
  * cart, lines, ...), each item's product field (sku, product, id, ...) and its quantity field (qty, quantity, count, ...).
  */
 const LIST_KEYS = ["items", "cart", "lines", "line_items", "lineItems", "products", "basket", "bag"];
-const SKU_KEYS = /^(sku|product|productId|product_id|id|code|item|itemId|item_id|variant|variantId)$/i;
+const SKU_KEYS = /^(sku|product|productId|product_id|id|_id|code|item|itemId|item_id|variant|variantId)$/i;
 const QTY_KEYS = /^(qty|quantity|count|units|number)$/i;
 
 export function itemList(body: unknown): { key: string; items: any[] } | null {

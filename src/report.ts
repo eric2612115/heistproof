@@ -2,7 +2,7 @@ import type { Run } from "./events.ts";
 import { verdictOf, type Round, type Verdict } from "./pipeline.ts";
 import { mismatchKind } from "./thief.ts";
 
-const RESULT: Record<string, string> = { held: "Blocked", robbed: "ROBBED", skipped: "Not run", error: "Error" };
+const RESULT: Record<string, string> = { held: "Blocked", robbed: "ROBBED", skipped: "Not run", error: "Error", "n/a": "Does not apply" };
 
 const HEADLINE: Record<Verdict, string> = {
   safe: "safe to ship",
@@ -21,6 +21,7 @@ function purchaseLine(r: Round): string {
 function webhookLine(r: Round): string {
   if (r.webhook === "accepted" || r.webhook === "verified") return `PayPal's genuine PAYMENT.CAPTURE.COMPLETED event for this order was accepted (HTTP 2xx)${r.webhookEvent ? ` (event ${r.webhookEvent})` : ""}; whether the shop checks signatures is what the forged-webhook robbery tests`;
   if (r.webhook === "refused") return `PayPal's genuine PAYMENT.CAPTURE.COMPLETED event was REFUSED by the shop${r.webhookEvent ? ` (event ${r.webhookEvent})` : ""}`;
+  if (r.webhook === "no-route") return "the shop has no webhook route; PayPal's events are not part of its checkout";
   return "PayPal did not deliver the PAYMENT.CAPTURE.COMPLETED event during this run";
 }
 
@@ -35,13 +36,14 @@ export function renderReport(opts: { shopDir: string; rounds: Round[]; title?: s
   if (last) {
     const robbed = last.attacks.filter((a) => a.verdict === "robbed").length;
     const held = last.attacks.filter((a) => a.verdict === "held").length;
+    const na = last.attacks.filter((a) => a.verdict === "n/a").length;
     const thiefRobbed = last.thief?.plans.filter((p) => p.verdict === "robbed").length ?? 0;
     const thiefRepeat = last.thief?.plans.filter((p) => p.verdict === "repeat").length ?? 0;
     const thiefLine = last.thief?.ran
       ? ` The AI thief tried ${last.thief.plans.length} robberies of its own: ${thiefRobbed ? `${thiefRobbed} GOT THROUGH` : "none got through"}${thiefRepeat ? ` (${thiefRepeat} only repeated a problem the books already showed)` : ""}.`
       : ` The AI thief did not run (${last.thief?.reason ?? "not asked to"}), so this covers the ten scripted robberies only.`;
     const booksLine = last.books?.mismatches.length ? ` The shop's books do not match PayPal's (${last.books.mismatches.length} order${last.books.mismatches.length === 1 ? "" : "s"}).` : "";
-    lines.push(`**Verdict: ${HEADLINE[verdictOf(last)]}.** ${held} of 10 scripted robberies blocked, ${robbed} robbed the shop${last.attacks.length < 10 ? ` (${last.attacks.length} ran)` : ""}.${thiefLine}${booksLine} Real purchase: ${purchaseLine(last)}. Tests: ${last.tests ? "pass" : "fail"}.`);
+    lines.push(`**Verdict: ${HEADLINE[verdictOf(last)]}.** ${held} of 10 scripted robberies blocked${na ? ` (${na} do not apply to this shop)` : ""}, ${robbed} robbed the shop${last.attacks.length < 10 ? ` (${last.attacks.length} ran)` : ""}.${thiefLine}${booksLine} Real purchase: ${purchaseLine(last)}. Tests: ${last.tests ? "pass" : "fail"}.`);
     lines.push("");
     lines.push(
       opts.offline

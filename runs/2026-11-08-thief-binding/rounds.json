@@ -6,26 +6,27 @@
     "prove": {
       "ok": true,
       "method": "paypal",
-      "verdict": "Paid $64.00: capture 8RK062132J345092R COMPLETED, shop order KC-C3C91F shipped, 1 label.",
+      "verdict": "Paid $64.00: capture 4C76889462408674E COMPLETED, shop order KC-4700EF shipped, 1 label.",
       "environment": null,
       "bagTotal": "64.00",
-      "paypalOrderId": "4SB597749C5269217",
+      "paypalOrderId": "2DE958241U991160E",
       "paypalAmount": {
         "value": "64.00",
         "currency": "USD"
       },
       "paypalStatus": "COMPLETED",
-      "captureId": "8RK062132J345092R",
+      "captureId": "4C76889462408674E",
       "captureStatus": "COMPLETED",
       "approved": true,
       "captureBlocked": false,
+      "shopCallHeld": false,
       "shopOrder": {
-        "ref": "KC-C3C91F",
+        "ref": "KC-4700EF",
         "state": "shipped",
-        "paypal_order": "4SB597749C5269217",
-        "paypal_capture": "8RK062132J345092R",
+        "paypal_order": "2DE958241U991160E",
+        "paypal_capture": "4C76889462408674E",
         "parcels": 1,
-        "created_at": "2026-11-08T06:03:30.402Z",
+        "created_at": "2026-11-08T12:58:32.937Z",
         "lines": [
           {
             "product": "KC-KETTLE",
@@ -36,11 +37,11 @@
         ],
         "total_cents": 6400,
         "currency": "USD",
-        "id": "KC-C3C91F",
+        "id": "KC-4700EF",
         "status": "shipped",
         "paid": true,
         "shipments": 1,
-        "payment_reference": "8RK062132J345092R"
+        "payment_reference": "4C76889462408674E"
       },
       "calls": [
         {
@@ -56,26 +57,26 @@
           },
           "status": 201,
           "response": {
-            "ref": "KC-C3C91F",
-            "paypalOrderId": "4SB597749C5269217"
+            "ref": "KC-4700EF",
+            "paypalOrderId": "2DE958241U991160E"
           },
           "headers": {
             "content-type": "application/json",
-            "x-csrf-token": "77bb21bdb25027af9d5b9436b6503cb9616807924f16f371"
+            "x-csrf-token": "eb27bacdaae3f52f61e3db9a8f0c27f7cca617d11720e65d"
           }
         },
         {
           "method": "POST",
-          "path": "/api/checkout/paypal/4SB597749C5269217/capture",
+          "path": "/api/checkout/paypal/2DE958241U991160E/capture",
           "body": {},
           "status": 200,
           "response": {
-            "ref": "KC-C3C91F",
+            "ref": "KC-4700EF",
             "state": "shipped"
           },
           "headers": {
             "content-type": "application/json",
-            "x-csrf-token": "77bb21bdb25027af9d5b9436b6503cb9616807924f16f371"
+            "x-csrf-token": "eb27bacdaae3f52f61e3db9a8f0c27f7cca617d11720e65d"
           }
         }
       ],
@@ -115,7 +116,7 @@
           "request": "/api/checkout/paypal",
           "expected": "USD 64.00",
           "control": {
-            "paypalOrderId": "41E5968990481901U",
+            "paypalOrderId": "39W268383C7658343",
             "amount": {
               "value": "64.00",
               "currency": "USD"
@@ -125,62 +126,62 @@
             {
               "variant": "total fields set to one cent",
               "shopStatus": 201,
-              "paypalOrderId": "7JN54110FF156493M",
+              "paypalOrderId": "0LW94459NR5671711",
               "paypalAmount": {
                 "value": "64.00",
                 "currency": "USD"
               },
-              "debugId": "f2263767f883e"
+              "debugId": "f4898182e2198"
             },
             {
               "variant": "common price fields added to every line, at one cent",
               "shopStatus": 201,
-              "paypalOrderId": "1VS2463654227780P",
+              "paypalOrderId": "1HH52187UC492101E",
               "paypalAmount": {
                 "value": "64.00",
                 "currency": "USD"
               },
-              "debugId": "f6361990aea13"
+              "debugId": "f534360519b3b"
             },
             {
               "variant": "every price in the bag set to one cent",
               "shopStatus": 201,
-              "paypalOrderId": "55555406T7287804T",
+              "paypalOrderId": "16L66767062944348",
               "paypalAmount": {
                 "value": "64.00",
                 "currency": "USD"
               },
-              "debugId": "f23017572d630"
+              "debugId": "f72688620bd94"
             },
             {
               "variant": "every price in the bag set to 1 (cents)",
               "shopStatus": 201,
-              "paypalOrderId": "3MC02990412258841",
+              "paypalOrderId": "1M162985J6352873N",
               "paypalAmount": {
                 "value": "64.00",
                 "currency": "USD"
               },
-              "debugId": "f673294d25424"
+              "debugId": "f7797040a0fb9"
             },
             {
               "variant": "every number in the request set to one cent",
               "shopStatus": 201,
-              "paypalOrderId": "2PR21139V9437921Y",
+              "paypalOrderId": "07T41849T11517747",
               "paypalAmount": {
                 "value": "64.00",
                 "currency": "USD"
               },
-              "debugId": "f2661192e90ba"
+              "debugId": "f777005d1e932"
             },
             {
               "variant": "currency switched to yen",
               "shopStatus": 201,
-              "paypalOrderId": "9YN7539676150571D",
+              "paypalOrderId": "7MN06613HY966170E",
               "paypalAmount": {
                 "value": "64.00",
                 "currency": "USD"
               },
-              "debugId": "f8339127ed1de"
+              "debugId": "f8618716810ed"
             }
           ],
           "screenshots": [
@@ -269,13 +270,13 @@
         "verdict": "held",
         "summary": "The capture request, replayed for an order no buyer approved: PayPal says CREATED, and the shop kept it unpaid.",
         "evidence": {
-          "paypalOrderId": "9J877606728997215",
+          "paypalOrderId": "0PU44935M30628006",
           "paypalStatus": "CREATED",
           "requests": [
             {
-              "path": "/api/checkout/paypal/9J877606728997215/capture",
-              "paypalOrderId": "9J877606728997215",
-              "shopOrder": "KC-F9A6AD",
+              "path": "/api/checkout/paypal/0PU44935M30628006/capture",
+              "paypalOrderId": "0PU44935M30628006",
+              "shopOrder": "KC-BE15E6",
               "answer": {
                 "status": 502,
                 "body": {
@@ -286,7 +287,7 @@
           ],
           "orders": [
             {
-              "id": "KC-F9A6AD",
+              "id": "KC-BE15E6",
               "before": null,
               "after": "awaiting_payment",
               "labelsBefore": 0,
@@ -307,15 +308,16 @@
           8
         ],
         "verdict": "held",
-        "summary": "Buyer approved order 1XE61001JJ724604M, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped.",
+        "summary": "Buyer approved order 4JB39973Y62473318, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped.",
         "evidence": {
-          "paypalOrderId": "1XE61001JJ724604M",
+          "paypalOrderId": "4JB39973Y62473318",
           "paypalStatus": "APPROVED",
-          "approvedWebhook": "WH-7EC46401CE858101E-7UK45304PV767184J",
+          "approvedWebhook": "WH-9DJ75338WJ790811F-07L3504916187310J",
           "approvedWebhookAnswer": 200,
+          "toldShop": null,
           "orders": [
             {
-              "id": "KC-FEB913",
+              "id": "KC-3F7ED8",
               "before": null,
               "after": "awaiting_payment",
               "labelsBefore": 0,
@@ -339,18 +341,18 @@
           5
         ],
         "verdict": "held",
-        "summary": "PayPal answered 422 INSTRUMENT_DECLINED (debug id f226750d20fa8); the shop kept the order unpaid.",
+        "summary": "PayPal answered 422 INSTRUMENT_DECLINED (debug id f506360dba341); the shop kept the order unpaid.",
         "evidence": {
-          "paypalOrderId": "0WS18563XC816811G",
+          "paypalOrderId": "4DH20085PE086615B",
           "injected": {
             "status": 422,
-            "debugId": "f226750d20fa8",
+            "debugId": "f506360dba341",
             "issue": "INSTRUMENT_DECLINED"
           },
           "shopAnswer": 402,
           "orders": [
             {
-              "id": "KC-CF8220",
+              "id": "KC-58926E",
               "before": null,
               "after": "awaiting_payment",
               "labelsBefore": 0,
@@ -377,14 +379,14 @@
         "verdict": "held",
         "summary": "Two simultaneous captures: PayPal captured 1, the shop printed 1 label.",
         "evidence": {
-          "paypalOrderId": "1XE61001JJ724604M",
+          "paypalOrderId": "4JB39973Y62473318",
           "shopAnswers": [
             200,
             200
           ],
           "paypalCaptures": [
             {
-              "id": "3R693479LH002772S",
+              "id": "18562920HV653422H",
               "status": "COMPLETED",
               "amount": {
                 "currency_code": "USD",
@@ -394,7 +396,7 @@
           ],
           "orders": [
             {
-              "id": "KC-FEB913",
+              "id": "KC-3F7ED8",
               "before": "awaiting_payment",
               "after": "shipped",
               "labelsBefore": 0,
@@ -414,15 +416,15 @@
           6
         ],
         "verdict": "held",
-        "summary": "Forged events got HTTP 400 unsigned and 400 with stolen signature headers, and changed nothing: order KC-505195 stayed unpaid.",
+        "summary": "Forged events got HTTP 400 unsigned and 400 with stolen signature headers, and changed nothing: order KC-B58553 stayed unpaid.",
         "evidence": {
-          "targetShopOrder": "KC-505195",
-          "targetPayPalOrder": "7AX80068UA195622H",
+          "targetShopOrder": "KC-B58553",
+          "targetPayPalOrder": "61F29925364680740",
           "unsignedAnswer": 400,
           "stolenHeadersAnswer": 400,
           "orders": [
             {
-              "id": "KC-505195",
+              "id": "KC-B58553",
               "before": "awaiting_payment",
               "after": "awaiting_payment",
               "labelsBefore": 0,
@@ -443,10 +445,10 @@
           8
         ],
         "verdict": "held",
-        "summary": "Event WH-41K62719S45755419-9B286117VR4644910 for order KC-C3C91F replayed 3 times byte for byte: no extra label.",
+        "summary": "Event WH-0YK89862NJ930454B-7SR8890358946520F for order KC-4700EF replayed 3 times byte for byte: no extra label.",
         "evidence": {
-          "eventId": "WH-41K62719S45755419-9B286117VR4644910",
-          "targetShopOrder": "KC-C3C91F",
+          "eventId": "WH-0YK89862NJ930454B-7SR8890358946520F",
+          "targetShopOrder": "KC-4700EF",
           "answers": [
             200,
             200,
@@ -454,7 +456,7 @@
           ],
           "orders": [
             {
-              "id": "KC-C3C91F",
+              "id": "KC-4700EF",
               "before": "shipped",
               "after": "shipped",
               "labelsBefore": 1,
@@ -474,17 +476,17 @@
           9
         ],
         "verdict": "held",
-        "summary": "Order KC-C3C91F stayed shipped after a late 'approved' event.",
+        "summary": "Order KC-4700EF stayed shipped after a late 'approved' event.",
         "evidence": {
-          "eventId": "WH-2DK92147JB162032M-7X527730G63224837",
-          "targetShopOrder": "KC-C3C91F",
-          "targetPayPalOrder": "4SB597749C5269217",
+          "eventId": "WH-31N639203M155854F-3XM516581F745022M",
+          "targetShopOrder": "KC-4700EF",
+          "targetPayPalOrder": "2DE958241U991160E",
           "shopAnswer": 200,
           "before": "shipped",
           "after": "shipped",
           "orders": [
             {
-              "id": "KC-C3C91F",
+              "id": "KC-4700EF",
               "before": "shipped",
               "after": "shipped",
               "labelsBefore": 1,
@@ -520,17 +522,17 @@
       }
     ],
     "webhook": "accepted",
-    "webhookEvent": "WH-41K62719S45755419-9B286117VR4644910",
+    "webhookEvent": "WH-0YK89862NJ930454B-7SR8890358946520F",
     "paypalErrors": [],
     "books": {
       "matched": true,
-      "orders": 20,
-      "paid": 6,
+      "orders": 19,
+      "paid": 5,
       "otherPaid": 0,
       "mismatches": [
         {
-          "order": "KC-01FCAB",
-          "problem": "paid by capture 8RK062132J345092R, which already pays for order KC-C3C91F"
+          "order": "KC-AA52F2",
+          "problem": "paid by capture 4C76889462408674E, which already pays for order KC-4700EF"
         }
       ]
     },
@@ -542,282 +544,9 @@
       "dropped": [],
       "plans": [
         {
-          "name": "Partial capture at capture time",
-          "idea": "The create order is correctly priced at $64, but the capture endpoint may forward a client-supplied capture amount to PayPal or trust it when marking the order paid.",
-          "expect": "Only $0.01 is captured, yet the approved kettle order is marked shipped.",
-          "verdict": "held",
-          "summary": "The books still match PayPal's records: nothing taken.",
-          "steps": [
-            {
-              "step": {
-                "do": "buy",
-                "tamper": {},
-                "blockCapture": true,
-                "save": "b"
-              },
-              "result": "PayPal order 3GC71400H3888713S, approved, capture APPROVED, shop order KC-37068E awaiting_payment"
-            },
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
-                "body": {
-                  "amount": {
-                    "currency_code": "USD",
-                    "value": "0.01"
-                  },
-                  "final_capture": true
-                },
-                "times": 1,
-                "together": false,
-                "save": "c"
-              },
-              "result": "HTTP 200 {\"ref\":\"KC-37068E\",\"state\":\"shipped\"}"
-            }
-          ],
-          "mismatches": []
-        },
-        {
-          "name": "Paid-state injection at creation",
-          "idea": "Order creation may copy client-supplied status fields into the new order record instead of allowing only the server to set paid or shipped state.",
-          "expect": "An order is created or approved but never captured, while the shop already treats it as paid or shipped.",
-          "verdict": "held",
-          "summary": "The books still match PayPal's records: nothing taken.",
-          "steps": [
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/checkout/paypal",
-                "body": {
-                  "lines": [
-                    {
-                      "product": "KC-KETTLE",
-                      "count": 1
-                    }
-                  ],
-                  "paid": true,
-                  "isPaid": true,
-                  "captured": true,
-                  "state": "shipped",
-                  "status": "COMPLETED",
-                  "paymentStatus": "COMPLETED"
-                },
-                "times": 1,
-                "together": false,
-                "save": "a"
-              },
-              "result": "HTTP 201 {\"ref\":\"KC-EC60BA\",\"paypalOrderId\":\"7TY8696117609180W\"}"
-            },
-            {
-              "step": {
-                "do": "buy",
-                "tamper": {
-                  "paid": true,
-                  "isPaid": true,
-                  "captured": true,
-                  "state": "shipped",
-                  "status": "COMPLETED",
-                  "paymentStatus": "COMPLETED"
-                },
-                "blockCapture": true,
-                "save": "b"
-              },
-              "result": "PayPal order 4G797929NV550180F, approved, capture APPROVED, shop order KC-9699C6 awaiting_payment"
-            }
-          ],
-          "mismatches": []
-        },
-        {
-          "name": "Transplant legit capture via capture API",
-          "idea": "The capture endpoint may trust a capture ID, PayPal order ID, status, or shop reference supplied in its request body rather than binding the verified capture to the order identified in the path.",
-          "expect": "A fresh unpaid shop order is shipped by reusing the legitimately completed $64 capture, without paying for the new order.",
-          "verdict": "robbed",
-          "summary": "Got through: order KC-01FCAB paid by capture 8RK062132J345092R, which already pays for order KC-C3C91F.",
-          "steps": [
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/checkout/paypal",
-                "body": {
-                  "lines": [
-                    {
-                      "product": "KC-KETTLE",
-                      "count": 1
-                    }
-                  ]
-                },
-                "times": 1,
-                "together": false,
-                "save": "a"
-              },
-              "result": "HTTP 201 {\"ref\":\"KC-01FCAB\",\"paypalOrderId\":\"3CP085613R7867328\"}"
-            },
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/checkout/paypal/{{a.body.paypalOrderId}}/capture",
-                "body": {
-                  "captureId": "{{legit.captureId}}",
-                  "paypalCaptureId": "{{legit.captureId}}",
-                  "transactionId": "{{legit.captureId}}",
-                  "paypalOrderId": "{{legit.paypalOrderId}}",
-                  "status": "COMPLETED",
-                  "state": "shipped",
-                  "amount": "64.00"
-                },
-                "times": 1,
-                "together": false,
-                "save": "c"
-              },
-              "result": "HTTP 502 {\"error\":\"PayPal did not complete the payment. Nothing was charged.\"}"
-            },
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/checkout/paypal/{{legit.paypalOrderId}}/capture",
-                "body": {
-                  "ref": "{{a.body.ref}}",
-                  "shopOrderId": "{{a.body.ref}}",
-                  "shopOrderRef": "{{a.body.ref}}",
-                  "paypalOrderId": "{{a.body.paypalOrderId}}"
-                },
-                "times": 1,
-                "together": false,
-                "save": "d"
-              },
-              "result": "HTTP 200 {\"ref\":\"KC-01FCAB\",\"state\":\"shipped\"}"
-            }
-          ],
-          "mismatches": [
-            {
-              "order": "KC-01FCAB",
-              "problem": "paid by capture 8RK062132J345092R, which already pays for order KC-C3C91F"
-            }
-          ]
-        },
-        {
-          "name": "Retargeted approved-then-completed webhooks",
-          "idea": "The webhook handler may locate the order solely from editable custom_id, reference_id, invoice_id, or related order fields, without binding the real capture to the PayPal order that actually produced it.",
-          "expect": "A fresh unpaid order passes through approved and completed states and is shipped using the legit capture identity.",
-          "verdict": "held",
-          "summary": "The books still match PayPal's records: nothing taken.",
-          "steps": [
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/checkout/paypal",
-                "body": {
-                  "lines": [
-                    {
-                      "product": "KC-KETTLE",
-                      "count": 1
-                    }
-                  ]
-                },
-                "times": 1,
-                "together": false,
-                "save": "a"
-              },
-              "result": "HTTP 201 {\"ref\":\"KC-EB8914\",\"paypalOrderId\":\"6W772168AX570683M\"}"
-            },
-            {
-              "step": {
-                "do": "webhook",
-                "event": "CHECKOUT.ORDER.APPROVED",
-                "edit": {
-                  "resource.purchase_units.0.reference_id": "{{a.body.ref}}",
-                  "resource.purchase_units.0.custom_id": "{{a.body.ref}}",
-                  "resource.purchase_units.0.invoice_id": "{{a.body.ref}}-0bbd"
-                },
-                "signed": true,
-                "times": 1
-              },
-              "result": "resent CHECKOUT.ORDER.APPROVED WH-2DK92147JB162032M-7X527730G63224837 (edited, with PayPal's headers): shop answered 400"
-            },
-            {
-              "step": {
-                "do": "webhook",
-                "event": "PAYMENT.CAPTURE.COMPLETED",
-                "edit": {
-                  "resource.custom_id": "{{a.body.ref}}",
-                  "resource.invoice_id": "{{a.body.ref}}-0bbd",
-                  "resource.supplementary_data.related_ids.order_id": "{{a.body.paypalOrderId}}"
-                },
-                "signed": true,
-                "times": 1
-              },
-              "result": "resent PAYMENT.CAPTURE.COMPLETED WH-41K62719S45755419-9B286117VR4644910 (edited, with PayPal's headers): shop answered 400"
-            }
-          ],
-          "mismatches": []
-        },
-        {
-          "name": "Swap cart after approval, before capture",
-          "idea": "Capture may fulfill the session's latest shop order instead of the items belonging to the PayPal order actually approved and captured.",
-          "expect": "Pay $64 for one approved kettle, but the later ten-kettle order is shipped, or both orders are shipped.",
-          "verdict": "held",
-          "summary": "The books still match PayPal's records: nothing taken.",
-          "steps": [
-            {
-              "step": {
-                "do": "buy",
-                "tamper": {
-                  "lines": [
-                    {
-                      "product": "KC-KETTLE",
-                      "count": 1
-                    }
-                  ]
-                },
-                "blockCapture": true,
-                "save": "b"
-              },
-              "result": "PayPal order 50M57084V31109252, approved, capture APPROVED, shop order KC-145E1A awaiting_payment"
-            },
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/checkout/paypal",
-                "body": {
-                  "lines": [
-                    {
-                      "product": "KC-KETTLE",
-                      "count": 10
-                    }
-                  ]
-                },
-                "times": 1,
-                "together": false,
-                "save": "a"
-              },
-              "result": "HTTP 201 {\"ref\":\"KC-971A2D\",\"paypalOrderId\":\"20L0147917332914K\"}"
-            },
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
-                "body": {},
-                "times": 1,
-                "together": false,
-                "save": "c"
-              },
-              "result": "HTTP 200 {\"ref\":\"KC-145E1A\",\"state\":\"shipped\"}"
-            }
-          ],
-          "mismatches": []
-        },
-        {
-          "name": "Split duplicate lines",
-          "idea": "Pricing may deduplicate repeated SKUs with a map while fulfillment may sum every raw line, creating a disagreement between the amount charged and the quantity shipped.",
-          "expect": "PayPal charges for one kettle, but three kettles are fulfilled.",
+          "name": "Duplicate-line split",
+          "idea": "The shop prices duplicate SKUs through a map that keeps only one line, while fulfilment sums every raw line.",
+          "expect": "Pay $64 once but have three kettles shipped.",
           "verdict": "held",
           "summary": "The books still match PayPal's records: nothing taken.",
           "steps": [
@@ -843,7 +572,237 @@
                 "blockCapture": false,
                 "save": "b"
               },
-              "result": "PayPal order 16G29779G6183521K, approved, capture COMPLETED, shop order KC-9FF96D shipped"
+              "result": "PayPal order 4G00214965849970R, approved, capture COMPLETED, shop order KC-92F415 shipped"
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Enlarge after approval",
+          "idea": "Creating another order with an already-approved order's reference may mutate its stored lines after PayPal fixed the approved amount at $64, without creating or approving a new PayPal amount.",
+          "expect": "Capture only the original $64 payment but ship three kettles under the original reference.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "buy",
+                "tamper": {},
+                "blockCapture": true,
+                "save": "b"
+              },
+              "result": "PayPal order 66K639528T736682V, approved, capture APPROVED, shop order KC-28730E awaiting_payment"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/checkout/paypal",
+                "body": {
+                  "lines": [
+                    {
+                      "product": "KC-KETTLE",
+                      "count": 3
+                    }
+                  ],
+                  "ref": "{{b.shopOrderId}}",
+                  "paypalOrderId": "{{b.paypalOrderId}}",
+                  "custom_id": "{{b.shopOrderId}}"
+                },
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 201 {\"ref\":\"KC-C8CF61\",\"paypalOrderId\":\"9VP50841VG6286600\"}"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
+                "body": {},
+                "times": 1,
+                "together": false,
+                "save": "c"
+              },
+              "result": "HTTP 200 {\"ref\":\"KC-28730E\",\"state\":\"shipped\"}"
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Captured-order transplant",
+          "idea": "The capture handler may trust a client-supplied shop reference, or the latest pending order in the session, after finding that the supplied old PayPal order is already COMPLETED, instead of using the immutable PayPal-order-to-shop-order binding created at checkout.",
+          "expect": "A fresh unpaid kettle order is marked shipped by reusing the legitimately captured $64 PayPal order.",
+          "verdict": "robbed",
+          "summary": "Got through: order KC-AA52F2 paid by capture 4C76889462408674E, which already pays for order KC-4700EF.",
+          "steps": [
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/checkout/paypal",
+                "body": {
+                  "lines": [
+                    {
+                      "product": "KC-KETTLE",
+                      "count": 1
+                    }
+                  ]
+                },
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 201 {\"ref\":\"KC-AA52F2\",\"paypalOrderId\":\"1HG05056EM217672X\"}"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/checkout/paypal/{{legit.paypalOrderId}}/capture",
+                "body": {
+                  "ref": "{{a.body.ref}}",
+                  "shopOrderId": "{{a.body.ref}}",
+                  "custom_id": "{{a.body.ref}}"
+                },
+                "times": 1,
+                "together": false,
+                "save": "c"
+              },
+              "result": "HTTP 200 {\"ref\":\"KC-AA52F2\",\"state\":\"shipped\"}"
+            }
+          ],
+          "mismatches": [
+            {
+              "order": "KC-AA52F2",
+              "problem": "paid by capture 4C76889462408674E, which already pays for order KC-4700EF"
+            }
+          ]
+        },
+        {
+          "name": "Webhook payment transplant",
+          "idea": "The webhook handler may look up the order solely from resource.custom_id and record idempotency per shop order, rather than per capture ID, while revalidating the genuine capture ID with PayPal instead of relying only on the signature.",
+          "expect": "The legitimate $64 capture is credited a second time to a fresh order that has no capture of its own.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/checkout/paypal",
+                "body": {
+                  "lines": [
+                    {
+                      "product": "KC-KETTLE",
+                      "count": 1
+                    }
+                  ]
+                },
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 201 {\"ref\":\"KC-3A86F3\",\"paypalOrderId\":\"0WW305149M602064F\"}"
+            },
+            {
+              "step": {
+                "do": "webhook",
+                "event": "PAYMENT.CAPTURE.COMPLETED",
+                "edit": {
+                  "resource.custom_id": "{{a.body.ref}}",
+                  "resource.supplementary_data.related_ids.order_id": "{{a.body.paypalOrderId}}"
+                },
+                "signed": true,
+                "times": 1
+              },
+              "result": "resent PAYMENT.CAPTURE.COMPLETED WH-0YK89862NJ930454B-7SR8890358946520F (edited, with PayPal's headers): shop answered 400"
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Capture-result spoof",
+          "idea": "For an unapproved order, the capture handler may trust status, capture ID, or amount fields supplied in the capture request body, or use them as a fallback when PayPal refuses the capture.",
+          "expect": "The new order ships without the buyer ever approving or paying its PayPal order.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/checkout/paypal",
+                "body": {
+                  "lines": [
+                    {
+                      "product": "KC-KETTLE",
+                      "count": 1
+                    }
+                  ]
+                },
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 201 {\"ref\":\"KC-327D8C\",\"paypalOrderId\":\"8VN98596G4406023K\"}"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/checkout/paypal/{{a.body.paypalOrderId}}/capture",
+                "body": {
+                  "status": "COMPLETED",
+                  "state": "shipped",
+                  "paid": true,
+                  "id": "{{legit.captureId}}",
+                  "captureId": "{{legit.captureId}}",
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "{{legit.bagTotal}}"
+                  }
+                },
+                "times": 1,
+                "together": false,
+                "save": "c"
+              },
+              "result": "HTTP 502 {\"error\":\"PayPal did not complete the payment. Nothing was charged.\"}"
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Create-order mass assignment",
+          "idea": "The create-order handler may copy unknown top-level body fields into the stored order record, allowing the client to set its payment or fulfilment state directly.",
+          "expect": "A newly created order is immediately treated as paid and shipped without any PayPal approval or capture.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/checkout/paypal",
+                "body": {
+                  "lines": [
+                    {
+                      "product": "KC-KETTLE",
+                      "count": 1
+                    }
+                  ],
+                  "state": "shipped",
+                  "status": "COMPLETED",
+                  "paid": true,
+                  "paymentStatus": "COMPLETED",
+                  "captureId": "{{legit.captureId}}"
+                },
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 201 {\"ref\":\"KC-B6145A\",\"paypalOrderId\":\"9P159596YS150234F\"}"
             }
           ],
           "mismatches": []

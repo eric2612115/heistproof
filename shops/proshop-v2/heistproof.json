@@ -1,0 +1,31 @@
+{
+  "start": ["node", "heistproof-adapter.mjs"],
+  "health": "/api/products",
+  "product": { "sku": "", "qty": 1, "name": "item" },
+  "checkout": [
+    { "goto": "/login" },
+    { "waitFor": "#email, #username" },
+    { "fill": "#email", "value": "john@email.com", "unless": "#username" },
+    { "fill": "#password", "value": "123456", "unless": "#username" },
+    { "click": "button:has-text('Sign In')", "unless": "#username" },
+    { "waitFor": "a[href^='/product/']" },
+    { "click": "a[href^='/product/']" },
+    { "click": "button:has-text('Add To Cart')" },
+    { "click": "button:has-text('Proceed To Checkout')" },
+    { "fill": "#address", "value": "2211 N First St" },
+    { "fill": "#city", "value": "San Jose" },
+    { "fill": "#postalCode", "value": "95131" },
+    { "fill": "#country", "value": "United States" },
+    { "click": "button:has-text('Continue')" },
+    { "waitFor": "#PayPal" },
+    { "click": "button:has-text('Continue')" },
+    { "click": "button:has-text('Place Order')" },
+    { "waitFor": "iframe[name^='__zoid__paypal_buttons']" }
+  ],
+  "bag": { "total": ".list-group-item:has(> .row > .col:text-is('Total')) .col:nth-child(2)" },
+  "admin": { "orders": "/heistproof/orders", "keyHeader": "x-admin-key", "page": "/heistproof/backoffice?key={key}" },
+  "orders": { "id": "id", "status": "status", "paid": ["paid", "delivered"], "shipments": "shipments", "reference": "reference", "total": "total", "totalUnit": "dollars" },
+  "webhooks": null,
+  "payments": ["paypal"],
+  "capture": "browser"
+}

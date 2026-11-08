@@ -198,6 +198,13 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
   const failed: string[] = [];
   for (const raw of plan.steps) {
     const step = fill(raw, saved) as ThiefStep;
+    const missing = /\{\{\s*([\w.-]+)\s*\}\}/.exec(JSON.stringify(step));
+    if (missing) {
+      const why = `it needs ${missing[1]}, which no earlier step produced`;
+      failed.push(why);
+      log.push({ step: raw, result: `not sent: ${why}` });
+      continue;
+    }
     try {
       if (step.do === "request") {
         const send = async () => {
