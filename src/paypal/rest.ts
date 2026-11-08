@@ -64,6 +64,26 @@ export async function verifyDelivery(headers: Record<string, string>, rawBody: s
   return r?.status === 200 && r.body?.verification_status === "SUCCESS";
 }
 
+/**
+ * When PayPal's sandbox is slow to deliver an event, ask PayPal for it: list this app's events of that type since `since`
+ * and have PayPal resend the ones about `ids` (an order, capture or shop reference) to this run's own webhook only, never
+ * to the app's other webhooks. Returns the ids of the events PayPal agreed to resend.
+ */
+export async function resendEvents(eventType: string, ids: string[], webhookId: string, since: string): Promise<string[]> {
+  const wanted = new Set(ids.filter(Boolean));
+  if (!wanted.size) return [];
+  const q = new URLSearchParams({ event_type: eventType, start_time: since, page_size: "50" });
+  const list = await pp("GET", `/v1/notifications/webhooks-events?${q}`).catch(() => null);
+  const events: any[] = list?.status === 200 && Array.isArray(list.body?.events) ? list.body.events : [];
+  const about = (e: any) => [e?.resource?.id, e?.resource?.custom_id, e?.resource?.invoice_id, e?.resource?.supplementary_data?.related_ids?.order_id].some((x) => typeof x === "string" && wanted.has(x));
+  const out: string[] = [];
+  for (const e of events.filter(about).slice(0, 3)) {
+    const r = await pp("POST", `/v1/notifications/webhooks-events/${encodeURIComponent(e.id)}/resend`, { webhook_ids: [webhookId] }).catch(() => null);
+    if (r && r.status < 300) out.push(e.id);
+  }
+  return out;
+}
+
 export function orderCapture(order: any): any | null {
   return order?.purchase_units?.[0]?.payments?.captures?.[0] ?? null;
 }

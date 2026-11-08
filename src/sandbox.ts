@@ -1,7 +1,7 @@
 import { PORTS, paypal, isOffline, usePayPalStandIn } from "./config.ts";
 import { PayPalProxy } from "./paypal/proxy.ts";
 import { PayPalStandIn } from "./paypal/stand-in.ts";
-import { verifyDelivery } from "./paypal/rest.ts";
+import { verifyDelivery, resendEvents } from "./paypal/rest.ts";
 import { WebhookTap } from "./webhooks/tap.ts";
 import { openTunnel, ensureWebhook } from "./webhooks/tunnel.ts";
 import { startShop, assertPortFree, type ShopProcess } from "./shop-process.ts";
@@ -54,6 +54,8 @@ export async function openSandbox(run: Run, phase: Phase, shopDir: string, round
       webhookId = await ensureWebhook(webhookUrl);
     }
     tap.verifier = (headers, rawBody) => verifyDelivery(headers, rawBody, webhookId);
+    const since = new Date(Date.now() - 5 * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+    tap.resender = (eventType, ids) => resendEvents(eventType, ids, webhookId, since);
     run.emit(phase, "sandbox.ready", { round, proxy: proxyUrl, webhookUrl, webhookId, offline: Boolean(standIn) });
     const shop = await startShop({
       dir: shopDir,

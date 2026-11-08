@@ -1,7 +1,7 @@
 {
   "start": ["node", "server.js"],
   "health": "/api/catalog",
-  "product": { "sku": "KC-KETTLE", "qty": 1 },
+  "product": { "sku": "KC-KETTLE", "qty": 1, "name": "kettle", "other": "KC-MUG" },
   "bag": { "add": "button[data-add='{sku}']", "open": "#cart-open", "total": "#cart-total" },
   "admin": { "orders": "/api/staff/orders", "keyHeader": "x-staff-token", "page": "/staff?token={key}" },
   "orders": { "id": "ref", "status": "state", "paid": ["paid", "shipped"], "shipments": "parcels", "reference": "paypal_capture", "total": "total_cents", "totalUnit": "cents" },

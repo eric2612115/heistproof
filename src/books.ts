@@ -14,6 +14,8 @@ export type Books = {
   /** Paid or shipped orders with no PayPal reference (paid another way, such as the shop's card form): not PayPal's to vouch for. */
   otherPaid?: number;
   mismatches: Array<{ order: string; problem: string }>;
+  /** Why the books could not be read, when they could not. */
+  error?: string;
 };
 
 const PAYPAL_ID = /\b[0-9A-Z]{17}\b/g;

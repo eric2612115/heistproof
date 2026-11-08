@@ -10,6 +10,8 @@ export type ProxiedCall = {
   status: number;
   debugId: string | null;
   injected?: string;
+  /** The Content-Type the shop sent (null when it sent none): PayPal refuses a capture without a JSON one (415). */
+  requestContentType?: string | null;
   requestBody?: unknown;
   responseBody?: unknown;
 };
@@ -65,6 +67,7 @@ export class PayPalProxy {
           status: upstreamRes.status,
           debugId: upstreamRes.headers.get("paypal-debug-id"),
           injected: fault ? JSON.stringify(fault.mockResponse) : undefined,
+          requestContentType: req.headers["content-type"] ?? null,
         };
         if (!path.startsWith("/v1/oauth2/token")) {
           call.requestBody = safeJson(raw.toString());

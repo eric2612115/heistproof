@@ -138,6 +138,25 @@ type PurchaseOptions = {
 };
 
 /** A purchase, started over (with a new PayPal order) when PayPal's sandbox checkout page itself fails. */
+/**
+ * Does PayPal's order charge what the bag says? The goods must cost exactly the bag total: PayPal's item total when the
+ * order has a breakdown, else the whole amount. On top of the goods, the breakdown may add shipping, handling, insurance
+ * or tax, but never a discount, and its parts must add up to the amount. A shop that adds $5 shipping passes; a shop that
+ * asks for $4,900 for a $49 bag, or $0.01, does not.
+ */
+export function amountCheck(order: any, bagTotal: string | null | undefined): { ok: boolean; goods: string | null; extras: Array<{ kind: string; value: string }> } {
+  const amount = order?.purchase_units?.[0]?.amount;
+  if (!amount || bagTotal == null || amount.currency_code !== "USD") return { ok: false, goods: null, extras: [] };
+  const b = amount.breakdown ?? {};
+  const goods = String(b.item_total?.value ?? amount.value);
+  const extras = ["shipping", "handling", "insurance", "tax_total"].filter((k) => Number(b[k]?.value ?? 0) > 0).map((k) => ({ kind: k === "tax_total" ? "tax" : k, value: String(b[k].value) }));
+  const discounted = ["discount", "shipping_discount"].some((k) => Number(b[k]?.value ?? 0) > 0);
+  const cents = (v: unknown) => Math.round(Number(v) * 100);
+  const adds = cents(goods) + extras.reduce((n, e) => n + cents(e.value), 0);
+  const ok = !discounted && cents(goods) === cents(bagTotal) && adds === cents(amount.value);
+  return { ok, goods, extras };
+}
+
 export async function purchase(opts: PurchaseOptions): Promise<PurchaseResult> {
   let result = await purchaseOnce(opts);
   for (let attempt = 2; attempt <= 3 && result.environment === "sandbox-down"; attempt++) {
@@ -341,8 +360,9 @@ async function purchaseOnce(opts: PurchaseOptions): Promise<PurchaseResult> {
   if (result.paypalOrderId) {
     const order = await getOrder(result.paypalOrderId);
     result.paypalAmount = orderAmount(order.body);
-    const matches = result.paypalAmount && result.bagTotal && Number(result.paypalAmount.value) === Number(result.bagTotal);
-    run.emit(phase, "prove.amount_check", { label, bagTotal: result.bagTotal, paypalAmount: result.paypalAmount, debugId: order.debugId, ok: Boolean(matches) });
+    const check = amountCheck(order.body, result.bagTotal);
+    const matches = check.ok;
+    run.emit(phase, "prove.amount_check", { label, bagTotal: result.bagTotal, paypalAmount: result.paypalAmount, goods: check.goods, extras: check.extras, debugId: order.debugId, ok: Boolean(matches) });
     await popup.waitForTimeout(pace(2500));
     await shot(popup, "2-paypal");
     if (!matches && !opts.skipAmountCheck) {

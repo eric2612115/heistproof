@@ -33,7 +33,21 @@ export function verdictOf(r: Round): Verdict {
   if (!r.prove.ok) return environmentProblem(r) ? "incomplete" : "unsafe";
   const held = new Set(r.attacks.filter((a) => a.verdict === "held").map((a) => a.id));
   if (ALL_ATTACKS.some((id) => !held.has(id))) return "incomplete";
+  // Safe also needs the books: matched to PayPal's records, every paid order backed. Books that could not be read or
+  // matched leave the check incomplete.
+  if (!r.books?.matched) return "incomplete";
   return "safe";
+}
+
+/**
+ * What a verdict covered, in one line. Safe without the AI thief means safe against the ten scripted robberies only: a
+ * mistake outside the ten is the thief's to find, and it needs a model key.
+ */
+export function verdictLine(r: Round): string {
+  const v = verdictOf(r);
+  if (v === "safe" && !r.thief?.ran) return `${VERDICT_LINE.safe} against the ten scripted robberies (the AI thief did not run: ${r.thief?.reason ?? "it was not asked to"}; mistakes outside the ten were not looked for)`;
+  if (v === "incomplete" && !r.books?.matched && r.attacks.every((a) => a.verdict === "held")) return `${VERDICT_LINE.incomplete} (the shop's books could not be matched to PayPal's records)`;
+  return VERDICT_LINE[v];
 }
 
 export function isSafe(r: Round): boolean {
@@ -55,7 +69,8 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
   ensureInstalled(shopDir);
   const tests = runTests(shopDir);
   run.emit("build", "build.tests", { round, ok: tests.ok, output: tests.output.slice(-3000) });
-  const items = [loadProfile(shopDir).product];
+  const { sku, qty } = loadProfile(shopDir).product;
+  const items = [{ sku, qty }];
   const sandbox = await openSandbox(run, phase, shopDir, round);
   try {
     const legit = await purchase({ run, phase: "prove", shop: sandbox.shop, tap: sandbox.tap, items, label: `round${round}-purchase${opts.method && opts.method !== "paypal" ? `-${opts.method}` : ""}`, method: opts.method });
@@ -69,7 +84,7 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     if (paypalErrors.length) run.emit("prove", "prove.paypal_errors", { round, errors: paypalErrors });
     if (legit.ok && legit.captureId) {
       // Give PayPal a minute to deliver the purchase's PAYMENT.CAPTURE.COMPLETED; the sandbox is sometimes slower.
-      await sandbox.tap.waitFor((d) => d.eventType === "PAYMENT.CAPTURE.COMPLETED" && d.resourceId === legit.captureId, pace(60_000));
+      await sandbox.tap.waitOrAsk((d) => d.eventType === "PAYMENT.CAPTURE.COMPLETED" && d.resourceId === legit.captureId, "PAYMENT.CAPTURE.COMPLETED", [legit.captureId, legit.paypalOrderId], pace(60_000));
     }
     let attacks: AttackOutcome[] = [];
     if (!opts.skipAttacks && (legit.ok || legit.paypalOrderId)) {
@@ -85,10 +100,13 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     let thief: ThiefReport | undefined;
     const buyerCouldApprove = legit.ok || legit.approved || legit.captureStatus === "COMPLETED";
     if (opts.thief !== false && opts.thief !== undefined && !opts.skipAttacks && !opts.attacks && buyerCouldApprove) {
-      thief = await runThief({ run, round, shop: sandbox.shop, proxy: sandbox.proxy, tap: sandbox.tap, legit, items, scripted: attacks }, opts.thief).catch((err) => ({ ran: false, reason: String((err as Error).message ?? err).slice(0, 200), plans: [] }));
+      thief = await runThief({ run, round, shop: sandbox.shop, proxy: sandbox.proxy, tap: sandbox.tap, legit, items, scripted: attacks }, opts.thief).catch((err) => ({ ran: false, reason: `the AI thief failed: ${String((err as Error).message ?? err).slice(0, 200)}`, plans: [] }));
     }
     // After every robbery, the shop's books against PayPal's own records.
-    const books = legit.paypalOrderId ? await reconcile(sandbox.shop, sandbox.proxy.calls, legit).catch(() => undefined) : undefined;
+    // A failure to read the books is recorded, not swallowed: without them the check cannot be called safe.
+    const books: Books | undefined = legit.paypalOrderId
+      ? await reconcile(sandbox.shop, sandbox.proxy.calls, legit).catch((err) => ({ matched: false, orders: 0, paid: 0, mismatches: [], error: String((err as Error).message ?? err).slice(0, 200) }))
+      : undefined;
     if (books) run.emit("attack", "books.reconciled", { round, ...books });
     // The webhook verdict for the round: how the shop answered PayPal's genuine PAYMENT.CAPTURE.COMPLETED for one of its
     // own orders. Events about other shops' orders (one sandbox app can serve several projects) do not count.
@@ -96,6 +114,7 @@ export async function checkShop(run: Run, shopDir: string, round: number, opts: 
     const ours = sandbox.tap.genuine("PAYMENT.CAPTURE.COMPLETED").filter((d) => d.resourceId === legit.captureId || shopOrderFor(d, orders, legit));
     const best = ours.find((d) => d.resourceId === legit.captureId) ?? ours[0];
     const webhook: WebhookStatus = !best ? "not-delivered" : best.shopStatus >= 200 && best.shopStatus < 300 ? "accepted" : "refused";
+    if (sandbox.tap.resends.length) run.emit("prove", "webhook.resends", { round, resends: sandbox.tap.resends });
     run.emit("prove", "prove.webhook", { round, status: webhook, eventId: best?.eventId ?? null, resourceId: best?.resourceId ?? null, shopStatus: best?.shopStatus ?? null, paypalVerified: best?.paypalVerified ?? null, ok: webhook === "accepted" });
     const result: Round = { round, tests: tests.ok, prove: legit, attacks, webhook, webhookEvent: best?.eventId ?? null, paypalErrors, books, thief };
     run.writeJson(`round${round}.json`, result);

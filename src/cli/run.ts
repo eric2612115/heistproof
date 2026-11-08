@@ -11,7 +11,7 @@ import { Run } from "../events.ts";
 import { runCodingAgent } from "../agent.ts";
 import { prepareShop, diff, commit, switchBranch, openPullRequest, heistproofCommit, sourceHash, headCommit, diffSince } from "../workspace.ts";
 import { MIGRATION_PROMPT, BASELINE_PROMPT } from "../prompts.ts";
-import { proveAndHarden, verdictOf, VERDICT_LINE } from "../pipeline.ts";
+import { proveAndHarden, verdictOf, verdictLine } from "../pipeline.ts";
 import { renderReport } from "../report.ts";
 import { chooseEngine } from "../engine.ts";
 import { offlineFlag, preflight, stopIfMissing, main } from "./common.ts";
@@ -75,6 +75,6 @@ await main(run, async () => {
   const pr = safe ? openPullRequest(shopDir, branch, title, path.join(shopDir, "HEISTPROOF-REPORT.md")) : null;
   run.writeText("final.patch", diffSince(shopDir, base));
   run.emit("ship", "run.done", { safe, verdict, robbed, rounds: rounds.length, shop: shopDir, branch, pr, prNote: safe ? null : "No pull request: one is opened only when every robbery is blocked." });
-  console.log(`\nRun ${run.id}: ${VERDICT_LINE[verdict]}\nshop: ${shopDir}\nbranch: ${branch}${pr ? `\npull request: ${pr}` : safe ? "" : "\nno pull request (opened only when every robbery is blocked)"}\nreport: ${run.file("REPORT.md")}`);
+  console.log(`\nRun ${run.id}: ${verdictLine(last)}\nshop: ${shopDir}\nbranch: ${branch}${pr ? `\npull request: ${pr}` : safe ? "" : "\nno pull request (opened only when every robbery is blocked)"}\nreport: ${run.file("REPORT.md")}`);
   return safe ? 0 : verdict === "incomplete" ? 2 : 1;
 });

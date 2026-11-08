@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import { askModel, firstJson } from "./llm.ts";
 import { browser, purchase, type PurchaseResult } from "./prove.ts";
-import { settledOrders, type ShopProcess } from "./shop-process.ts";
+import { settledOrders, shopOrders, type ShopProcess } from "./shop-process.ts";
+import type { ShopOrder } from "./shop-profile.ts";
 import { reconcile, type Books } from "./books.ts";
 import { shopOrderFor, shopScripts, type AttackOutcome } from "./attacks.ts";
 import { pace } from "./config.ts";
@@ -24,7 +25,7 @@ export type ThiefStep =
   | { do: "webhook"; event: "PAYMENT.CAPTURE.COMPLETED" | "CHECKOUT.ORDER.APPROVED"; edit?: Record<string, unknown>; signed?: boolean; times?: number }
   | { do: "wait"; ms: number };
 export type ThiefPlan = { name: string; idea: string; expect: string; steps: ThiefStep[] };
-export type ThiefOutcome = { name: string; idea: string; expect: string; verdict: "held" | "robbed" | "error"; summary: string; steps: Array<{ step: ThiefStep; result: string }>; mismatches: Books["mismatches"] };
+export type ThiefOutcome = { name: string; idea: string; expect: string; verdict: "held" | "robbed" | "repeat" | "error"; summary: string; steps: Array<{ step: ThiefStep; result: string }>; mismatches: Books["mismatches"] };
 export type ThiefReport = { ran: boolean; reason?: string; model?: string; provider?: string; source?: "model" | "replay"; dropped?: string[]; plans: ThiefOutcome[] };
 
 export type ThiefContext = { run: Run; round: number; shop: ShopProcess; proxy: PayPalProxy; tap: WebhookTap; legit: PurchaseResult; items: Array<{ sku: string; qty: number }>; scripted: AttackOutcome[] };
@@ -154,8 +155,35 @@ Values may use placeholders: {{legit.paypalOrderId}}, {{legit.captureId}}, {{leg
 Paths must be routes of this shop (starting with /). Do not repeat the ten known robberies as they were run.`;
 }
 
+/**
+ * The kind of a books mismatch. A plan that only causes a kind the books already show (a shop that ships three parcels
+ * for every capture does it to any new order, the thief's included) repeats a known problem; it has not found a way in.
+ */
+export function mismatchKind(problem: string): string {
+  if (/already pays for order/.test(problem)) return "one payment paying for two orders";
+  if (/holds no completed capture/.test(problem)) return "paid or shipped without a completed capture";
+  if (/parcels for \d+ completed capture/.test(problem)) return "more parcels than captures";
+  if (/^PayPal captured \$[\d.,]+ for an order of/.test(problem)) return "less captured than the order costs";
+  if (/shipped the same goods as the real purchase/.test(problem)) return "the same goods for less";
+  return problem;
+}
+
+/**
+ * Which new mismatches a plan answers for: those on orders it made, or on orders whose record carries an id the plan
+ * named, sent or got back (a shop order id, or a 17-character PayPal order or capture id). A mismatch on any other order
+ * comes from a PayPal event arriving late for an earlier order: the round's books still count it, but not as this plan's.
+ */
+export function answerable(changed: Books["mismatches"], before: Set<string>, records: Map<string, string>, trail: string): Books["mismatches"] {
+  const ids = (record: string) => [...new Set(record.match(/\b[0-9A-Z]{17}\b/g) ?? [])];
+  const mine = (order: string) => !before.has(order) || trail.includes(order) || ids(records.get(order) ?? "").some((id) => trail.includes(id));
+  return changed.filter((m) => mine(m.order));
+}
+
 /** Runs one plan, step by step, and judges it by the books: a new mismatch with PayPal's records means it got through. */
 async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Books): Promise<{ outcome: ThiefOutcome; books: Books }> {
+  const existing = new Set((await shopOrders(ctx.shop).catch(() => [] as ShopOrder[])).map((o) => o.id));
+  // Everything this plan named or got back: ids in its requests and answers, and the events it resent.
+  const touched: string[] = [];
   const saved: Record<string, any> = { legit: { paypalOrderId: ctx.legit.paypalOrderId, captureId: ctx.legit.captureId, shopOrderId: ctx.legit.shopOrder?.id ?? null, bagTotal: ctx.legit.bagTotal } };
   const create = ctx.legit.calls.find((c) => ctx.legit.paypalOrderId && JSON.stringify(c.response ?? "").includes(ctx.legit.paypalOrderId));
   const pageHeaders = create?.headers ?? {};
@@ -187,6 +215,7 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
           return out;
         })();
         if (step.save) saved[step.save] = answers.at(-1);
+        touched.push(JSON.stringify(step), JSON.stringify(answers));
         log.push({ step: raw, result: answers.map((a) => `HTTP ${a.status} ${cut(a.body, 160)}`).join(" | ") });
       } else if (step.do === "buy") {
         const p = await purchase({
@@ -202,6 +231,7 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
           expectPaid: false,
         });
         if (step.save) saved[step.save] = { paypalOrderId: p.paypalOrderId, captureId: p.captureId, shopOrderId: p.shopOrder?.id ?? null, approved: p.approved, captured: p.captureStatus };
+        touched.push(JSON.stringify([p.paypalOrderId, p.captureId, p.shopOrder?.id, p.calls.map((c) => c.response)]));
         log.push({ step: raw, result: `PayPal order ${p.paypalOrderId ?? "none"}, ${p.approved ? "approved" : "not approved"}, capture ${p.captureStatus ?? "none"}, shop order ${p.shopOrder?.id ?? "?"} ${p.shopOrder?.status ?? ""}` });
       } else if (step.do === "webhook") {
         const orders = await settledOrders(ctx.shop, pace(500), pace(4000));
@@ -217,6 +247,7 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
           for (const [p, v] of Object.entries(step.edit)) setPath(event, p, v);
           body = JSON.stringify(event);
         }
+        touched.push(body, source.rawBody);
         const headers = step.signed === false ? { "content-type": "application/json" } : source.headers;
         const answers = [];
         for (let i = 0; i < (step.times ?? 1); i++) answers.push((await ctx.tap.forward("attacker", headers, body)).shopStatus);
@@ -232,13 +263,23 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
   await settledOrders(ctx.shop, pace(1500), pace(12_000));
   const after = await reconcile(ctx.shop, ctx.proxy.calls, ctx.legit);
   const known = new Set(books.mismatches.map((m) => `${m.order}|${m.problem}`));
-  const fresh = after.mismatches.filter((m) => !known.has(`${m.order}|${m.problem}`));
+  const records = new Map((await shopOrders(ctx.shop).catch(() => [] as ShopOrder[])).map((o) => [o.id, JSON.stringify(o)]));
+  const changed = after.mismatches.filter((m) => !known.has(`${m.order}|${m.problem}`));
+  const fresh = answerable(changed, existing, records, touched.join(" "));
+  const knownKinds = new Set(books.mismatches.map((m) => mismatchKind(m.problem)));
+  const novel = fresh.filter((m) => !knownKinds.has(mismatchKind(m.problem)));
   const outcome: ThiefOutcome = {
     name: plan.name,
     idea: plan.idea,
     expect: plan.expect,
-    verdict: fresh.length ? "robbed" : "held",
-    summary: fresh.length ? `Got through: ${fresh.map((m) => `order ${m.order} ${m.problem}`).join("; ")}.` : "The books still match PayPal's records: nothing taken.",
+    verdict: novel.length ? "robbed" : fresh.length ? "repeat" : "held",
+    summary: novel.length
+      ? `Got through: ${novel.map((m) => `order ${m.order} ${m.problem}`).join("; ")}.`
+      : fresh.length
+        ? `Only repeated a problem the books already showed (${[...new Set(fresh.map((m) => mismatchKind(m.problem)))].join("; ")}) on ${fresh.map((m) => `order ${m.order}`).join(", ")}: not a new way in.`
+        : changed.length
+        ? `Nothing taken by this robbery; meanwhile late PayPal events changed orders it never touched (${changed.map((m) => m.order).join(", ")}), counted in the round's books.`
+        : "The books still match PayPal's records: nothing taken.",
     steps: log,
     mismatches: fresh,
   };
@@ -266,7 +307,9 @@ export async function runThief(ctx: ThiefContext, opts: { plansFile?: string; co
       model = answer.model;
       provider = answer.provider;
     } catch (err) {
-      const report: ThiefReport = { ran: false, reason: `the model could not be asked: ${String((err as Error).message ?? err).slice(0, 200)}`, plans: [] };
+      const message = String((err as Error).message ?? err);
+      const reason = /No model key found/.test(message) ? "no model key (add one with npm run setup)" : `the model could not be asked: ${message.length > 200 ? `${message.slice(0, 200).replace(/\s+\S*$/, "")}…` : message}`;
+      const report: ThiefReport = { ran: false, reason, plans: [] };
       ctx.run.emit("attack", "thief.skipped", { round: ctx.round, reason: report.reason });
       return report;
     }

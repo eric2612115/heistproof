@@ -26,8 +26,14 @@ export class WebhookTap {
   private server: http.Server | null = null;
   private waiters: Array<{ match: (d: Delivery) => boolean; resolve: (d: Delivery) => void }> = [];
 
-  /** Set once the webhook id is known: asks PayPal whether a delivery is genuine (recorded as evidence). */
+  /** Set once the webhook id is known: asks PayPal whether a delivery is genuine. Only verified deliveries count as PayPal's. */
   verifier: ((headers: Record<string, string>, rawBody: string) => Promise<boolean>) | null = null;
+
+  /** Set once the webhook id is known: asks PayPal to resend this run's events of a type about some ids (see resendEvents). */
+  resender: ((eventType: string, ids: string[]) => Promise<string[]>) | null = null;
+
+  /** Every time Heistproof asked PayPal to resend an event the sandbox had not delivered, for the run's evidence. */
+  readonly resends: Array<{ at: string; eventType: string; ids: string[]; resent: string[] }> = [];
 
   constructor(private shopWebhookUrl: string) {}
 
@@ -91,7 +97,7 @@ export class WebhookTap {
     if (source === "paypal" && this.verifier) {
       delivery.paypalVerified = await this.verifier(headers, rawBody).catch(() => null);
     }
-    if (source === "paypal") {
+    if (source === "paypal" && this.isPayPal(delivery)) {
       for (const w of [...this.waiters]) {
         if (w.match(delivery)) {
           this.waiters.splice(this.waiters.indexOf(w), 1);
@@ -102,9 +108,30 @@ export class WebhookTap {
     return delivery;
   }
 
+  /**
+   * PayPal's own delivery: it came with PayPal's signature headers and, when a verifier is set, PayPal's
+   * verify-webhook-signature said SUCCESS. Headers alone can be copied by anyone who reaches the public tunnel.
+   */
+  isPayPal(d: Delivery): boolean {
+    return d.source === "paypal" && (!this.verifier || d.paypalVerified === true);
+  }
+
+  /**
+   * Waits for PayPal's delivery of an event; halfway through, asks PayPal to resend this run's events of that type about
+   * `ids` to this run's webhook (the sandbox sometimes never delivers an event on its own), then waits the rest.
+   */
+  async waitOrAsk(match: (d: Delivery) => boolean, eventType: string, ids: Array<string | null | undefined>, timeoutMs = 90_000): Promise<Delivery | null> {
+    const first = await this.waitFor(match, Math.round(timeoutMs / 2));
+    if (first || !this.resender) return first;
+    const wanted = ids.filter((x): x is string => typeof x === "string" && x.length > 0);
+    const resent = await this.resender(eventType, wanted).catch(() => [] as string[]);
+    this.resends.push({ at: new Date().toISOString(), eventType, ids: wanted, resent });
+    return resent.length ? this.waitFor(match, Math.round(timeoutMs / 2)) : null;
+  }
+
   /** Waits for a genuine PayPal delivery that matches. */
   waitFor(match: (d: Delivery) => boolean, timeoutMs = 90_000): Promise<Delivery | null> {
-    const existing = this.deliveries.find((d) => d.source === "paypal" && match(d));
+    const existing = this.deliveries.find((d) => this.isPayPal(d) && match(d));
     if (existing) return Promise.resolve(existing);
     return new Promise((resolve) => {
       const waiter = { match, resolve: (d: Delivery | null) => resolve(d) };
@@ -120,7 +147,7 @@ export class WebhookTap {
   }
 
   genuine(type?: string) {
-    return this.deliveries.filter((d) => d.source === "paypal" && (!type || d.eventType === type));
+    return this.deliveries.filter((d) => this.isPayPal(d) && (!type || d.eventType === type));
   }
 
   async stop() {

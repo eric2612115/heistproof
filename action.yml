@@ -11,6 +11,10 @@ inputs:
     description: "true to run against the real PayPal sandbox instead of the offline stand-in (needs PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET and a sandbox buyer in the environment, and cloudflared)."
     required: false
     default: "false"
+  thief-plans:
+    description: "Optional: a file of AI thief robberies recorded in an earlier run (round0-thief-plans.json), replayed with no model key. With a model key in the job's environment (for example MODEL_API_KEY or ANTHROPIC_API_KEY from your secrets), the AI thief invents new ones instead."
+    required: false
+    default: ""
 outputs:
   verdict:
     description: safe, unsafe or incomplete
@@ -34,7 +38,8 @@ runs:
       working-directory: ${{ github.action_path }}
       run: |
         set +e
-        npx tsx src/cli/check.ts "$GITHUB_WORKSPACE/${{ inputs.shop }}" ${{ inputs.sandbox == 'true' && ' ' || '--offline' }} | tee heistproof.log
+        plans="${{ inputs.thief-plans }}"
+        npx tsx src/cli/check.ts "$GITHUB_WORKSPACE/${{ inputs.shop }}" ${{ inputs.sandbox == 'true' && ' ' || '--offline' }} ${plans:+--thief-plans="$GITHUB_WORKSPACE/$plans"} | tee heistproof.log
         code=${PIPESTATUS[0]}
         case $code in 0) v=safe ;; 1) v=unsafe ;; *) v=incomplete ;; esac
         echo "verdict=$v" >> "$GITHUB_OUTPUT"

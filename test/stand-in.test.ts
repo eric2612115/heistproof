@@ -107,3 +107,48 @@ test("webhooks are signed: the event as sent verifies, a replay verifies, any ed
   assert.equal(await verify(completed.headers, event, "WH-SOMEONE-ELSE"), "FAILURE");
   assert.equal(await verify({ ...completed.headers, "paypal-transmission-sig": "forged" }, event), "FAILURE");
 });
+
+test("an order created to AUTHORIZE cannot be captured with the Orders capture call", async () => {
+  const o = await call("POST", "/v2/checkout/orders", { intent: "AUTHORIZE", purchase_units: [{ amount: { currency_code: "USD", value: "49.00" } }] });
+  assert.equal(o.status, 201);
+  await approve(o.body.id);
+  const r = await call("POST", `/v2/checkout/orders/${o.body.id}/capture`, {});
+  assert.equal(r.status, 422);
+  assert.equal(issue(r), "ACTION_DOES_NOT_MATCH_INTENT");
+});
+
+test("negative testing comes first: a mocked capture with no content type is declined, as in the sandbox, not refused with 415", async () => {
+  const o = await order();
+  await approve(o.body.id);
+  const r = await fetch(`${pp.url}/v2/checkout/orders/${o.body.id}/capture`, { method: "POST", headers: { authorization: `Bearer ${token}`, "paypal-mock-response": JSON.stringify({ mock_application_codes: "INSTRUMENT_DECLINED" }) } });
+  assert.equal(r.status, 422);
+  assert.equal(issue({ body: await r.json() }), "INSTRUMENT_DECLINED");
+});
+
+test("events can be listed and resent to the webhook, signed again and still verifiable", async () => {
+  const o = await order();
+  await approve(o.body.id);
+  const captured = await call("POST", `/v2/checkout/orders/${o.body.id}/capture`, {}, { "paypal-request-id": `resend-${Date.now()}` });
+  const captureId = captured.body.purchase_units[0].payments.captures[0].id;
+  await new Promise((r) => setTimeout(r, 400));
+  const list = await call("GET", "/v1/notifications/webhooks-events?event_type=PAYMENT.CAPTURE.COMPLETED&page_size=50");
+  const event = list.body.events.find((e: any) => e.resource?.id === captureId);
+  assert.ok(event, "the capture's event is listed");
+  const before = received.filter((d) => JSON.parse(d.body).id === event.id).length;
+  const resent = await call("POST", `/v1/notifications/webhooks-events/${event.id}/resend`, { webhook_ids: [pp.webhookId] });
+  assert.equal(resent.status, 202);
+  await new Promise((r) => setTimeout(r, 300));
+  const deliveries = received.filter((d) => JSON.parse(d.body).id === event.id);
+  assert.equal(deliveries.length, before + 1, "delivered once more");
+  const last = deliveries.at(-1)!;
+  const verified = await call("POST", "/v1/notifications/verify-webhook-signature", {
+    auth_algo: last.headers["paypal-auth-algo"],
+    cert_url: last.headers["paypal-cert-url"],
+    transmission_id: last.headers["paypal-transmission-id"],
+    transmission_sig: last.headers["paypal-transmission-sig"],
+    transmission_time: last.headers["paypal-transmission-time"],
+    webhook_id: pp.webhookId,
+    webhook_event: JSON.parse(last.body),
+  });
+  assert.equal(verified.body.verification_status, "SUCCESS");
+});

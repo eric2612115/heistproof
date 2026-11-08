@@ -12,19 +12,22 @@ const FIXTURES = path.join(import.meta.dirname, "..", "fixtures");
 
 const SHOP = path.join(import.meta.dirname, "..", "..", "shops", "copper-kettle");
 type Patch = { file: string; from: string; to: string };
+/** A planted shop: its edits, and whether its own tests no longer apply (they would fail on purpose). */
+type Plant = { mistake: string; patches: Patch[]; noTests?: boolean };
 
 /** One mistake per robbery, as a few exact edits of the careful shop's code. */
-const BUGS: Record<string, { mistake: string; patches: Patch[] }> = {
+const BUGS: Record<string, Plant> = {
   "price-tamper": {
     mistake: "uses a unit price sent by the browser",
     patches: [{ file: "server.js", from: "priced = priceLines(body.lines);", to: "priced = priceLines(body.lines);\n            if (body.lines?.[0]?.price_cents) { priced.lines[0].unit_cents = body.lines[0].price_cents; priced.total_cents = priced.lines.reduce((n, l) => n + l.count * l.unit_cents, 0); }" }],
   },
   "bad-bag": {
-    mistake: "accepts any quantity",
+    mistake: "lets a line with a negative quantity take money off the bag",
     patches: [
-      { file: "lib/catalog.js", from: "count < 1 || count > MAX_COUNT", to: "count === 0" },
-      { file: "lib/catalog.js", from: "    if (count > MAX_COUNT) throw new Error(`You can buy 1 to ${MAX_COUNT} of each product.`);\n", to: "" },
+      { file: "lib/catalog.js", from: "if (!Number.isInteger(count) || count < 1 || count > MAX_COUNT)", to: "if (!Number.isInteger(count) || count === 0 || count > MAX_COUNT)" },
+      { file: "lib/paypal.js", from: "              amount: { currency_code: \"USD\", value, breakdown: { item_total: { currency_code: \"USD\", value } } },\n              items: order.lines.map((l) => ({ name: l.name, sku: l.product, quantity: String(l.count), unit_amount: { currency_code: \"USD\", value: dollars(l.unit_cents) }, category: \"PHYSICAL_GOODS\" })),\n", to: "              amount: { currency_code: \"USD\", value },\n" },
     ],
+    noTests: true,
   },
   "capture-unapproved": {
     mistake: "treats a refused capture as paid",
@@ -71,6 +74,60 @@ const BUGS: Record<string, { mistake: string; patches: Patch[] }> = {
 };
 
 /**
+ * Mistakes an earlier version of these robberies missed (found by an independent review), each now caught by the robbery
+ * for its kind: a price under another field name, a webhook that names the order only by invoice_id, an access token
+ * served to the page.
+ */
+const MISSED_BEFORE: Record<string, Plant & { robbery: string }> = {
+  "unit-cents": {
+    robbery: "price-tamper",
+    mistake: "prices each line from a unit_cents field the page sends",
+    patches: [
+      { file: "public/app.js", from: "const lines = () => [...cart].map(([product, count]) => ({ product, count }));", to: "const lines = () => [...cart].map(([product, count]) => ({ product, count, unit_cents: Math.round(Number(catalog.find((p) => p.sku === product)?.price ?? 0) * 100) }));" },
+      { file: "server.js", from: "            priced = priceLines(body.lines);", to: "            priced = priceLines(body.lines);\n            for (const [i, l] of priced.lines.entries()) if (Number.isInteger(body.lines?.[i]?.unit_cents) && body.lines[i].unit_cents > 0) l.unit_cents = body.lines[i].unit_cents;\n            priced.total_cents = priced.lines.reduce((n, l) => n + l.count * l.unit_cents, 0);" },
+    ],
+  },
+  "invoice-no-verify": {
+    robbery: "forged-webhook",
+    mistake: "never verifies webhooks and finds the order by invoice_id",
+    patches: [
+      { file: "server.js", from: "if (!(await paypal.verifyWebhook(req.headers, event)))", to: "if (false)" },
+      { file: "server.js", from: "          const order = store.byRef(cap.custom_id) ?? store.byPayPal(cap.supplementary_data?.related_ids?.order_id);", to: "          const order = store.byRef(String(cap.invoice_id ?? \"\").split(\"-\").slice(0, 2).join(\"-\"));" },
+    ],
+    noTests: true,
+  },
+  "token-leak": {
+    robbery: "secret-leak",
+    mistake: "hands the page a PayPal access token",
+    patches: [
+      { file: "lib/paypal.js", from: "    browserConfig: () => ({\n      clientId: env.PAYPAL_CLIENT_ID ?? null,", to: "    browserConfig: async () => ({\n      accessToken: await accessToken(),\n      clientId: env.PAYPAL_CLIENT_ID ?? null," },
+      { file: "server.js", from: "return send(res, 200, paypal.browserConfig());", to: "return send(res, 200, await paypal.browserConfig());" },
+    ],
+  },
+};
+
+/** Correct shops that an earlier version wrongly flagged: selling a thousand at full price, and adding shipping. */
+const CORRECT: Record<string, Plant & { robberies?: string[] }> = {
+  "wholesale-1000": {
+    mistake: "sells up to 1,000 of an item at the catalog price",
+    patches: [{ file: "lib/catalog.js", from: "const MAX_COUNT = 10;", to: "const MAX_COUNT = 1000;" }],
+    robberies: ["bad-bag"],
+    noTests: true,
+  },
+  "flat-shipping": {
+    mistake: "adds $5.00 shipping on the server, named in PayPal's breakdown",
+    patches: [
+      { file: "server.js", from: "          const order = store.add({ ...priced, currency: \"USD\" });", to: "          const order = store.add({ ...priced, total_cents: priced.total_cents + 500, currency: \"USD\" });" },
+      { file: "lib/paypal.js", from: "breakdown: { item_total: { currency_code: \"USD\", value } } },", to: "breakdown: { item_total: { currency_code: \"USD\", value: dollars(order.total_cents - 500) }, shipping: { currency_code: \"USD\", value: \"5.00\" } } }," },
+    ],
+    noTests: true,
+  },
+};
+
+/** A shop that creates AUTHORIZE orders and then calls capture: PayPal refuses every capture, so it must never pass. */
+const AUTHORIZE: Patch[] = [{ file: "lib/paypal.js", from: "          intent: \"CAPTURE\",", to: "          intent: \"AUTHORIZE\"," }];
+
+/**
  * A mistake none of the ten scripted robberies can see: the capture route lets a field in its request body choose which
  * shop order a payment pays for, so one payment can pay for two orders. The AI thief found it on its own (its plans,
  * recorded from that run, are in test/fixtures/thief-plans-binding.json); the books catch it.
@@ -81,7 +138,7 @@ const BEYOND_THE_TEN: Patch[] = [
   { file: "server.js", from: "          const order = store.byPayPal(decodeURIComponent(m[1]));\n          if (!order) return send(res, 404, { error: \"unknown order\" });\n          if (!inflight.has(order.ref)) inflight.set(order.ref, capture(order).finally(() => inflight.delete(order.ref)));", to: "          const order = (body.ref && store.byRef(body.ref)) || store.byPayPal(decodeURIComponent(m[1]));\n          if (!order) return send(res, 404, { error: \"unknown order\" });\n          if (!inflight.has(order.ref)) inflight.set(order.ref, capture(order, decodeURIComponent(m[1])).finally(() => inflight.delete(order.ref)));" },
 ];
 
-function patched(name: string, patches: Patch[]): string {
+function patched(name: string, patches: Patch[], noTests = false): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), `heistproof-${name}-`));
   fs.cpSync(SHOP, dir, { recursive: true, filter: (p) => !/(^|\/)(node_modules|data)(\/|$)/.test(path.relative(SHOP, p)) });
   for (const p of patches) {
@@ -90,11 +147,17 @@ function patched(name: string, patches: Patch[]): string {
     assert.equal(text.split(p.from).length - 1, 1, `${name}: the edit must match exactly once in ${p.file}: ${p.from.slice(0, 60)}`);
     fs.writeFileSync(file, text.replace(p.from, p.to));
   }
+  // A plant whose own tests would fail on purpose: what is measured here is the robbery, not the shop's tests.
+  if (noTests) {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+    pkg.scripts.test = "node -e \"console.log('the shop tests do not apply to this planted copy')\"";
+    fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify(pkg, null, 2));
+  }
   return dir;
 }
 
 function buggyCopy(id: string): string {
-  return patched(id, BUGS[id].patches);
+  return patched(id, BUGS[id].patches, BUGS[id].noTests);
 }
 
 
@@ -123,6 +186,48 @@ for (const [id, bug] of Object.entries(BUGS)) {
     }
   });
 }
+
+for (const [name, plant] of Object.entries(MISSED_BEFORE)) {
+  test(`a shop that ${plant.mistake} is robbed by "${plant.robbery}"`, { timeout: 240_000 }, async () => {
+    const dir = patched(name, plant.patches, plant.noTests);
+    try {
+      const { round } = await checkOffline(dir, { attacks: [plant.robbery], label: `copper-kettle-${name}` });
+      const outcome = round.attacks.find((a) => a.id === plant.robbery);
+      assert.ok(outcome, `${plant.robbery} ran`);
+      assert.equal(outcome.verdict, "robbed", `${name}: ${outcome.summary}`);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+}
+
+for (const [name, plant] of Object.entries(CORRECT)) {
+  test(`a correct shop that ${plant.mistake} is not reported robbed`, { timeout: 300_000 }, async () => {
+    const dir = patched(name, plant.patches, plant.noTests);
+    try {
+      const { round, verdict } = await checkOffline(dir, { attacks: plant.robberies, label: `copper-kettle-${name}` });
+      assert.equal(round.prove.ok, true, `the real purchase goes through: ${round.prove.verdict}`);
+      for (const a of round.attacks) assert.equal(a.verdict, "held", `${a.id}: ${a.summary}`);
+      if (!plant.robberies) {
+        assert.deepEqual(round.books?.mismatches, [], "its books match PayPal's");
+        assert.equal(verdict, "safe");
+      }
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+}
+
+test("a shop that captures orders it created to AUTHORIZE never passes: PayPal refuses the capture", { timeout: 240_000 }, async () => {
+  const dir = patched("authorize-intent", AUTHORIZE);
+  try {
+    const { round, verdict } = await checkOffline(dir, { attacks: ["price-tamper"], label: "copper-kettle-authorize-intent" });
+    assert.equal(round.prove.ok, false, "the purchase did not complete");
+    assert.notEqual(verdict, "safe");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test("a mistake outside the ten: the scripted robberies all pass it, the AI thief's own robbery does not", { timeout: 300_000 }, async () => {
   const dir = patched("binding", BEYOND_THE_TEN);

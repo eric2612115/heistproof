@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { verdictOf, ALL_ATTACKS, environmentProblem, type Round } from "../src/pipeline.ts";
+import { verdictOf, verdictLine, ALL_ATTACKS, environmentProblem, type Round } from "../src/pipeline.ts";
 
 const held = (id: string) => ({ id, title: id, what: id, rule: [1], verdict: "held" as const, summary: "", evidence: {} });
 const base = (over: Partial<Round> = {}): Round =>
@@ -10,6 +10,8 @@ const base = (over: Partial<Round> = {}): Round =>
     prove: { ok: true, verdict: "Paid $49.00", captureId: "X", environment: null },
     attacks: ALL_ATTACKS.map(held),
     webhook: "accepted",
+    books: { matched: true, orders: 1, paid: 1, mismatches: [] },
+    thief: { ran: true, plans: [] },
     ...over,
   }) as unknown as Round;
 
@@ -73,5 +75,15 @@ test("runs recorded before the reason was structured still read the old wording"
 test("books that do not match PayPal's records make it unsafe, even with every robbery blocked", () => {
   assert.equal(verdictOf(base({ books: { matched: true, orders: 3, paid: 2, mismatches: [] } })), "safe");
   assert.equal(verdictOf(base({ books: { matched: true, orders: 3, paid: 2, mismatches: [{ order: "FOG-1", problem: "2 parcels for 1 completed capture(s)" }] } })), "unsafe");
-  assert.equal(verdictOf(base({ books: { matched: false, orders: 3, paid: 2, mismatches: [] } })), "safe", "books that cannot be matched do not decide");
+  assert.equal(verdictOf(base({ books: { matched: false, orders: 3, paid: 2, mismatches: [] } })), "incomplete", "books that cannot be matched leave the check incomplete");
+  assert.equal(verdictOf(base({ books: { matched: false, orders: 0, paid: 0, mismatches: [], error: "back office unreachable" } })), "incomplete", "books that could not be read leave it incomplete");
+  assert.equal(verdictOf(base({ books: undefined })), "incomplete", "no books at all is never safe");
+});
+
+test("safe without the AI thief says so: it covers the ten scripted robberies only", () => {
+  assert.match(verdictLine(base()), /^SAFE TO SHIP$/);
+  const noThief = verdictLine(base({ thief: { ran: false, reason: "no model key (add one with npm run setup)", plans: [] } }));
+  assert.match(noThief, /^SAFE TO SHIP against the ten scripted robberies/);
+  assert.match(noThief, /no model key/);
+  assert.match(verdictLine(base({ thief: undefined })), /the AI thief did not run/);
 });

@@ -4,7 +4,9 @@ import crypto from "node:crypto";
 /**
  * A local pass-through to an Anthropic-protocol model API that holds the real key, so the coding agent's process (and
  * every command it runs) never sees it: Claude Code gets this relay's address and a per-run token instead. Requests
- * without that token are refused, so other local programs cannot spend the key either.
+ * without that token are refused, so other local programs cannot spend the key either; and only POST /v1/messages
+ * (and its token count) is forwarded, so even the agent, which holds the token, can use the key for nothing but messages
+ * during its own run.
  */
 export type RelayOptions = {
   baseUrl: string;
@@ -24,6 +26,9 @@ export function authorized(req: http.IncomingMessage, token: string): boolean {
   return given.length === token.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(token));
 }
 
+/** The only routes the relay forwards. */
+export const ALLOWED = new Set(["/v1/messages", "/v1/messages/count_tokens"]);
+
 const HOP = new Set(["host", "connection", "content-length", "accept-encoding", "authorization", "x-api-key", "transfer-encoding", "keep-alive"]);
 
 export async function startRelay(opts: RelayOptions): Promise<{ url: string; token: string; close: () => Promise<void> }> {
@@ -33,6 +38,13 @@ export async function startRelay(opts: RelayOptions): Promise<{ url: string; tok
     if (!authorized(req, token)) {
       res.writeHead(401, { "content-type": "application/json" });
       return res.end(JSON.stringify({ type: "error", error: { type: "authentication_error", message: "This relay only serves the Heistproof run that started it." } }));
+    }
+    // Only what a coding agent needs from a model: messages (and counting their tokens). Nothing else reaches the
+    // provider with the real key: not model listings, not files, not batches, not account endpoints.
+    const route = new URL(req.url ?? "/", "http://relay").pathname;
+    if (req.method !== "POST" || !ALLOWED.has(route)) {
+      res.writeHead(404, { "content-type": "application/json" });
+      return res.end(JSON.stringify({ type: "error", error: { type: "not_found_error", message: `This relay forwards only POST ${[...ALLOWED].join(" and ")}.` } }));
     }
     const chunks: Buffer[] = [];
     for await (const c of req) chunks.push(c as Buffer);

@@ -5,7 +5,7 @@
 // --thief-plans: replay robberies an AI thief invented in an earlier run (round0-thief-plans.json) instead of asking a model.
 import path from "node:path";
 import { Run } from "../events.ts";
-import { checkShop, proveAndHarden, verdictOf, VERDICT_LINE } from "../pipeline.ts";
+import { checkShop, proveAndHarden, verdictOf, verdictLine } from "../pipeline.ts";
 import { heistproofCommit, sourceHash, prepareShop, headCommit, diffSince } from "../workspace.ts";
 import { writeReport } from "../report.ts";
 import { offlineFlag, preflight, stopIfMissing, main } from "./common.ts";
@@ -41,6 +41,6 @@ await main(run, async () => {
   const verdict = verdictOf(last);
   const safe = verdict === "safe";
   run.emit("ship", "run.done", { safe, verdict, robbed, rounds: rounds.length, shop: dir });
-  console.log(`\nRun ${run.id}: ${VERDICT_LINE[verdict]}${attacks ? `\n(only ${attacks.length} of the 10 robberies were asked for, so this check can never say safe)` : ""}\nreport: ${report}`);
+  console.log(`\nRun ${run.id}: ${verdictLine(last)}${attacks ? `\n(only ${attacks.length} of the 10 robberies were asked for, so this check can never say safe)` : ""}\nreport: ${report}`);
   return safe ? 0 : verdict === "incomplete" ? 2 : 1;
 });

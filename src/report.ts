@@ -1,5 +1,6 @@
 import type { Run } from "./events.ts";
 import { verdictOf, type Round, type Verdict } from "./pipeline.ts";
+import { mismatchKind } from "./thief.ts";
 
 const RESULT: Record<string, string> = { held: "Blocked", robbed: "ROBBED", skipped: "Not run", error: "Error" };
 
@@ -13,8 +14,8 @@ const HEADLINE: Record<Verdict, string> = {
 function purchaseLine(r: Round): string {
   const p = r.prove;
   if (p.ok) return "paid and shipped once";
-  if (p.captureStatus === "COMPLETED") return `PayPal took the money, but ${p.verdict.replace(/^Capture COMPLETED; /, "")}`;
-  return `did not complete (${p.verdict})`;
+  if (p.captureStatus === "COMPLETED") return `PayPal took the money, but ${p.verdict.replace(/^Capture COMPLETED; /, "").replace(/\.$/, "")}`;
+  return `did not complete (${p.verdict.replace(/\.$/, "")})`;
 }
 
 function webhookLine(r: Round): string {
@@ -35,7 +36,10 @@ export function renderReport(opts: { shopDir: string; rounds: Round[]; title?: s
     const robbed = last.attacks.filter((a) => a.verdict === "robbed").length;
     const held = last.attacks.filter((a) => a.verdict === "held").length;
     const thiefRobbed = last.thief?.plans.filter((p) => p.verdict === "robbed").length ?? 0;
-    const thiefLine = last.thief?.ran ? ` The AI thief tried ${last.thief.plans.length} robberies of its own: ${thiefRobbed ? `${thiefRobbed} GOT THROUGH` : "none got through"}.` : "";
+    const thiefRepeat = last.thief?.plans.filter((p) => p.verdict === "repeat").length ?? 0;
+    const thiefLine = last.thief?.ran
+      ? ` The AI thief tried ${last.thief.plans.length} robberies of its own: ${thiefRobbed ? `${thiefRobbed} GOT THROUGH` : "none got through"}${thiefRepeat ? ` (${thiefRepeat} only repeated a problem the books already showed)` : ""}.`
+      : ` The AI thief did not run (${last.thief?.reason ?? "not asked to"}), so this covers the ten scripted robberies only.`;
     const booksLine = last.books?.mismatches.length ? ` The shop's books do not match PayPal's (${last.books.mismatches.length} order${last.books.mismatches.length === 1 ? "" : "s"}).` : "";
     lines.push(`**Verdict: ${HEADLINE[verdictOf(last)]}.** ${held} of 10 scripted robberies blocked, ${robbed} robbed the shop${last.attacks.length < 10 ? ` (${last.attacks.length} ran)` : ""}.${thiefLine}${booksLine} Real purchase: ${purchaseLine(last)}. Tests: ${last.tests ? "pass" : "fail"}.`);
     lines.push("");
@@ -58,7 +62,7 @@ export function renderReport(opts: { shopDir: string; rounds: Round[]; title?: s
     lines.push(`- Purchase: ${r.prove.verdict}`);
     if (r.prove.paypalOrderId) lines.push(`  - PayPal order \`${r.prove.paypalOrderId}\`, amount ${r.prove.paypalAmount ? `${r.prove.paypalAmount.currency} ${r.prove.paypalAmount.value}` : "?"} (bag total $${r.prove.bagTotal}), capture \`${r.prove.captureId ?? "none"}\` ${r.prove.captureStatus ?? ""}`);
     lines.push(`- Webhook: ${webhookLine(r)}`);
-    if (r.books) lines.push(`- Books: ${!r.books.matched ? "not matched (the back office shows no PayPal ids)" : r.books.mismatches.length ? `DO NOT MATCH PayPal's records: ${r.books.mismatches.map((m) => `order ${m.order}: ${m.problem}`).join("; ")}` : `${r.books.paid} PayPal order(s) the shop calls paid, checked against PayPal's records: each backed by a completed capture that covers it, none shipped more than once${r.books.otherPaid ? ` (${r.books.otherPaid} paid another way, not PayPal's to check)` : ""}`}`);
+    if (r.books) lines.push(`- Books: ${!r.books.matched ? (r.books.error ? `could not be read (${r.books.error})` : "not matched (the back office shows no PayPal ids)") : r.books.mismatches.length ? `DO NOT MATCH PayPal's records on ${r.books.mismatches.length} order(s): ${[...new Set(r.books.mismatches.map((m) => mismatchKind(m.problem)))].join("; ")}. ${r.books.mismatches.map((m) => `Order ${m.order}: ${m.problem}`).join("; ")}` : `${r.books.paid} PayPal order(s) the shop calls paid, checked against PayPal's records: each backed by a completed capture that covers it, none shipped more than once${r.books.otherPaid ? ` (${r.books.otherPaid} paid another way, not PayPal's to check)` : ""}`}`);
     if (r.attacks.length) {
       lines.push("");
       lines.push("| Robbery | What it tries | Rules | Result | What happened |");

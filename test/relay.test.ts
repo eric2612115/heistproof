@@ -63,3 +63,21 @@ test("without the run's token the relay refuses and nothing reaches the model", 
     up.close();
   }
 });
+
+test("even with the run's token, the relay forwards only messages: no other route reaches the provider with the key", async () => {
+  const up = await upstream();
+  const relay = await startRelay({ baseUrl: up.url, apiKey: "REAL", keyHeader: "bearer" });
+  const auth = { authorization: `Bearer ${relay.token}` };
+  try {
+    for (const [method, route] of [["GET", "/v1/models"], ["POST", "/v1/files"], ["POST", "/v1/messages/batches"], ["GET", "/v1/messages"], ["POST", "/v1/organizations/me"]]) {
+      const res = await fetch(`${relay.url}${route}`, { method, headers: auth, body: method === "POST" ? "{}" : undefined });
+      assert.equal(res.status, 404, `${method} ${route}`);
+    }
+    assert.equal(up.seen.length, 0, "nothing reached the provider");
+    await (await fetch(`${relay.url}/v1/messages/count_tokens`, { method: "POST", headers: auth, body: "{}" })).text();
+    assert.equal(up.seen.length, 1, "token counting still works");
+  } finally {
+    await relay.close();
+    up.close();
+  }
+});

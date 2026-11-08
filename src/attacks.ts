@@ -129,7 +129,33 @@ function withOrderId(call: ShopCall, from: string, to: string): ShopCall {
 
 // What PayPal should charge: the bag total the shopper saw (the shop's own PayPal amount may be the bug).
 const expectedValue = (ctx: AttackContext) => ctx.legit.bagTotal ?? ctx.legit.paypalAmount?.value ?? "?";
-const wrongAmount = (ctx: AttackContext, a: { value: string; currency: string } | null) => Boolean(a && (Number(a.value) !== Number(expectedValue(ctx)) || a.currency !== "USD"));
+type Amount = { value: string; currency: string };
+/** Less money than the unchanged request asks PayPal for, or another currency. Paying more (a shop adding shipping, say) is not a robbery. */
+const cheaper = (control: Amount | null, a: Amount | null) => Boolean(a && control && (a.currency !== control.currency || Number(a.value) < Number(control.value) - 0.005));
+
+/** The product the robberies talk about, in the shop's own words (heistproof.json), and the price one of it paid. */
+const itemName = (ctx: AttackContext) => ctx.shop.profile.product.name ?? "item";
+const unitPrice = (ctx: AttackContext) => {
+  const total = Number(ctx.legit.bagTotal ?? ctx.legit.paypalAmount?.value);
+  const qty = ctx.items[0]?.qty ?? 1;
+  return Number.isFinite(total) && qty > 0 ? total / qty : NaN;
+};
+const t0 = (v: string | null) => (v ? `$${v}` : "full price");
+const usd = (v: number) => (Number.isFinite(v) ? `$${Number.isInteger(v) ? v : v.toFixed(2)}` : "full-price");
+/** A robbery's plain description for this shop: {item} and {price} become the product and what one of it costs. */
+export const describe = (what: string, ctx: AttackContext) => what.replaceAll("{item}", itemName(ctx)).replaceAll("{price}", usd(unitPrice(ctx)));
+
+/** Every number in a request (and in the objects inside it) set to `to`, except the fields in `keep`: a price under any name. */
+function cheapen(v: any, keep: Set<string>, to: number): any {
+  if (Array.isArray(v)) return v.map((x) => cheapen(x, keep, to));
+  if (!v || typeof v !== "object") return v;
+  return Object.fromEntries(
+    Object.entries(v).map(([k, x]) => [
+      k,
+      keep.has(k) ? x : typeof x === "number" ? to : typeof x === "string" && /^\d+(\.\d+)?$/.test(x) ? (to < 1 ? to.toFixed(2) : String(to)) : typeof x === "object" ? cheapen(x, keep, to) : x,
+    ]),
+  );
+}
 
 /** The shop orders an attack touched: those that mention one of the ids, or else the orders that are new since `before`. */
 function targets(before: ShopOrder[], after: ShopOrder[], ids: Array<string | null | undefined>): ShopOrder[] {
@@ -154,7 +180,7 @@ const settle = (ctx: AttackContext, maxMs = 12_000) => settledOrders(ctx.shop, p
  * The positive control for every replayed request: the shop's own create-order request, sent again unchanged, must give
  * a PayPal order just like the shopper's did. If it does not, a refused tampered request would prove nothing.
  */
-const controls = new WeakMap<AttackContext, Promise<{ ok: boolean; why: string; create: ShopCall | null; paypalOrderId: string | null }>>();
+const controls = new WeakMap<AttackContext, Promise<{ ok: boolean; why: string; create: ShopCall | null; paypalOrderId: string | null; amount?: Amount | null }>>();
 function control(ctx: AttackContext) {
   if (!controls.has(ctx))
     controls.set(
@@ -169,7 +195,7 @@ function control(ctx: AttackContext) {
         const amount = orderAmount((await getOrder(id)).body);
         const want = ctx.legit.paypalAmount ?? { value: expectedValue(ctx), currency: "USD" };
         if (!amount || Number(amount.value) !== Number(want.value) || amount.currency !== want.currency) return { ok: false, why: `the unchanged request gave a PayPal order for ${amount?.currency} ${amount?.value}, where the shopper's own request gave ${want.currency} ${want.value}`, create, paypalOrderId: id };
-        return { ok: true, why: "", create, paypalOrderId: id };
+        return { ok: true, why: "", create, paypalOrderId: id, amount };
       })(),
     );
   return controls.get(ctx)!;
@@ -208,14 +234,17 @@ async function genuineCompleted(ctx: AttackContext, ours = true): Promise<Delive
   if (legit) return legit;
   const orders = await shopOrders(ctx.shop).catch(() => [] as ShopOrder[]);
   const fits = (d: Delivery) => d.eventType === "PAYMENT.CAPTURE.COMPLETED" && (!ours || shopOrderFor(d, orders, ctx.legit) !== null);
-  return have.find(fits) ?? (await ctx.tap.waitFor(fits, pace(90_000)));
+  const ids = [ctx.legit.captureId, ctx.legit.paypalOrderId, approvedOrder.get(ctx), ...orders.map((o) => o.payment_reference)];
+  return have.find(fits) ?? (await ctx.tap.waitOrAsk(fits, "PAYMENT.CAPTURE.COMPLETED", ids, pace(90_000)));
 }
 
 /**
- * Webhook attacks go late, so PayPal's slower deliveries have arrived by then. Double capture goes after them: it uses
- * the order approval-alone left approved, whose "approved" webhook gets the longest time to arrive before it is captured.
+ * Webhook attacks go late, so PayPal's slower deliveries have arrived by then. Double capture goes just before them: it
+ * captures the order approval-alone left approved, which gives the webhook attacks a fresh capture of this shop's own,
+ * whose events the sandbox usually delivers within seconds, even when it never delivers the first purchase's events;
+ * and that order, now paid, has an "approved" event of its own for the late-event robbery.
  */
-export const ORDER = ["price-tamper", "bad-bag", "capture-unapproved", "approved-not-captured", "declined-capture", "forged-webhook", "webhook-replay", "out-of-order", "double-capture", "secret-leak"];
+export const ORDER = ["price-tamper", "bad-bag", "capture-unapproved", "approved-not-captured", "declined-capture", "double-capture", "forged-webhook", "webhook-replay", "out-of-order", "secret-leak"];
 
 /** The order approval-alone leaves approved and uncaptured at PayPal: double capture captures it twice at once. */
 const approvedOrder = new WeakMap<AttackContext, string>();
@@ -226,7 +255,7 @@ export const ATTACKS: Attack[] = [
   {
     id: "price-tamper",
     title: "Price tampering",
-    what: "Pay $0.01 for the $49 hoodie",
+    what: "Pay $0.01 for the {price} {item}",
     rule: [1, 2],
     async run(ctx) {
       const c = await control(ctx);
@@ -234,9 +263,17 @@ export const ATTACKS: Attack[] = [
       const create = c.create;
       const base = clone(create.body ?? {}) as any;
       const list = itemList(base);
+      // Quantities and product ids stay as they are; any other number, under whatever name the shop gave it, is a price.
+      const first = list?.items[0] ?? {};
+      const keep = new Set([qtyKey(first) ?? "qty", skuKey(first) ?? "sku"]);
+      const items = (to: number) => (list ? { [list.key]: cheapen(list.items, keep, to) } : {});
       const variants: Array<{ name: string; body: any }> = [
         { name: "total fields set to one cent", body: { ...base, amount: "0.01", total: "0.01", totalCents: 1, total_cents: 1, price: 1, value: "0.01" } },
-        { name: "item prices set to one cent", body: { ...base, ...(list ? { [list.key]: list.items.map((i: any) => ({ ...i, price: 1, priceCents: 1, price_cents: 1, unitCents: 1, unit_amount: { currency_code: "USD", value: "0.01" }, amount: "0.01" })) } : {}) } },
+        // A shop may read a price field its own page never sends: add the usual names to every line.
+        { name: "common price fields added to every line, at one cent", body: { ...base, ...(list ? { [list.key]: list.items.map((i: any) => ({ ...i, price: 1, priceCents: 1, price_cents: 1, unitCents: 1, unit_cents: 1, unitPrice: 0.01, unit_price: 0.01, unit_amount: { currency_code: "USD", value: "0.01" }, amount: "0.01" })) } : {}) } },
+        { name: "every price in the bag set to one cent", body: { ...base, ...items(0.01) } },
+        { name: "every price in the bag set to 1 (cents)", body: { ...base, ...items(1) } },
+        { name: "every number in the request set to one cent", body: cheapen(base, keep, 0.01) },
         { name: "currency switched to yen", body: { ...base, currency: "JPY", currency_code: "JPY", currencyCode: "JPY" } },
       ];
       const tries = [];
@@ -252,12 +289,14 @@ export const ATTACKS: Attack[] = [
         }
         tries.push({ variant: v.name, shopStatus: r.status, paypalOrderId: id, paypalAmount: amount, debugId });
       }
-      const worst = tries.find((t) => wrongAmount(ctx, t.paypalAmount));
-      const evidence: Record<string, unknown> = { request: create.path, expected: `USD ${expectedValue(ctx)}`, control: { paypalOrderId: c.paypalOrderId }, tries };
-      if (!worst) return { verdict: "held", summary: `Every tampered request still produced a USD ${expectedValue(ctx)} PayPal order, or none (the unchanged request did produce one).`, evidence };
+      const fair = c.amount ?? { value: String(expectedValue(ctx)), currency: "USD" };
+      const worst = tries.find((t) => cheaper(fair, t.paypalAmount));
+      const evidence: Record<string, unknown> = { request: create.path, expected: `${fair.currency} ${fair.value}`, control: { paypalOrderId: c.paypalOrderId, amount: c.amount ?? null }, tries };
+      if (!worst) return { verdict: "held", summary: `Every tampered request still produced a PayPal order for ${fair.currency} ${fair.value} or more, or none (the unchanged request did produce one).`, evidence };
       // Follow through like a thief: tamper the request in the shopper's own browser, pay the wrong amount as the
-      // buyer, and see whether the shop ships the hoodie anyway.
+      // buyer, and see whether the shop ships the goods anyway.
       const variant = variants[tries.indexOf(worst)];
+      const changed = Object.fromEntries(Object.entries(variant.body).filter(([k, v]) => !(k in base) || JSON.stringify(v) !== JSON.stringify(base[k])));
       const before = await settle(ctx);
       const heist = await purchase({
         run: ctx.run,
@@ -266,7 +305,7 @@ export const ATTACKS: Attack[] = [
         tap: ctx.tap,
         items: ctx.items,
         label: `${prefix(ctx)}-attack-penny`,
-        tamperCreate: (body) => ({ ...body, ...Object.fromEntries(Object.entries(variant.body).filter(([k]) => !(k in base) || k === list?.key)) }),
+        tamperCreate: (body) => ({ ...body, ...changed }),
         skipAmountCheck: true,
         expectPaid: false,
       });
@@ -275,13 +314,8 @@ export const ATTACKS: Attack[] = [
       const d = damage(before, after, touched);
       const shopOrder = touched[0] ?? heist.shopOrder;
       // The shop owner's view of the same order: the back office.
-      const office = await (await browser()).newPage();
-      await office.goto(backOfficeUrl(ctx.shop)).catch(() => {});
-      await office.waitForTimeout(pace(2500));
-      const officeShot = `${prefix(ctx)}-attack-penny-5-backoffice.png`;
-      await office.screenshot({ path: ctx.run.file(officeShot) }).catch(() => {});
-      await office.close();
-      heist.screenshots.push(officeShot);
+      const officeShot = await backOfficePicture(ctx, `${prefix(ctx)}-attack-penny-5-backoffice.png`, [heist.paypalOrderId, heist.captureId, shopOrder?.id]);
+      if (officeShot) heist.screenshots.push(officeShot);
       const pp = heist.paypalOrderId ? await getOrder(heist.paypalOrderId) : null;
       const captured = pp?.body?.purchase_units?.[0]?.payments?.captures?.[0]?.amount ?? null;
       const followThrough = { paypalOrderId: heist.paypalOrderId, approved: heist.approved, captured, shopOrder: shopOrder?.id ?? null, shopStatus: shopOrder?.status ?? null, labelsAdded: d.labels, paidNow: d.paidNow.map((o) => o.id) };
@@ -290,22 +324,22 @@ export const ATTACKS: Attack[] = [
         return {
           verdict: "held",
           summary: `The shop asked PayPal for ${worst.paypalAmount!.currency} ${worst.paypalAmount!.value}, but after PayPal captured ${captured.currency_code} ${captured.value} it refused to ship (order ${heist.paypalOrderId}).`,
-          evidence: { ...evidence, followThrough, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId },
+          evidence: { ...evidence, variant: variant.name, followThrough, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId },
         };
       }
       return {
         verdict: "robbed",
         summary: robbed
-          ? `Shipped the $${expectedValue(ctx)} hoodie after PayPal captured ${captured ? `${captured.currency_code} ${captured.value}` : "the tampered amount"} (order ${heist.paypalOrderId}); the shop's back office says ${shopOrder?.status ?? "paid"}.`
-          : `The shop asked PayPal for ${worst.paypalAmount!.currency} ${worst.paypalAmount!.value} (order ${worst.paypalOrderId}) when the bag said USD ${expectedValue(ctx)}; the follow-through purchase did not finish (${heist.verdict}).`,
-        evidence: { ...evidence, followThrough, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId },
+          ? `Shipped the ${usd(unitPrice(ctx))} ${itemName(ctx)} after PayPal captured ${captured ? `${captured.currency_code} ${captured.value}` : "the tampered amount"} (order ${heist.paypalOrderId}); the shop's back office says ${shopOrder?.status ?? "paid"}.`
+          : `The shop asked PayPal for ${worst.paypalAmount!.currency} ${worst.paypalAmount!.value} (order ${worst.paypalOrderId}) when the unchanged bag asks for ${fair.currency} ${fair.value}; the follow-through purchase did not finish (${heist.verdict}).`,
+        evidence: { ...evidence, variant: variant.name, followThrough, screenshots: heist.screenshots, paypalOrderId: heist.paypalOrderId },
       };
     },
   },
   {
     id: "bad-bag",
     title: "Negative quantity",
-    what: "Buy -1, 0.5 or 1,000 hoodies, or a product that doesn't exist",
+    what: "Buy -1, 0.5 or 1,000 of an item, a product that doesn't exist, or a bag with a negative line",
     rule: [11],
     async run(ctx) {
       const c = await control(ctx);
@@ -317,27 +351,41 @@ export const ATTACKS: Attack[] = [
       const orig = list.items[0] ?? {};
       const sk = skuKey(orig) ?? "sku";
       const qk = qtyKey(orig) ?? "quantity";
-      // Each bad bag keeps the real item's fields and changes only what the robbery is about.
+      const unit = unitPrice(ctx);
+      const other = ctx.shop.profile.product.other;
+      // Each bad bag keeps the real item's fields and changes only what the robbery is about. `fair` is the least PayPal
+      // must charge for what the shop could ship from that bag: a whole item for -1 or 0.5, a thousand for a thousand.
+      // A bag that PayPal is asked to charge less for is a robbery; a shop that sells a thousand at full price is not robbed.
       const withQty = (q: number) => ({ ...orig, [qk]: q });
-      const bags = [
-        { name: "quantity -1", items: [withQty(-1)] },
-        { name: "quantity 0.5", items: [withQty(0.5)] },
-        { name: "quantity 1000", items: [withQty(1000)] },
-        { name: "unknown product", items: [{ ...orig, [sk]: "FREE-ITEM-0" }] },
-        { name: "empty bag", items: [] },
+      const bags: Array<{ name: string; items: any[]; fair: number }> = [
+        { name: "quantity -1", items: [withQty(-1)], fair: unit },
+        { name: "quantity 0.5", items: [withQty(0.5)], fair: unit },
+        { name: "quantity 1000", items: [withQty(1000)], fair: 1000 * unit },
+        { name: "unknown product", items: [{ ...orig, [sk]: "FREE-ITEM-0" }], fair: unit },
+        { name: "empty bag", items: [], fair: 0 },
+        ...(other ? [{ name: `one ${itemName(ctx)} plus a line of -3 ${other}`, items: [withQty(1), { ...orig, [sk]: other, [qk]: -3 }], fair: unit }] : []),
       ];
-      const mark = ctx.proxy.calls.length;
+      const currency = c.amount?.currency ?? "USD";
       const tries = [];
       for (const b of bags) {
+        const mark = ctx.proxy.calls.length;
         const r = await send(ctx, c.create, { ...base, [key]: b.items });
-        tries.push({ bag: b.name, shopStatus: r.status, paypalOrderId: paypalIdFrom(r.body) });
+        const made = ctx.proxy.since(mark).find((x) => x.method === "POST" && x.path === "/v2/checkout/orders");
+        const id = made && made.status < 300 ? ((made.responseBody as any)?.id ?? paypalIdFrom(r.body)) : null;
+        const amount = id ? orderAmount((await getOrder(id)).body) : null;
+        const short = Boolean(amount && Number.isFinite(b.fair) && (amount.currency !== currency || Number(amount.value) < b.fair - 0.005));
+        tries.push({ bag: b.name, shopStatus: r.status, paypal: made ? { status: made.status, debugId: made.debugId } : null, paypalOrderId: id, paypalAmount: amount, leastFair: Number.isFinite(b.fair) ? b.fair.toFixed(2) : null, robbed: short });
       }
-      const created = ctx.proxy.since(mark).filter((x) => x.method === "POST" && x.path === "/v2/checkout/orders" && x.status < 300);
-      const robbed = created.length > 0;
+      const robbed = tries.filter((t) => t.robbed);
+      const made = tries.filter((t) => t.paypalOrderId);
       return {
-        verdict: robbed ? "robbed" : "held",
-        summary: robbed ? `${created.length} bad bag(s) still became PayPal orders.` : "All five bad bags were refused before any PayPal order was created (the unchanged bag did create one).",
-        evidence: { tries, paypalOrdersCreated: created.map((x) => ({ status: x.status, debugId: x.debugId, amount: (x.responseBody as any)?.purchase_units?.[0]?.amount })) },
+        verdict: robbed.length ? "robbed" : "held",
+        summary: robbed.length
+          ? `${robbed.map((t) => `the bag "${t.bag}" became a PayPal order for ${t.paypalAmount!.currency} ${t.paypalAmount!.value}`).join("; ")}, less than the ${t0(robbed[0].leastFair)} the goods cost.`
+          : made.length
+            ? `No bad bag got the goods for less: ${made.map((t) => `"${t.bag}" was charged ${t.paypalAmount?.currency} ${t.paypalAmount?.value}`).join(", ")}; the others were refused before PayPal.`
+            : `All ${bags.length} bad bags were refused before any PayPal order was created (the unchanged bag did create one).`,
+        evidence: { tries },
       };
     },
   },
@@ -400,7 +448,7 @@ export const ATTACKS: Attack[] = [
       // PayPal's "approved" webhook can take minutes in the sandbox: the verdict on that half waits until just before
       // double capture captures this order (see finish), so the event gets the whole attack sequence to arrive.
       const finish = async () => {
-        const event = ctx.tap.genuine("CHECKOUT.ORDER.APPROVED").find((x) => x.resourceId === p.paypalOrderId) ?? (await ctx.tap.waitFor((x) => x.eventType === "CHECKOUT.ORDER.APPROVED" && x.resourceId === p.paypalOrderId, pace(15_000)));
+        const event = ctx.tap.genuine("CHECKOUT.ORDER.APPROVED").find((x) => x.resourceId === p.paypalOrderId) ?? (await ctx.tap.waitOrAsk((x) => x.eventType === "CHECKOUT.ORDER.APPROVED" && x.resourceId === p.paypalOrderId, "CHECKOUT.ORDER.APPROVED", [p.paypalOrderId], pace(30_000)));
         const now = await settle(ctx);
         const later = damage(before, now, targets(before, now, [p.paypalOrderId]));
         outcome.evidence = { ...outcome.evidence, approvedWebhook: event?.eventId ?? null, approvedWebhookAnswer: event?.shopStatus ?? null, orders: later.orders };
@@ -461,11 +509,16 @@ export const ATTACKS: Attack[] = [
       const mid = await settle(ctx);
       const pending = targets(before, mid, [target]).find((o) => !o.paid) ?? null;
       const event = JSON.parse(genuine.rawBody);
+      // Point every reference a shop might look the order up by at the unpaid order: the shop's own id (custom_id and
+      // invoice_id) and PayPal's order id.
       const forge = (e: any) => {
         e.id = `WH-FORGED-${Date.now()}`;
         e.resource.id = `FORGED${Date.now()}`;
-        if (pending) e.resource.custom_id = pending.id;
-        if (e.resource.supplementary_data?.related_ids) e.resource.supplementary_data.related_ids.order_id = target;
+        if (pending) {
+          e.resource.custom_id = pending.id;
+          e.resource.invoice_id = pending.id;
+        }
+        e.resource.supplementary_data = { ...(e.resource.supplementary_data ?? {}), related_ids: { ...(e.resource.supplementary_data?.related_ids ?? {}), order_id: target } };
         return JSON.stringify(e);
       };
       const unsigned = await ctx.tap.forward("attacker", { "content-type": "application/json" }, forge(clone(event)));
@@ -475,7 +528,9 @@ export const ATTACKS: Attack[] = [
       const robbed = d.paidNow.length > 0 || d.labels > 0;
       return {
         verdict: robbed ? "robbed" : "held",
-        summary: robbed ? `A forged event marked unpaid order ${pending?.id ?? target} paid.` : `Forged events were refused (HTTP ${unsigned.shopStatus} unsigned, ${resigned.shopStatus} with stolen headers); order ${pending?.id ?? target} stayed unpaid.`,
+        summary: robbed
+          ? `A forged event marked unpaid order ${pending?.id ?? target} paid.`
+          : `Forged events got HTTP ${unsigned.shopStatus} unsigned and ${resigned.shopStatus} with stolen signature headers, and changed nothing: order ${pending?.id ?? target} stayed unpaid.`,
         evidence: { targetShopOrder: pending?.id ?? null, targetPayPalOrder: target, unsignedAnswer: unsigned.shopStatus, stolenHeadersAnswer: resigned.shopStatus, orders: d.orders },
       };
     },
@@ -517,7 +572,8 @@ export const ATTACKS: Attack[] = [
       const have = ctx.tap.genuine("CHECKOUT.ORDER.APPROVED");
       let approved = have.find((d) => d.resourceId === ctx.legit.paypalOrderId) ?? have.find((d) => forPaidOrder(d, paid)) ?? null;
       if (!approved) {
-        approved = await ctx.tap.waitFor((d) => d.eventType === "CHECKOUT.ORDER.APPROVED" && (d.resourceId === ctx.legit.paypalOrderId || forPaidOrder(d, paid)), pace(120_000));
+        const known = [ctx.legit.paypalOrderId, approvedOrder.get(ctx), ...paid.flatMap((o) => JSON.stringify(o).match(/\b[0-9A-Z]{17}\b/g) ?? [])];
+        approved = await ctx.tap.waitOrAsk((d) => d.eventType === "CHECKOUT.ORDER.APPROVED" && (d.resourceId === ctx.legit.paypalOrderId || forPaidOrder(d, paid)), "CHECKOUT.ORDER.APPROVED", known, pace(120_000));
         paid = await paidOrders();
       }
       if (!approved) return { verdict: "skipped", summary: "PayPal sent no CHECKOUT.ORDER.APPROVED event for any paid order of this shop.", evidence: {} };
@@ -564,6 +620,9 @@ export const ATTACKS: Attack[] = [
       const pp = await getOrder(orderId);
       const captures = pp.body?.purchase_units?.[0]?.payments?.captures ?? [];
       const d = damage(before, after, targets(before, after, [orderId, ...captures.map((c: any) => c.id)]));
+      // The positive control: if neither request captured anything, the shop's capture route is broken, and refusing a
+      // second capture proves nothing.
+      if (!captures.length && d.labels === 0) return { verdict: "skipped", summary: `Neither of two simultaneous capture requests captured order ${orderId} (shop answered ${answers.map((a) => a.status).join(" and ")}), so the capture route does not work and a double capture tests nothing.`, evidence: { paypalOrderId: orderId, shopAnswers: answers.map((a) => a.status), paypalCaptures: [] } };
       const robbed = d.labels > 1 || captures.length > 1;
       return {
         verdict: robbed ? "robbed" : "held",
@@ -575,12 +634,15 @@ export const ATTACKS: Attack[] = [
   {
     id: "secret-leak",
     title: "Secret in the browser",
-    what: "Look for the PayPal secret in every page and script",
+    what: "Look for the PayPal secret or an access token in every page and script",
     rule: [12],
     async run(ctx) {
       const secret = paypal.clientSecret();
       const basic = Buffer.from(`${paypal.clientId()}:${secret}`).toString("base64");
-      const leaks = (text: string) => text.includes(secret) || text.includes(basic);
+      // The client secret (alone or as Basic credentials), or an OAuth access token minted with it: either lets anyone
+      // call PayPal as the shop.
+      const token = /A21AA[\w-]{20,}/;
+      const leaks = (text: string) => text.includes(secret) || text.includes(basic) || token.test(text);
       const hits: string[] = [];
       const checked: string[] = [];
       const scripts = await shopScripts(ctx.shop);
@@ -600,18 +662,22 @@ export const ATTACKS: Attack[] = [
       for (const c of ctx.legit.calls) if (leaks(JSON.stringify(c.response ?? ""))) hits.push(`${c.method} ${c.path} (answer during the purchase)`);
       return {
         verdict: hits.length ? "robbed" : "held",
-        summary: hits.length ? `The client secret is served at ${[...new Set(hits)].join(", ")}.` : `Checked ${new Set(checked).size} pages, scripts and endpoints, and every answer during the purchase: only the client id is public.`,
+        summary: hits.length ? `The client secret or a PayPal access token is served at ${[...new Set(hits)].join(", ")}.` : `Checked ${new Set(checked).size} pages, scripts and endpoints, and every answer during the purchase: no secret and no access token, only the client id is public.`,
         evidence: { checked: [...new Set(checked)], leakedAt: [...new Set(hits)] },
       };
     },
   },
 ];
 
-/** A picture of the shop owner's back office after an attack, with the orders it touched outlined. */
-async function backOfficeShot(ctx: AttackContext, id: string, highlight: Array<string | null | undefined>): Promise<string | null> {
+/**
+ * A picture of the shop owner's back office, with the orders an attack touched outlined. None when the back office does
+ * not answer with a page (an error status, or no back office at that address): an error page proves nothing.
+ */
+async function backOfficePicture(ctx: AttackContext, file: string, highlight: Array<string | null | undefined>): Promise<string | null> {
   const page = await (await browser()).newPage();
   try {
-    await page.goto(backOfficeUrl(ctx.shop));
+    const answer = await page.goto(backOfficeUrl(ctx.shop));
+    if (!answer || answer.status() >= 400) return null;
     await page.waitForTimeout(pace(2600));
     // The table may show a capture id or a shop order id rather than PayPal's order id: map through the back office API.
     const ids = highlight.filter((h): h is string => Boolean(h));
@@ -625,7 +691,6 @@ async function backOfficeShot(ctx: AttackContext, id: string, highlight: Array<s
         }
       }
     }, marks);
-    const file = `${prefix(ctx)}-attack-${id}-backoffice.png`;
     await page.screenshot({ path: ctx.run.file(file) });
     return file;
   } catch {
@@ -639,7 +704,7 @@ async function record(ctx: AttackContext, a: Attack, outcome: AttackOutcome) {
   if (outcome.verdict !== "skipped" && a.id !== "secret-leak") {
     const ev = outcome.evidence as any;
     const touched = Array.isArray(ev?.orders) ? ev.orders.map((o: any) => o.id) : [];
-    const shot = await backOfficeShot(ctx, a.id, [ev?.paypalOrderId, ev?.targetShopOrder, ev?.targetPayPalOrder, ev?.followThrough?.paypalOrderId, ev?.followThrough?.shopOrder, ...touched]);
+    const shot = await backOfficePicture(ctx, `${prefix(ctx)}-attack-${a.id}-backoffice.png`, [ev?.paypalOrderId, ev?.targetShopOrder, ev?.targetPayPalOrder, ev?.followThrough?.paypalOrderId, ev?.followThrough?.shopOrder, ...touched]);
     if (shot) outcome.evidence = { ...ev, screenshots: [...(ev?.screenshots ?? []), shot] };
   }
   ctx.run.emit("attack", "attack.result", { round: ctx.round, ...outcome });
@@ -662,12 +727,13 @@ export async function runAttacks(ctx: AttackContext, only?: string[]): Promise<A
     const a = ATTACKS.find((x) => x.id === id)!;
     if (only && !only.includes(a.id)) continue;
     if (a.id === "double-capture") await finishApproved();
-    ctx.run.emit("attack", "attack.start", { round: ctx.round, id: a.id, title: a.title, what: a.what });
+    const what = describe(a.what, ctx);
+    ctx.run.emit("attack", "attack.start", { round: ctx.round, id: a.id, title: a.title, what });
     let outcome: AttackOutcome;
     try {
-      outcome = { id: a.id, title: a.title, what: a.what, rule: a.rule, ...(await a.run(ctx)) };
+      outcome = { id: a.id, title: a.title, what, rule: a.rule, ...(await a.run(ctx)) };
     } catch (err) {
-      outcome = { id: a.id, title: a.title, what: a.what, rule: a.rule, verdict: "error", summary: String((err as Error).message ?? err).slice(0, 300), evidence: {} };
+      outcome = { id: a.id, title: a.title, what, rule: a.rule, verdict: "error", summary: String((err as Error).message ?? err).slice(0, 300), evidence: {} };
     }
     // Approval-alone is judged later (see finish), unless it already failed or was robbed.
     const pending = approvedOnly.get(ctx);

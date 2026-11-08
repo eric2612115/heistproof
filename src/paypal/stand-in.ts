@@ -9,7 +9,10 @@ import { standInSdk } from "./stand-in-sdk.ts";
  * - An order is created with an amount PayPal validates (two decimals, positive, item totals that add up).
  * - It can be captured only after the buyer approved it on PayPal's page, and only once (PayPal-Request-Id is idempotent).
  * - A capture without a JSON content type is refused with 415, as the sandbox does.
- * - Negative testing: the PayPal-Mock-Response header turns a capture into INSTRUMENT_DECLINED or TRANSACTION_REFUSED.
+ * - Negative testing: the PayPal-Mock-Response header turns a capture into INSTRUMENT_DECLINED or TRANSACTION_REFUSED,
+ *   before anything else is checked (the sandbox answered 422, not 415, to a mocked capture with no content type).
+ * - An order created with intent AUTHORIZE cannot be captured with the Orders capture call (422 ACTION_DOES_NOT_MATCH_INTENT).
+ * - Events can be listed and resent to the webhook (/v1/notifications/webhooks-events).
  * - Webhooks are signed; verify-webhook-signature says SUCCESS only for an event exactly as it was sent (a replay of a
  *   genuine delivery still verifies, as with PayPal; any edit fails).
  * It is not PayPal: only a run against the real sandbox proves a shop against PayPal itself.
@@ -66,6 +69,8 @@ export class PayPalStandIn {
   private tokens = new Set<string>();
   private idempotent = new Map<string, Answer>();
   private sent = new Map<string, { webhookId: string; time: string; body: string }>();
+  /** Every event the stand-in has raised, by id, for listing and resending. */
+  private events = new Map<string, any>();
   private signingKey = crypto.randomBytes(32);
   private server: http.Server | null = null;
   private pending = new Set<Promise<unknown>>();
@@ -133,6 +138,18 @@ export class PayPalStandIn {
     m = /^\/v2\/checkout\/orders\/([^/]+)\/capture$/.exec(p);
     if (method === "POST" && m) return this.capture(decodeURIComponent(m[1]), headers, raw);
     if (method === "POST" && p === "/v1/notifications/verify-webhook-signature") return this.verify(raw);
+    if (method === "GET" && p === "/v1/notifications/webhooks-events") {
+      const type = url.searchParams.get("event_type");
+      const events = [...this.events.values()].filter((e) => !type || e.event_type === type).reverse();
+      return { status: 200, body: { events: events.slice(0, Number(url.searchParams.get("page_size") ?? 10)), count: events.length } };
+    }
+    m = /^\/v1\/notifications\/webhooks-events\/([^/]+)\/resend$/.exec(p);
+    if (method === "POST" && m) {
+      const e = this.events.get(decodeURIComponent(m[1]));
+      if (!e) return error(404, "RESOURCE_NOT_FOUND", "INVALID_RESOURCE_ID", "Specified resource ID does not exist.");
+      void this.send(JSON.stringify(e), 0);
+      return { status: 202, body: e };
+    }
     m = /^\/v2\/payments\/captures\/([^/]+)$/.exec(p);
     if (method === "GET" && m) {
       for (const o of this.orders.values()) for (const c of o.captures) if (c.id === m[1]) return { status: 200, body: c };
@@ -230,6 +247,10 @@ document.getElementById("cancel-link").addEventListener("click", (ev) => { ev.pr
   private capture(id: string, headers: http.IncomingHttpHeaders, raw: string): Answer {
     const replay = this.replayed(headers, `capture:${id}`);
     if (replay) return replay;
+    // Negative testing comes first, as in the sandbox.
+    const mocked = mockCode(headers);
+    if (mocked === "INSTRUMENT_DECLINED") return this.remember(headers, `capture:${id}`, error(422, "UNPROCESSABLE_ENTITY", "INSTRUMENT_DECLINED", "The instrument presented was either declined by the processor or bank, or it can't be used for this payment."));
+    if (mocked === "TRANSACTION_REFUSED") return this.remember(headers, `capture:${id}`, error(422, "UNPROCESSABLE_ENTITY", "TRANSACTION_REFUSED", "The request was refused."));
     const type = String(headers["content-type"] ?? "");
     if (!/application\/json/i.test(type)) return error(415, "UNSUPPORTED_MEDIA_TYPE", null, "The server does not support the request payload's media type.");
     if (raw.trim()) {
@@ -241,9 +262,7 @@ document.getElementById("cancel-link").addEventListener("click", (ev) => { ev.pr
     }
     const o = this.orders.get(id);
     if (!o) return error(404, "RESOURCE_NOT_FOUND", "INVALID_RESOURCE_ID", "Specified resource ID does not exist. Please check the resource ID and try again.");
-    const mock = mockCode(headers);
-    if (mock === "INSTRUMENT_DECLINED") return this.remember(headers, `capture:${id}`, error(422, "UNPROCESSABLE_ENTITY", "INSTRUMENT_DECLINED", "The instrument presented was either declined by the processor or bank, or it can't be used for this payment."));
-    if (mock === "TRANSACTION_REFUSED") return this.remember(headers, `capture:${id}`, error(422, "UNPROCESSABLE_ENTITY", "TRANSACTION_REFUSED", "The request was refused."));
+    if (o.intent !== "CAPTURE") return this.remember(headers, `capture:${id}`, error(422, "UNPROCESSABLE_ENTITY", "ACTION_DOES_NOT_MATCH_INTENT", "Order was created with an intent of 'AUTHORIZE'. Please use /v2/checkout/orders/order_id/authorize to complete the transaction or alternately, create an order with an intent of 'CAPTURE'."));
     if (o.status === "COMPLETED") return this.remember(headers, `capture:${id}`, error(422, "UNPROCESSABLE_ENTITY", "ORDER_ALREADY_CAPTURED", "Order already captured. If 'intent=CAPTURE' only one capture per order is allowed."));
     if (o.status !== "APPROVED") return this.remember(headers, `capture:${id}`, error(422, "UNPROCESSABLE_ENTITY", "ORDER_NOT_APPROVED", "Payer has not yet approved the Order for payment. Please redirect the payer to the 'rel':'approve' url returned as part of the HATEOAS links within the Create Order call or provide a valid payment_source in the request."));
     const unit = o.purchase_units[0];
@@ -303,7 +322,12 @@ document.getElementById("cancel-link").addEventListener("click", (ev) => { ev.pr
       summary,
       resource,
     };
-    const body = JSON.stringify(event);
+    this.events.set(event.id, event);
+    return this.send(JSON.stringify(event), delayMs);
+  }
+
+  /** Signs and posts one delivery of an event (a first delivery, or a resend with a new transmission id). */
+  private send(body: string, delayMs: number): Promise<unknown> {
     const id = crypto.randomUUID();
     const time = now();
     this.sent.set(id, { webhookId: this.webhookId, time, body });

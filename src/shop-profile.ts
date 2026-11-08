@@ -11,8 +11,11 @@ export type ShopProfile = {
   start: string[];
   /** A GET path that answers 200 once the shop is up. */
   health: string;
-  /** What the shopper buys. */
-  product: { sku: string; qty: number };
+  /**
+   * What the shopper buys: the product, how many, its name in plain words (for the reports), and optionally a second
+   * product of the shop, for the bag with a negative line.
+   */
+  product: { sku: string; qty: number; name?: string; other?: string };
   /** How the shopper fills and opens the bag: a localStorage key holding [{ sku, qty }], or a button to click per item. */
   bag: { storageKey?: string; add?: string; open?: string; total: string };
   /** The back office: an orders list (JSON, read with the admin key in a header) and the page to photograph. */
@@ -26,7 +29,7 @@ export type ShopProfile = {
 export const FOGLINE: ShopProfile = {
   start: ["node", "server.js"],
   health: "/api/products",
-  product: { sku: "FOG-HOODIE", qty: 1 },
+  product: { sku: "FOG-HOODIE", qty: 1, name: "hoodie", other: "HARBOR-BEANIE" },
   bag: { storageKey: "fogline.bag", open: "#bag-button", total: "#bag-total" },
   admin: { orders: "/api/admin/orders", keyHeader: "x-admin-key", page: "/admin?key={key}" },
   orders: { id: "id", status: "status", paid: ["paid", "fulfilled"], shipments: "shipments", reference: "payment_reference", total: "total_cents", totalUnit: "cents" },
@@ -40,7 +43,8 @@ export function loadProfile(dir: string): ShopProfile {
   return {
     start: given.start ?? FOGLINE.start,
     health: given.health ?? FOGLINE.health,
-    product: { ...FOGLINE.product, ...given.product },
+    // A shop that names its own product does not inherit Fogline's name or second product.
+    product: given.product ? { ...given.product, qty: given.product.qty ?? 1, name: given.product.name ?? "item" } : FOGLINE.product,
     // A shop that names its own bag replaces Fogline's bag settings entirely (no stray localStorage key).
     bag: given.bag ? { ...given.bag, total: given.bag.total ?? FOGLINE.bag.total } : FOGLINE.bag,
     admin: { ...FOGLINE.admin, ...given.admin },
