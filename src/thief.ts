@@ -188,6 +188,7 @@ export function answerable(changed: Books["mismatches"], before: Set<string>, re
 /** Runs one plan, step by step, and judges it by the books: a new mismatch with PayPal's records means it got through. */
 async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Books): Promise<{ outcome: ThiefOutcome; books: Books }> {
   const existing = new Set((await shopOrders(ctx.shop).catch(() => [] as ShopOrder[])).map((o) => o.id));
+  const callsBefore = ctx.proxy.calls.length;
   // Everything this plan named or got back: ids in its requests and answers, and the events it resent.
   const touched: string[] = [];
   const saved: Record<string, any> = { legit: { paypalOrderId: ctx.legit.paypalOrderId, captureId: ctx.legit.captureId, shopOrderId: ctx.legit.shopOrder?.id ?? null, bagTotal: ctx.legit.bagTotal } };
@@ -270,6 +271,17 @@ async function carryOut(ctx: ThiefContext, plan: ThiefPlan, k: number, books: Bo
       failed.push(why);
       log.push({ step: raw, result: `failed: ${why}` });
     }
+  }
+  // A second order may claim a payment only when PayPal's event about that capture arrives, after the plan's last step.
+  // Wait for PayPal's events about the captures this plan caused (asking PayPal to resend them if they are late), so the
+  // books judge the plan on everything it set off.
+  const captures = ctx.proxy
+    .since(callsBefore)
+    .filter((c) => c.method === "POST" && /\/capture$/.test(c.path) && c.status < 300)
+    .flatMap((c) => ((c.responseBody as any)?.purchase_units?.[0]?.payments?.captures ?? []).map((x: any) => x?.id))
+    .filter((x: unknown): x is string => typeof x === "string");
+  for (const id of [...new Set(captures)].slice(0, 4)) {
+    await ctx.tap.waitOrAsk((d) => d.eventType === "PAYMENT.CAPTURE.COMPLETED" && d.resourceId === id, "PAYMENT.CAPTURE.COMPLETED", [id], pace(60_000));
   }
   await settledOrders(ctx.shop, pace(1500), pace(12_000));
   const after = await reconcile(ctx.shop, ctx.proxy.calls, ctx.legit);

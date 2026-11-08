@@ -161,13 +161,33 @@ export function amountCheck(order: any, bagTotal: string | null | undefined): { 
 }
 
 export async function purchase(opts: PurchaseOptions): Promise<PurchaseResult> {
-  let result = await purchaseOnce(opts);
-  for (let attempt = 2; attempt <= 3 && result.environment === "sandbox-down"; attempt++) {
-    opts.run.emit(opts.phase, "prove.sandbox_restart", { label: opts.label, attempt });
+  let result = await attempt(opts);
+  for (let n = 2; n <= 3 && result.environment === "sandbox-down"; n++) {
+    opts.run.emit(opts.phase, "prove.sandbox_restart", { label: opts.label, attempt: n });
     await new Promise((r) => setTimeout(r, 5000));
-    result = await purchaseOnce({ ...opts, label: `${opts.label}-try${attempt}` });
+    result = await attempt({ ...opts, label: `${opts.label}-try${n}` });
   }
   return result;
+}
+
+/**
+ * One purchase. If the shop's page or PayPal's window closes under it (PayPal refusing a tampered order can do that),
+ * the purchase is reported as stopped, with what it got as far as, instead of failing the whole check.
+ */
+async function attempt(opts: PurchaseOptions): Promise<PurchaseResult> {
+  const box: { result?: PurchaseResult } = {};
+  try {
+    return await purchaseOnce(opts, box);
+  } catch (err) {
+    const message = String((err as Error).message ?? err);
+    if (!box.result || !/has been closed|Target closed/i.test(message)) throw err;
+    const r = box.result;
+    r.ok = false;
+    r.environment = "page-closed";
+    r.verdict = `The purchase stopped: the shop's page or PayPal's window closed before it finished (${message.slice(0, 120)}).`;
+    opts.run.emit(opts.phase, "prove.result", { label: opts.label, ok: false, verdict: r.verdict, captureId: r.captureId, paypalStatus: r.paypalStatus, shopOrder: r.shopOrder?.id, screenshots: [...r.screenshots] });
+    return r;
+  }
 }
 
 /** Why no button showed, in words the coding agent can act on. */
@@ -187,7 +207,7 @@ function noButton(method: string, r: PurchaseResult): string {
  * One real sandbox purchase, the way a shopper makes it. Before approving, the PayPal order's amount is
  * checked against the bag total; a mismatch is reported and the purchase is cancelled.
  */
-async function purchaseOnce(opts: PurchaseOptions): Promise<PurchaseResult> {
+async function purchaseOnce(opts: PurchaseOptions, box: { result?: PurchaseResult } = {}): Promise<PurchaseResult> {
   const { run, phase, shop, label } = opts;
   const method = opts.method ?? "paypal";
   const shots: string[] = [];
@@ -219,6 +239,7 @@ async function purchaseOnce(opts: PurchaseOptions): Promise<PurchaseResult> {
     paypalScripts: [],
     failedRequests: [],
   };
+  box.result = result;
   const known = new Set((await shopOrders(shop).catch(() => [] as ShopOrder[])).map((o) => o.id));
 
   const page = await openCheckout(shop, opts.items, (p) => {
