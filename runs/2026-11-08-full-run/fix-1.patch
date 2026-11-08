@@ -1,0 +1,97 @@
+diff --git a/lib/paypal.js b/lib/paypal.js
+index b43859e..68c75ed 100644
+--- a/lib/paypal.js
++++ b/lib/paypal.js
+@@ -243,6 +243,12 @@ export function createPayPalService({ clientId = "", clientSecret = "", webhookI
+           id: paypalOrderId,
+           payPalRequestId: `capture-${shopOrderId}`,
+           prefer: "return=representation",
++          // Empty JSON body is required on the wire: omitting it makes the SDK send
++          // no body and no Content-Type, which real PayPal rejects 415
++          // UNSUPPORTED_MEDIA_TYPE (sandbox debug id ca56fdd45a930, order
++          // 64W525091U2356921). `{}` is schema-valid (all members optional)
++          // and carries no payment_source, so no capture fields change.
++          body: {},
+         });
+       } catch (err) {
+         throw translatePayPalError(err, { write: true });
+diff --git a/paypal-plan.md b/paypal-plan.md
+index bcc7029..b97f6ba 100644
+--- a/paypal-plan.md
++++ b/paypal-plan.md
+@@ -83,7 +83,7 @@ across operations: we read `err.status` and, for capture, `err.payload.body.deta
+ 
+ ### captureOrder — `POST /v2/checkout/orders/{id}/capture`
+ - Signature: `captureOrder(request: Orders.CaptureOrderRequest, options?): ApiPromise<Order, Orders.CaptureOrderError>`.
+-- Fields: `id` (path, required); `body?: OrderCaptureRequest` (optional — omit); headers optional incl. `payPalRequestId`, `prefer` (default `"return=minimal"`).
++- Fields: `id` (path, required); `body?: OrderCaptureRequest` (optional in the spec — but MUST be sent as `{}` on the wire, see 1b.3: omitting it makes the SDK send no body and no `Content-Type`, which real PayPal rejects `415 UNSUPPORTED_MEDIA_TYPE` / “The request payload is not supported”, sandbox debug id `ca56fdd45a930` on order `64W525091U2356921`); headers optional incl. `payPalRequestId`, `prefer` (default `"return=minimal"`).
+ - Returns `Order`. Settlement data read from it: `purchaseUnits[].payments.captures[]`
+   (`OrdersCapture`, `src/models/orders-capture.ts`: `status?: CaptureStatus`, `id?`, `amount?: Money{currencyCode,value}`, `customId?`),
+   `purchaseUnits[].customId` (`PurchaseUnit`, `src/models/purchase-unit.ts`), `status?: OrderStatus`.
+@@ -216,13 +216,22 @@ createOrder (`Orders.CreateOrderRequest` + body):
+ 
+ captureOrder: `id` ✅ (path, the PayPal order id); `prefer` ✅ `"return=representation"`
+ (settlement reads captures from the response); `payPalRequestId` ✅ `= "capture-" + shopOrderId`
+-(DUPLICATE CLAIMS/UNKNOWN rows); `body` ❌ (nothing requires an `OrderCaptureRequest`);
++(DUPLICATE CLAIMS/UNKNOWN rows); `body` ✅ `= {}` — CHANGED 2026-11-08 after the real sandbox
++answered `POST /v2/checkout/orders/64W525091U2356921/capture` with `415
++UNSUPPORTED_MEDIA_TYPE: The request payload is not supported [debug id ca56fdd45a930]` and shop
++order `FOG-DC0A9F` stayed `pending` with 0 labels. PayPal's real answer wins over the spec's
++“optional”: omitting `body` makes the SDK (`buildJson` in `core/request-body.js`) send no body
++and no `Content-Type: application/json` at all. `{}` encodes to `"{}"` with that content type,
++is schema-valid (`OrderCaptureRequest` has only optional `payment_source`, which stays unset),
++and changes no capture semantics;
+ `payPalMockResponse`/`payPalClientMetadataId`/`payPalAuthAssertion` ❌.
+ getOrder: `id` ✅; `fields` ❌; mock/auth-assertion headers ❌.
+ 
+ Proof test: the faked-fetch tests assert the exact JSON body + headers the SDK sent for create and
+ capture — no key beyond the ✅ rows (SDK-added auth/content-type/idempotency-key are the SDK's, not
+-ours).
++ours). The fake now also mimics real PayPal on capture: no `application/json` body → `415`, and
++“capture sends an empty JSON body so real PayPal does not answer 415 UNSUPPORTED_MEDIA_TYPE”
++asserts the wire body is exactly `"{}"` with `Content-Type: application/json`.
+ 
+ ### 1b.4 — WHEN THE API SAYS NO
+ 
+diff --git a/test/paypal.test.js b/test/paypal.test.js
+index 10feeb9..1f57333 100644
+--- a/test/paypal.test.js
++++ b/test/paypal.test.js
+@@ -67,6 +67,11 @@ function createFakePayPal(hooks = {}) {
+       return jsonResponse(201, { id: state.paypalId, status: "CREATED", intent: "CAPTURE", purchase_units: json.purchase_units, links: [] });
+     }
+     if (request.method === "POST" && url.pathname === `/v2/checkout/orders/${state.paypalId}/capture`) {
++      // Real PayPal (sandbox debug id ca56fdd45a930): a capture with no JSON body /
++      // no Content-Type: application/json is rejected 415 UNSUPPORTED_MEDIA_TYPE.
++      if (!request.headers.get("content-type")?.includes("application/json")) {
++        return jsonResponse(415, { name: "UNSUPPORTED_MEDIA_TYPE", message: "The request payload is not supported", debug_id: "ca56fdd45a930" });
++      }
+       if (hooks.onCapture) return hooks.onCapture(call, () => jsonResponse(201, orderWire()));
+       return jsonResponse(201, orderWire());
+     }
+@@ -254,6 +259,25 @@ test("capture with a COMPLETED capture for the right amount fulfils exactly once
+   }
+ });
+ 
++test("capture sends an empty JSON body so real PayPal does not answer 415 UNSUPPORTED_MEDIA_TYPE", async () => {
++  const shop = await startShop();
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    // The fake above mimics real PayPal: no application/json body -> 415, order stays pending.
++    assert.equal(res.status, 200);
++    const captureCall = shop.fake.calls.find((c) => c.method === "POST" && c.pathname.endsWith("/capture"));
++    assert.ok(captureCall);
++    assert.match(captureCall.headers.get("content-type") ?? "", /^application\/json/);
++    assert.equal(captureCall.text, "{}");
++    assert.deepEqual(captureCall.json, {});
++    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++  } finally {
++    await shop.close();
++  }
++});
++
+ test("capture of an unknown PayPal order is 404 and never reaches PayPal", async () => {
+   const shop = await startShop();
+   try {

