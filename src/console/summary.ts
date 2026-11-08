@@ -41,8 +41,11 @@ export function summarize(id: string, events: Ev[]) {
   const buys = new Map<number, Purchase>(); // round -> how the round's own purchase ended
   const thief = new Map<number, { tried: number; robbed: number; repeat: number }>(); // repeat: only repeated a problem the books already showed
   const books = new Map<number, number>();
+  const doublePaid = new Map<number, number>(); // round -> orders paid by a capture that already pays for another order
   const booksError = new Map<number, string | null>(); // round -> why the books could not be read, when they could not
+  const paypalIds = new Set<string>(); // every PayPal order, capture and webhook event id the run's purchases saw (for search)
   for (const e of events) {
+    if (e.type?.startsWith("prove.")) for (const k of ["paypalOrderId", "captureId", "eventId"]) if (typeof e[k] === "string" && e[k]) paypalIds.add(e[k]);
     const own = e.type?.startsWith("prove.") && ROUND_PURCHASE.test(String(e.label ?? ""));
     if (own && e.type === "prove.buttons") buys.set(round, { status: e.buttons && !e.buttons.paypal ? "nobutton" : "failed", labels: null, amount: null, http: null });
     else if (own && e.type === "prove.amount_check" && e.ok === false) buys.set(round, { status: "mismatch", labels: null, amount: e.paypalAmount?.value ?? null, http: null });
@@ -84,6 +87,7 @@ export function summarize(id: string, events: Ev[]) {
       thief.set(e.round ?? round, t);
     } else if (e.type === "books.reconciled") {
       books.set(e.round ?? round, (e.mismatches ?? []).length);
+      doublePaid.set(e.round ?? round, (e.mismatches ?? []).filter((m: Ev) => /already pays for order/i.test(String(m.problem))).length);
       booksError.set(e.round ?? round, e.matched === false ? String(e.error ?? e.reason ?? "the back office shows no PayPal ids") : null);
     }
   }
@@ -111,6 +115,7 @@ export function summarize(id: string, events: Ev[]) {
     held: count("held"),
     robbed: count("robbed"),
     skipped: count("skipped") + count("error"),
+    notApplicable: count("n/a"),
     ran: final.length,
     total: Math.max(EXPECTED_ATTACKS, results.size),
     robbedEver: robbedEver.size,
@@ -125,6 +130,8 @@ export function summarize(id: string, events: Ev[]) {
     thief: thief.get(last) ?? null,
     booksMismatches: books.has(last) ? books.get(last)! : null,
     booksError: booksError.get(last) ?? null,
+    booksDoublePaid: doublePaid.get(last) ?? 0,
+    paypalIds: [...paypalIds],
     branch: done?.branch ?? (done?.branchReady ? "local" : null),
     pr: typeof done?.pr === "string" && done.pr ? done.pr : null,
     title,
