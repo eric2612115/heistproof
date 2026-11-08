@@ -84,8 +84,20 @@ a:hover { color: var(--text); }
 /* ======================================== Home ======================================== */
 .home { max-width: var(--max); margin: 0 auto; padding: 36px var(--gutter) 48px; }
 .intro h1 { font-size: 40px; line-height: 1.1; letter-spacing: -0.025em; font-weight: 700; }
-.why { margin-top: 14px; max-width: 72ch; font-size: 16.5px; line-height: 1.55; color: var(--text2); }
+.lead { margin-top: 10px; max-width: 64ch; font-size: 18px; line-height: 1.5; color: var(--text); }
+.why { margin-top: 22px; max-width: 76ch; font-size: 15.5px; line-height: 1.6; color: var(--text2); }
 .home h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+
+/* The result in two numbers: the same ten robberies on a hand-written checkout and on the coding agent's. */
+.result { margin-top: 24px; }
+.result h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; color: var(--text3); }
+.result-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 10px; }
+.tile .num small { margin-left: 2px; }
+.tile .ship { display: flex; align-items: center; gap: 8px; }
+.tile .sub { margin-top: 6px; font-size: 14px; line-height: 1.5; color: var(--text); }
+.tile .open { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--brass-text); text-decoration: underline; text-decoration-color: rgba(125, 95, 34, 0.35); text-underline-offset: 2px; }
+.tile.safe .open { border-top-color: var(--green-frame); }
+.tile.unsafe .open { border-top-color: var(--red-frame); }
 
 .compare { margin-top: 36px; }
 .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 14px; }
@@ -109,11 +121,16 @@ a:hover { color: var(--text); }
 /* What Heistproof caught: one card per catch, the number big, then what it means, what happened next, the verdict. */
 .catch { display: flex; flex-direction: column; gap: 6px; padding: 18px 22px 16px; border-radius: var(--radius); border: 1px solid var(--red-frame); background: var(--red-soft); box-shadow: var(--lift); color: inherit; text-decoration: none; transition: transform 0.15s ease; }
 .catch:hover { transform: translateY(-1px); }
-.catch-num { font-size: 46px; line-height: 1.05; font-weight: 700; letter-spacing: -0.035em; color: var(--red); font-variant-numeric: tabular-nums; }
+.catch-num { font-size: 38px; line-height: 1.05; font-weight: 700; letter-spacing: -0.035em; color: var(--red); font-variant-numeric: tabular-nums; }
 .catch-line { font-size: 15px; line-height: 1.4; font-weight: 600; color: var(--text); }
 .catch-then { font-size: 13.5px; line-height: 1.5; color: var(--text2); }
 .catch-then:empty { display: none; }
 .catch-verdict { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--red-frame); font-size: 12.5px; color: var(--text2); }
+/* Each catch card takes its own run's final verdict: green when the checkout ended safe to ship; the caught number stays red. */
+.catch.safe { border-color: var(--green-frame); background: var(--green-soft); }
+.catch.safe .catch-verdict { border-top-color: var(--green-frame); }
+.catch.incomplete, .catch.running { border-color: var(--frame); background: var(--surface); }
+.catch.incomplete .catch-verdict, .catch.running .catch-verdict { border-top-color: var(--line); }
 .catch-verdict .vdot { align-self: center; }
 .catch-verdict b { font-weight: 700; color: var(--text); }
 .catch-verdict span:last-child { color: var(--brass-text); text-decoration: underline; text-decoration-color: rgba(125, 95, 34, 0.35); text-underline-offset: 2px; }
@@ -265,8 +282,15 @@ h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 
 .row .money div { display: flex; flex-direction: column; }
 .row .money b { font-size: 20px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--red-text); }
 .row .money span { font-size: 12px; color: var(--text2); }
+.row .money .money-why { flex-basis: 100%; margin: 2px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--text2); }
 .row .untested { margin-top: 6px; font-size: 12.5px; color: var(--text2); }
-.row .ids { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; font-family: var(--mono); font-size: 11.5px; line-height: 1.5; color: var(--text2); }
+.row .ids { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; font-size: 12.5px; line-height: 1.5; color: var(--text2); }
+.id-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 0; }
+.id-line > span:first-child { color: var(--text2); }
+details.id-line { display: block; }
+details.id-line summary { cursor: pointer; min-height: 24px; color: var(--text2); }
+details.id-line summary:hover { color: var(--text); }
+.id-list { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 2px 0 4px 14px; }
 .row .ids:empty, .row .said:empty, .row .proofs:empty, .row .untested:empty { display: none; }
 .ids .raw-link { font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--text2); text-decoration-color: rgba(0, 0, 0, 0.25); }
 .ids .raw-link:hover { color: var(--text); }
@@ -277,6 +301,14 @@ h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 
 .proofs figure.small img { aspect-ratio: 16 / 9; }
 .proofs figcaption { margin-top: 5px; font-size: 12.5px; line-height: 1.4; color: var(--text2); }
 .proofs figcaption b { color: var(--text); font-weight: 600; }
+/* A back-office page as strips of its own pixels: the column headings and the outlined order, full width. */
+.proofs figure.bo { grid-column: 1 / -1; }
+.crop { display: block; overflow: hidden; border-radius: 8px; border: 1px solid var(--frame); background: var(--surface-2); }
+.crop .win { position: relative; display: block; overflow: hidden; }
+/* The cut between two strips is drawn over the picture, never as a border (a border would shift the strip's pixels). */
+.crop .win + .win::after { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; border-top: 2px dashed rgba(128, 128, 128, 0.8); }
+.proofs .crop img { position: absolute; max-width: none; height: auto; aspect-ratio: auto; object-fit: fill; border: 0; border-radius: 0; background: none; }
+.zoom-hint { color: var(--text3); }
 .proofs .thumbs { display: flex; flex-wrap: wrap; gap: 6px; grid-column: 1 / -1; }
 .proofs .thumbs img { width: 96px; aspect-ratio: 3 / 2; border-radius: 6px; }
 .row.running .stamp { background: var(--brass-tint); color: var(--brass-text); }
@@ -362,6 +394,10 @@ dialog { border: 0; padding: 0; background: transparent; max-width: 92vw; }
 dialog::backdrop { background: rgba(22, 22, 26, 0.6); }
 #viewer img { display: block; max-width: 92vw; max-height: 80vh; border-radius: 12px; background: #fff; }
 #viewer figcaption { margin-top: 8px; font: 13px var(--sans); color: #fff; text-align: center; }
+#viewer figure { max-width: 92vw; max-height: 84vh; overflow: auto; }
+#viewer.wide img { max-height: none; width: min(1200px, 92vw); }
+#viewer figure:focus { outline: none; }
+#viewer.wide figcaption { padding: 6px 8px; background: rgba(22, 22, 26, 0.85); }
 #viewer button, #doc-close { display: block; margin: 10px auto 0; min-height: 32px; padding: 4px 16px; font: inherit; font-size: 13px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); cursor: pointer; }
 #doc { width: min(960px, 92vw); max-height: 88vh; border-radius: var(--radius); background: var(--surface); box-shadow: var(--lift); overflow: hidden; flex-direction: column; }
 #doc[open] { display: flex; }
@@ -441,6 +477,13 @@ dialog::backdrop { background: rgba(22, 22, 26, 0.6); }
   .stamp { padding: 3px 6px; font-size: 10.5px; }
   .row-body { padding: 0 14px 14px 14px; }
   .proofs { grid-template-columns: 1fr; }
+  .crop { overflow-x: auto; overscroll-behavior-x: contain; }
+  .crop .win { width: 760px; max-width: none; }
+  #viewer.wide figure { max-width: 92vw; }
+  #viewer.wide img { max-width: none; width: 1000px; }
+  #viewer.wide figcaption { position: sticky; left: 0; width: 92vw; }
+  .result-tiles { grid-template-columns: 1fr; }
+  .lead { font-size: 16px; }
   .shots-grid { grid-template-columns: 1fr; }
   .panel > header { padding: 0 14px; }
   #tl-chip { display: none; }
@@ -462,9 +505,12 @@ dialog::backdrop { background: rgba(22, 22, 26, 0.6); }
 .thief-rows .row { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 12px; border-radius: 10px; border-bottom: 0; }
 .thief-rows .stamp { justify-self: start; }
 .thief-text { display: grid; gap: 3px; min-width: 0; }
-.thief-outcome { font-size: 14px; font-weight: 600; line-height: 1.45; color: var(--text); }
-.row.robbed .thief-outcome { color: var(--red-text); }
+.thief-name { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text); }
+.thief-outcome { font-size: 13.5px; line-height: 1.45; color: var(--text); }
+.row.robbed .thief-name, .row.robbed .thief-outcome { color: var(--red-text); }
+.row.robbed .thief-outcome { font-weight: 600; }
 .thief-idea { font-size: 13px; line-height: 1.45; color: var(--text3); }
+.thief header .chip.bad { color: var(--red-text); font-weight: 600; }
 .row.repeat .stamp { background: var(--brass-tint); color: var(--brass-text); }
 .books-line { margin: 12px 16px 16px; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.45; }
 .books-line.ok { background: var(--green-tint); color: var(--green-text); }

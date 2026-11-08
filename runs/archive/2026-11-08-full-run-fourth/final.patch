@@ -1,0 +1,1437 @@
+diff --git a/HEISTPROOF-REPORT.md b/HEISTPROOF-REPORT.md
+new file mode 100644
+index 0000000..4601e4a
+--- /dev/null
++++ b/HEISTPROOF-REPORT.md
+@@ -0,0 +1,65 @@
++# Heistproof evidence report
++
++**Verdict: safe to ship.** 10 of 10 scripted robberies blocked, 0 robbed the shop. The AI thief tried 6 robberies of its own: none got through. Real purchase: paid and shipped once. Tests: pass.
++
++All payments ran in the PayPal sandbox (no real money). Order and capture ids below are PayPal's own and can be looked up in the merchant's sandbox account.
++
++Coding agent: Claude Code (Meta Model API muse-wonder-1.0) with APIMatic's PayPal Context Plugin. Skills it loaded: paypal:typescript-integrate-paypal, paypal:typescript-getting-started, paypal:typescript-error-handling, heistproof:paypal-web-sdk-v6, heistproof:checkout-hardening, paypal:typescript-client-initialization, paypal:typescript-authentication, paypal:typescript-calling-endpoints, paypal:typescript-models, paypal:typescript-configuration-resilience, paypal:typescript-testing.
++
++## Round 1: first check
++
++- Tests: pass
++- Buttons shown: paypal yes, venmo yes, paylater yes; Pay Later message: "Pay in 4 interest-free payments of $12.25. Learn more"
++- Purchase: Capture APPROVED; shop order FOG-1D6BB8 is pending with 0 labels.
++  - PayPal refused `POST /v2/checkout/orders/81J53453W81649536/capture`: HTTP 415 UNSUPPORTED_MEDIA_TYPE, "The request payload is not supported", debug id `ca571d11c6846`
++  - PayPal order `81J53453W81649536`, amount USD 49.00 (bag total $49.00), capture `none` APPROVED
++- Webhook: PayPal did not deliver the PAYMENT.CAPTURE.COMPLETED event during this run
++- Books: 0 PayPal order(s) the shop calls paid, checked against PayPal's records: each backed by a completed capture that covers it, none shipped more than once
++
++| Robbery | What it tries | Rules | Result | What happened |
++|---|---|---|---|---|
++| Price tampering | Pay $0.01 for the $49 hoodie | 1, 2 | Blocked | Every tampered request still produced a PayPal order for USD 49.00 or more, or none (the unchanged request did produce one). |
++| Negative quantity | Buy -1, 0.5 or 1,000 of an item, a product that doesn't exist, or a bag with a negative line | 11 | Blocked | All 6 bad bags were refused before any PayPal order was created (the unchanged bag did create one). |
++| Payment nobody approved | Claim payment for an order no buyer approved | 4 | Blocked | The capture request, replayed for an order no buyer approved: PayPal says CREATED, and the shop kept it unpaid. |
++| Approval without payment | Get it shipped before PayPal takes the money | 4, 8 | Blocked | Buyer approved order 6P749026XS396484Y, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped. |
++| Declined card | Get it shipped after the card is declined | 5 | Blocked | PayPal answered 422 INSTRUMENT_DECLINED (debug id ca571d2f21803); the shop kept the order unpaid. |
++| Double click | Capture twice at once to get two shipments | 8, 10 | Not run | Neither of two simultaneous capture requests captured order 6P749026XS396484Y (shop answered 415 and 409), so the capture route does not work and a double capture tests nothing. |
++| Forged webhook | Fake PayPal's 'payment completed' message | 6 | Not run | PayPal delivered no PAYMENT.CAPTURE.COMPLETED webhook in time to forge from. |
++| Webhook replay | Resend PayPal's real message to ship again | 7, 8 | Not run | PayPal delivered no PAYMENT.CAPTURE.COMPLETED webhook about this shop's orders in time to replay. |
++| Late event | Send 'approved' after 'completed' to roll an order back | 9 | Not run | Order FOG-1D6BB8 was never paid (pending), so a late 'approved' event has nothing to roll back. |
++| Secret in the browser | Look for the PayPal secret or an access token in every page and script | 12 | Blocked | Checked 7 pages, scripts and endpoints, and every answer during the purchase: no secret and no access token, only the client id is public. |
++
++AI thief: not run (the shop's capture did not work, so nothing could be paid for the thief to steal).
++
++## Round 2: after fix 1
++
++- Tests: pass
++- Buttons shown: paypal yes, venmo yes, paylater yes; Pay Later message: "Pay in 4 interest-free payments of $12.25. Learn more"
++- Purchase: Paid $49.00: capture 719605298L643003X COMPLETED, shop order FOG-59ED39 fulfilled, 1 label.
++  - PayPal order `8NH0429814376320W`, amount USD 49.00 (bag total $49.00), capture `719605298L643003X` COMPLETED
++- Webhook: PayPal's genuine PAYMENT.CAPTURE.COMPLETED event for this order was accepted (HTTP 2xx) (event WH-3MF329485C939891V-6VF803443C952664A); whether the shop checks signatures is what the forged-webhook robbery tests
++- Books: 5 PayPal order(s) the shop calls paid, checked against PayPal's records: each backed by a completed capture that covers it, none shipped more than once
++
++| Robbery | What it tries | Rules | Result | What happened |
++|---|---|---|---|---|
++| Price tampering | Pay $0.01 for the $49 hoodie | 1, 2 | Blocked | Every tampered request still produced a PayPal order for USD 49.00 or more, or none (the unchanged request did produce one). |
++| Negative quantity | Buy -1, 0.5 or 1,000 of an item, a product that doesn't exist, or a bag with a negative line | 11 | Blocked | All 6 bad bags were refused before any PayPal order was created (the unchanged bag did create one). |
++| Payment nobody approved | Claim payment for an order no buyer approved | 4 | Blocked | The capture request, replayed for an order no buyer approved: PayPal says CREATED, and the shop kept it unpaid. |
++| Approval without payment | Get it shipped before PayPal takes the money | 4, 8 | Blocked | Buyer approved order 1UJ756681X4049458, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped. |
++| Declined card | Get it shipped after the card is declined | 5 | Blocked | PayPal answered 422 INSTRUMENT_DECLINED (debug id ca571daf4cd78); the shop kept the order unpaid. |
++| Double click | Capture twice at once to get two shipments | 8, 10 | Blocked | Two simultaneous captures: PayPal captured 1, the shop printed 1 label. |
++| Forged webhook | Fake PayPal's 'payment completed' message | 6 | Blocked | Forged events got HTTP 400 unsigned and 400 with stolen signature headers, and changed nothing: order FOG-6018D2 stayed unpaid. |
++| Webhook replay | Resend PayPal's real message to ship again | 7, 8 | Blocked | Event WH-3MF329485C939891V-6VF803443C952664A for order FOG-59ED39 replayed 3 times byte for byte: no extra label. |
++| Late event | Send 'approved' after 'completed' to roll an order back | 9 | Blocked | Order FOG-1632F1 stayed fulfilled after a late 'approved' event. |
++| Secret in the browser | Look for the PayPal secret or an access token in every page and script | 12 | Blocked | Checked 7 pages, scripts and endpoints, and every answer during the purchase: no secret and no access token, only the client id is public. |
++
++AI thief (Meta Model API muse-wonder-1.0): read what any visitor can see and tried 6 robberies of its own; none got through. The books against PayPal's records decide each one, not the model.
++
++| AI thief's robbery | Its idea | Result | What happened |
++|---|---|---|---|
++| Capture once, fulfil twice via body order ID | The capture endpoint may fulfil the shop order named in the request body, or both that order and the PayPal order in the URL, instead of binding fulfilment only to the captured PayPal order. | Blocked | The books still match PayPal's records: nothing taken. |
++| Orphan capture webhook transplant | A real $49 capture belonging to FOG-1632F1 may be reusable if the webhook handler routes solely by custom_id/invoice_id and does not bind the capture ID to its original PayPal order or reject its use for another shop order. | Blocked | The books still match PayPal's records: nothing taken. |
++| Rail switch after PayPal approval | After a PayPal order is approved but its capture is blocked, switching to the card route for the same session/order may make the shop treat the earlier approval as payment despite the card being declined. | Blocked | The books still match PayPal's records: nothing taken. |
++| Duplicate SKU line split | The PayPal order builder may deduplicate or aggregate duplicate SKU lines when charging, while fulfilment may process every line separately. | Blocked | The books still match PayPal's records: nothing taken. |
++| Currency code mismatch | The shop may verify only the numeric amount 49.00 and ignore the currency code, allowing the PayPal order to be created and approved in a much weaker currency. | Blocked | The books still match PayPal's records: nothing taken. |
++| Client-written payment status | Order creation or the order resource may mass-assign client-supplied status, paid, or capture fields instead of deriving payment status only from PayPal. | Blocked | The books still match PayPal's records: nothing taken. |
+diff --git a/README.md b/README.md
+index d143c55..d91d3b9 100644
+--- a/README.md
++++ b/README.md
+@@ -15,3 +15,5 @@ npm start            # http://127.0.0.1:4411, back office at /admin
+ ```
+ 
+ Environment: `PORT` (4411), `HOST` (127.0.0.1), `SHOP_DB` (data/shop.db), `ADMIN_KEY` (local-admin), `CARD_PROCESSOR_KEY`.
++
++PayPal (PayPal / Venmo / Pay Later via web SDK v6, Orders v2 via the `paypal` APIMatic SDK in `lib/paypal.js`): `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_API_BASE` (default `https://api-m.sandbox.paypal.com`, used as the SDK base-URL override for every REST call incl. OAuth + webhook verification), `PAYPAL_ENV` (`sandbox`|`live`, selects only the browser script URL), `PAYPAL_TEST_BUYER_COUNTRY` (sandbox only). Routes: `GET /api/paypal/config`, `POST /api/paypal/orders`, `POST /api/paypal/orders/:paypalOrderId/capture`, `POST /api/paypal/webhooks`. See `paypal-plan.md`.
+diff --git a/lib/db.js b/lib/db.js
+index 8a9c234..1259f11 100644
+--- a/lib/db.js
++++ b/lib/db.js
+@@ -27,7 +27,24 @@ export function openDb(file) {
+       created_at TEXT NOT NULL,
+       label TEXT NOT NULL
+     );
++    CREATE TABLE IF NOT EXISTS webhook_events (
++      event_id TEXT PRIMARY KEY,
++      event_type TEXT,
++      created_at TEXT NOT NULL
++    );
++    CREATE TABLE IF NOT EXISTS payment_claims (
++      claim_key TEXT PRIMARY KEY,
++      shop_order_id TEXT,
++      paypal_order_id TEXT,
++      created_at TEXT NOT NULL
++    );
+   `);
++  // Additive migration for DBs created before PayPal support.
++  const orderCols = db.prepare("PRAGMA table_info(orders)").all().map((c) => c.name);
++  if (!orderCols.includes("paypal_order_id")) {
++    db.exec("ALTER TABLE orders ADD COLUMN paypal_order_id TEXT");
++  }
++  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_paypal_order_id ON orders(paypal_order_id) WHERE paypal_order_id IS NOT NULL");
+   const now = () => new Date().toISOString();
+   const withItems = (r) => r && { ...r, items: JSON.parse(r.items_json) };
+   return {
+@@ -70,5 +87,55 @@ export function openDb(file) {
+     shipmentsFor(orderId) {
+       return db.prepare("SELECT * FROM shipments WHERE order_id = ? ORDER BY id").all(orderId);
+     },
++    // --- PayPal binding / claims / webhook idempotency ---
++    setPaypalOrderId(id, paypalOrderId) {
++      db.prepare("UPDATE orders SET paypal_order_id = ? WHERE id = ?").run(paypalOrderId, id);
++    },
++    getOrderByPaypalId(paypalOrderId) {
++      if (!paypalOrderId) return undefined;
++      return withItems(db.prepare("SELECT * FROM orders WHERE paypal_order_id = ?").get(paypalOrderId));
++    },
++    getOrderById(id) {
++      return this.getOrder(id);
++    },
++    tryClaim(claimKey, shopOrderId, paypalOrderId) {
++      try {
++        db.prepare("INSERT INTO payment_claims (claim_key, shop_order_id, paypal_order_id, created_at) VALUES (?, ?, ?, ?)").run(claimKey, shopOrderId ?? null, paypalOrderId ?? null, now());
++        return true;
++      } catch (err) {
++        if (isUniqueViolation(err)) return false;
++        throw err;
++      }
++    },
++    hasClaim(claimKey) {
++      return !!db.prepare("SELECT claim_key FROM payment_claims WHERE claim_key = ?").get(claimKey);
++    },
++    releaseClaim(claimKey) {
++      db.prepare("DELETE FROM payment_claims WHERE claim_key = ?").run(claimKey);
++    },
++    // Atomic paid transition: only the caller that changes 1 row may fulfil.
++    claimPaidForPayPal(id, { reference, paidCents }) {
++      const info = db.prepare(
++        "UPDATE orders SET status = 'paid', payment_method = 'paypal', payment_reference = ?, paid_cents = ?, paid_at = ? WHERE id = ? AND status = 'pending'",
++      ).run(reference ?? null, paidCents, now(), id);
++      return Number(info.changes ?? 0) === 1;
++    },
++    recordWebhookEvent(eventId, eventType) {
++      try {
++        db.prepare("INSERT INTO webhook_events (event_id, event_type, created_at) VALUES (?, ?, ?)").run(eventId, eventType ?? null, now());
++        return true;
++      } catch (err) {
++        if (isUniqueViolation(err)) return false;
++        throw err;
++      }
++    },
++    hasWebhookEvent(eventId) {
++      return !!db.prepare("SELECT event_id FROM webhook_events WHERE event_id = ?").get(eventId);
++    },
+   };
+ }
++
++export function isUniqueViolation(err) {
++  const msg = String(err?.message ?? err ?? "");
++  return /UNIQUE constraint failed/i.test(msg) || err?.code === "ERR_SQLITE_CONSTRAINT_UNIQUE" || err?.errcode === 2067 || err?.errcode === 1555;
++}
+diff --git a/lib/paypal.js b/lib/paypal.js
+new file mode 100644
+index 0000000..4fcdd27
+--- /dev/null
++++ b/lib/paypal.js
+@@ -0,0 +1,280 @@
++import { PaypalError } from "paypal";
++import { PaypalClient } from "paypal";
++
++// One conversion function (hardening #2): integer cents -> PayPal decimal dollars string.
++export function centsToPayPalAmount(cents) {
++  if (!Number.isInteger(cents) || cents < 0) throw new Error("amount must be a non-negative integer number of cents");
++  const dollars = Math.floor(cents / 100);
++  const rem = cents % 100;
++  return `${dollars}.${String(rem).padStart(2, "0")}`;
++}
++
++export function payPalAmountToCents(value) {
++  if (typeof value !== "string") return null;
++  const m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim());
++  if (!m) return null;
++  return Number(m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0") || 0);
++}
++
++export class PayPalServiceError extends Error {
++  constructor(status, message, { code, reason, unknown = false, cause } = {}) {
++    super(message, cause ? { cause } : undefined);
++    this.status = status;
++    this.code = code;
++    this.reason = reason;
++    this.unknown = unknown;
++  }
++}
++
++function extractReason(err) {
++  try {
++    const payload = err?.payload;
++    if (payload && payload.kind !== "undeclared" && payload.body) {
++      const body = payload.body;
++      const details = Array.isArray(body.details) ? body.details : [];
++      const detailText = details.map((d) => d.description || d.issue).filter(Boolean).join("; ");
++      return { text: [body.message, detailText].filter(Boolean).join(" — ") || body.name || undefined, issue: details[0]?.issue, name: body.name, details };
++    }
++    if (payload && "rawBody" in payload && payload.rawBody) {
++      const text = new TextDecoder().decode(payload.rawBody);
++      try {
++        const j = JSON.parse(text);
++        const details = Array.isArray(j.details) ? j.details : [];
++        return { text: j.message || j.name || text.slice(0, 300), issue: details[0]?.issue, name: j.name, details };
++      } catch {
++        return { text: text.slice(0, 300) || undefined, details: [] };
++      }
++    }
++  } catch {}
++  return { details: [] };
++}
++
++// Map SDK family errors to our HTTP boundary per plan 1b.4. Returns PayPalServiceError (or rethrows outside family).
++export function mapSdkError(err, { isWrite = false } = {}) {
++  if (err instanceof PaypalError) {
++    switch (err.kind) {
++      case "api": {
++        const reason = extractReason(err);
++        const reasonText = reason.text;
++        if (err.status === 401 || err.status === 403) {
++          return new PayPalServiceError(502, "Payment provider unavailable.", { cause: err, reason: reasonText });
++        }
++        if (err.status === 429) return new PayPalServiceError(503, "Payment provider temporarily unavailable.", { cause: err });
++        if (err.status >= 400 && err.status < 500) {
++          return new PayPalServiceError(err.status, reasonText ?? "Payment request rejected.", { cause: err, reason: reasonText, code: reason.issue });
++        }
++        return new PayPalServiceError(502, "Payment provider error.", { cause: err, reason: reasonText });
++      }
++      case "auth":
++      case "encode":
++        // Never sent: no re-read for writes.
++        return new PayPalServiceError(502, "Payment provider unavailable.", { cause: err });
++      case "connection":
++      case "timeout":
++      case "decode":
++        if (isWrite) return new PayPalServiceError(502, "Payment outcome unknown. Please check your order status.", { cause: err, unknown: true });
++        return new PayPalServiceError(502, "Payment provider error.", { cause: err });
++      default:
++        return new PayPalServiceError(502, "Payment provider error.", { cause: err });
++    }
++  }
++  throw err;
++}
++
++export function createPayPalService({
++  clientId,
++  clientSecret,
++  webhookId,
++  apiBase = "https://api-m.sandbox.paypal.com",
++  env = "sandbox",
++  testBuyerCountry,
++  fetchImpl,
++  sdkClient,
++} = {}) {
++  if (!clientId) throw new Error("PAYPAL_CLIENT_ID is not configured");
++  if (!clientSecret) throw new Error("PAYPAL_CLIENT_SECRET is not configured");
++  if (env !== "sandbox" && env !== "live") throw new Error(`PAYPAL_ENV must be "sandbox" or "live"`);
++  const base = String(apiBase || "https://api-m.sandbox.paypal.com").replace(/\/+$/, "");
++  const transport = fetchImpl ?? globalThis.fetch;
++  if (typeof transport !== "function") throw new Error("no fetch available for PayPal client");
++  const client =
++    sdkClient ??
++    new PaypalClient({
++      oauth2: { clientId, clientSecret },
++      serverOptions: { baseUrl: base },
++      retry: { maxRetries: 0, timeout: 10_000 },
++      logging: { level: "off" },
++      fetch: transport,
++    });
++
++  const scriptUrl = env === "live" ? "https://www.paypal.com/web-sdk/v6/core" : "https://www.sandbox.paypal.com/web-sdk/v6/core";
++
++  async function createOrder({ shopOrderId, cart }) {
++    const currency = "USD";
++    const total = centsToPayPalAmount(cart.totalCents);
++    const body = {
++      intent: "CAPTURE",
++      purchaseUnits: [
++        {
++          customId: shopOrderId,
++          invoiceId: shopOrderId,
++          amount: {
++            currencyCode: currency,
++            value: total,
++            breakdown: { itemTotal: { currencyCode: currency, value: total } },
++          },
++          items: cart.lines.map((l) => ({
++            name: l.name,
++            sku: l.sku,
++            quantity: String(l.qty),
++            unitAmount: { currencyCode: currency, value: centsToPayPalAmount(l.unitCents) },
++          })),
++        },
++      ],
++    };
++    let order;
++    try {
++      order = await client.orders.createOrder({ payPalRequestId: shopOrderId, prefer: "return=representation", body });
++    } catch (err) {
++      throw mapSdkError(err, { isWrite: true });
++    }
++    if (!order?.id) {
++      throw new PayPalServiceError(502, "Payment outcome unknown. Please check your order status.", { unknown: true });
++    }
++    return order;
++  }
++
++  async function captureOrder({ paypalOrderId, shopOrderId }) {
++    try {
++      // Real sandbox 415 UNSUPPORTED_MEDIA_TYPE (debug ca571d11c6846) when no body is sent:
++      // omitting `body` sends no Content-Type at all. PayPal capture requires an empty JSON object.
++      const order = await client.orders.captureOrder({ id: paypalOrderId, payPalRequestId: shopOrderId, prefer: "return=representation", body: {} });
++      if (!order?.id || !Array.isArray(order.purchaseUnits)) {
++        throw new PayPalServiceError(502, "Payment outcome unknown. Please check your order status.", { unknown: true });
++      }
++      return order;
++    } catch (err) {
++      if (err instanceof PayPalServiceError) throw err;
++      // ORDER_ALREADY_CAPTURED and unknown outcomes are settled by caller via getOrder.
++      const mapped = mapSdkError(err, { isWrite: true });
++      const reason = err instanceof PaypalError && err.kind === "api" ? extractReason(err) : {};
++      if (reason.issue) mapped.code = reason.issue;
++      if (reason.text) mapped.reason = reason.text;
++      throw mapped;
++    }
++  }
++
++  async function getOrder({ paypalOrderId }) {
++    try {
++      const order = await client.orders.getOrder({ id: paypalOrderId });
++      if (!order?.id) throw new PayPalServiceError(502, "Payment provider error.", {});
++      return order;
++    } catch (err) {
++      if (err instanceof PayPalServiceError) throw err;
++      throw mapSdkError(err, { isWrite: false });
++    }
++  }
++
++  // Webhook verification: SDK has no operation for this; direct REST to PAYPAL_API_BASE (plan).
++  async function verifyWebhook({ headers, event }) {
++    if (!webhookId) throw new PayPalServiceError(502, "Payment provider unavailable.", {});
++    const get = (name) => (typeof headers?.get === "function" ? headers.get(name) : headers?.[name] ?? headers?.[name.toLowerCase()]);
++    const auth_algo = get("paypal-auth-algo");
++    const cert_url = get("paypal-cert-url");
++    const transmission_id = get("paypal-transmission-id");
++    const transmission_sig = get("paypal-transmission-sig");
++    const transmission_time = get("paypal-transmission-time");
++    if (!auth_algo || !cert_url || !transmission_id || !transmission_sig || !transmission_time) {
++      return { verified: false, status: 400 };
++    }
++    // Client-credentials token at PAYPAL_API_BASE.
++    let tokenRes;
++    try {
++      tokenRes = await transport(`${base}/v1/oauth2/token`, {
++        method: "POST",
++        headers: {
++          authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
++          "content-type": "application/x-www-form-urlencoded",
++        },
++        body: "grant_type=client_credentials",
++      });
++    } catch (e) {
++      throw new PayPalServiceError(502, "Payment provider error.", { cause: e });
++    }
++    if (!tokenRes.ok) throw new PayPalServiceError(502, "Payment provider unavailable.", {});
++    const tokenJson = await tokenRes.json().catch(() => null);
++    const accessToken = tokenJson?.access_token;
++    if (!accessToken) throw new PayPalServiceError(502, "Payment provider unavailable.", {});
++    let verifyRes;
++    try {
++      verifyRes = await transport(`${base}/v1/notifications/verify-webhook-signature`, {
++        method: "POST",
++        headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
++        body: JSON.stringify({ auth_algo, cert_url, transmission_id, transmission_sig, transmission_time, webhook_id: webhookId, webhook_event: event }),
++      });
++    } catch (e) {
++      throw new PayPalServiceError(502, "Payment provider error.", { cause: e });
++    }
++    if (!verifyRes.ok) {
++      // Verification endpoint refusing is treated as unverified unless it's our auth (401/403 -> 502 ladder via status check)
++      if (verifyRes.status === 401 || verifyRes.status === 403) throw new PayPalServiceError(502, "Payment provider unavailable.", {});
++      return { verified: false, status: 400 };
++    }
++    const verifyJson = await verifyRes.json().catch(() => null);
++    return { verified: verifyJson?.verification_status === "SUCCESS", status: verifyJson?.verification_status === "SUCCESS" ? 200 : 400 };
++  }
++
++  return {
++    clientId,
++    scriptUrl,
++    env,
++    testBuyerCountry: env === "sandbox" && testBuyerCountry ? testBuyerCountry : undefined,
++    currency: "USD",
++    createOrder,
++    captureOrder,
++    getOrder,
++    verifyWebhook,
++    // exposed for tests / diagnostics only, never credentials
++    _client: client,
++  };
++}
++
++export function payPalServiceFromEnv(envVars = process.env, fetchImpl) {
++  const clientId = envVars.PAYPAL_CLIENT_ID;
++  const clientSecret = envVars.PAYPAL_CLIENT_SECRET;
++  if (!clientId || !clientSecret) return null;
++  return createPayPalService({
++    clientId,
++    clientSecret,
++    webhookId: envVars.PAYPAL_WEBHOOK_ID,
++    apiBase: envVars.PAYPAL_API_BASE || "https://api-m.sandbox.paypal.com",
++    env: envVars.PAYPAL_ENV || "sandbox",
++    testBuyerCountry: envVars.PAYPAL_TEST_BUYER_COUNTRY || undefined,
++    fetchImpl,
++  });
++}
++
++// Validate an SDK Order object against a shop order; returns {capture} if COMPLETED-matching, {pendingCapture} if PENDING, else {mismatch: reason}
++export function evaluatePayPalOrder(order, shopOrder) {
++  const expectedDollars = centsToPayPalAmount(shopOrder.total_cents);
++  const units = order?.purchaseUnits ?? [];
++  if (!units.length) return { mismatch: "missing purchase_units" };
++  const unit = units[0];
++  if (unit.customId !== undefined && unit.customId !== shopOrder.id) return { mismatch: "custom_id mismatch" };
++  if (unit.customId === undefined) return { mismatch: "missing custom_id" };
++  const captures = units.flatMap((u) => u.payments?.captures ?? []);
++  if (!captures.length) return { mismatch: "no captures" };
++  for (const cap of captures) {
++    if (!cap.amount) continue;
++    if (cap.amount.currencyCode !== "USD") continue;
++    if (cap.amount.value !== expectedDollars) continue;
++    if (cap.customId !== undefined && cap.customId !== shopOrder.id) continue;
++    if (cap.status === "COMPLETED") return { capture: cap };
++    if (cap.status === "PENDING") return { pendingCapture: cap };
++    if (cap.status === "DECLINED" || cap.status === "FAILED") return { declinedCapture: cap };
++  }
++  // Distinguish pending/declined with right amount handled above; anything else mismatch
++  const anyPending = captures.find((c) => c.status === "PENDING");
++  if (anyPending) return { mismatch: "capture amount or currency mismatch" };
++  return { mismatch: "no COMPLETED capture with matching amount/currency/custom_id" };
++}
+diff --git a/package.json b/package.json
+index 3b5241e..c516ec6 100644
+--- a/package.json
++++ b/package.json
+@@ -11,6 +11,7 @@
+     "test": "node --test --test-reporter=spec \"test/**/*.test.js\""
+   },
+   "dependencies": {
+-    "express": "^5.1.0"
++    "express": "^5.1.0",
++    "paypal": "git+https://github.com/context-plugins/paypal-typescript-sdk#5d0df8a8817e5fdf2e2cd48e68f790ea4730aab2"
+   }
+ }
+diff --git a/paypal-plan.md b/paypal-plan.md
+new file mode 100644
+index 0000000..86d8f94
+--- /dev/null
++++ b/paypal-plan.md
+@@ -0,0 +1,166 @@
++# PayPal integration plan & contract sheet
++
++## Scope
++Add PayPal/Venmo/Pay Later (web SDK v6) beside card checkout. Fulfil only after a server capture (or verified `PAYMENT.CAPTURE.COMPLETED` webhook) whose COMPLETED capture amount/currency and `custom_id` match a server-priced shop order. Keep card checkout and `npm test` green.
++
++## Repo survey (pattern + exemplar)
++- ESM (`"type":"module"`), Express 5, Node >=22, `node:test`. Exemplar server: `server.js` (`createApp({db,cards,adminKey})`, `express.json`, routes return `{error}` JSON).
++- Pricing validation exemplar: `lib/cart.js` `priceCart(items)` — SKUs/qty only, integer cents, currency `"usd"`, qty integer 1..10 (`MAX_QTY_PER_LINE=10`), unknown SKU throws. Reuse it unchanged for PayPal (hardening #1,#11).
++- DB exemplar: `lib/db.js` `openDb` (`node:sqlite` `DatabaseSync`, prepared statements). Fulfilment exemplar: `lib/fulfilment.js` `fulfilOrder(db,id)` prints a label every call — call it only on an atomic paid-claim.
++- Frontend exemplar: `public/app.js` (bag in localStorage, sends only `{sku,qty}`), `public/index.html` `#payment-options` holds card form, `public/styles.css`.
++- Baseline before edits: `npm test` = 5 pass. Package manager npm. No tsconfig in shop (JS ESM); type-check gate = `node --check` on touched files + SDK-shape fidelity from this sheet (no `tsc` project to run; stated in final report).
++- Toolchain: Node v24.22.2, npm 11.19.1.
++
++## SDK identity (from `typescript-getting-started` + installed map)
++- Package `paypal` v2.29.0, import specifier `paypal` (root only, no deep imports), client `PaypalClient`, `new PaypalClient(options: ClientOptions={})`.
++- Installed pinned over https: `git+https://github.com/context-plugins/paypal-typescript-sdk#5d0df8a8817e5fdf2e2cd48e68f790ea4730aab2` (commit of `main` at install; `node -e "console.log(require.resolve('paypal/package.json'))"` resolves, `node_modules/paypal/sdk-map.md` present). Node floor >=20.3 — shop Node 24 OK.
++- This SDK's `ClientOptions` (src/client-options.ts/src/servers.ts): `serverOptions?: { baseUrl?: string }` — flat baseUrl override (NOT nested group/env; this SDK declares one environment, no `ServerEnvironment`). Default base `https://api-m.sandbox.paypal.com`. Fields: `serverOptions, retry, logging, fetch, oauth2, oauth2Strategy`.
++- Auth: `oauth2: {clientId, clientSecret}` OAuth2 client-credentials; token `POST {base}/v1/oauth2/token` via same client/fetch/baseUrl, cached on the long-lived client, Basic header. Unset credential = no failure at construction, 401 later — so factory must throw if id/secret missing when PayPal is configured.
++- SDK is ESM+CJS dual; shop is pure ESM (`import` only) so `instanceof` on SDK errors is reliable in-process. Do NOT import model type `Error` unaliased (shadows global); in JS we import only runtime values `PaypalClient, PaypalError` and refer to wire/model shapes from this sheet.
++- Logging: set `logging:{level:"off"}` explicitly (blocks `PAYPAL_CLIENT_LOG` arming it), never `logRequestBody`, no per-call `logging` level. No hooks/middleware — `ClientOptions.fetch` is the only transport seam, forward the `Request`/its signal.
++- Retry: SDK retries on by default (GET etc). Use `retry:{maxRetries:0, timeout:10000}` on the one client — our code owns write recovery (re-read), never stack retries on writes.
++- Build client ONCE in a factory (`createPayPalService`), hold for process life (token cache + memoized `client.orders`).
++
++## Host / environment decision
++- Every PayPal REST call base = `PAYPAL_API_BASE` env (default `https://api-m.sandbox.paypal.com`), passed as `serverOptions:{baseUrl: PAYPAL_API_BASE}`. Token follows same base automatically.
++- `PAYPAL_ENV` is `sandbox|live` and selects ONLY the browser script: sandbox `https://www.sandbox.paypal.com/web-sdk/v6/core`, live `https://www.paypal.com/web-sdk/v6/core`. Never infer env from `PAYPAL_API_BASE` (harness proxy). Unknown `PAYPAL_ENV` => treat as sandbox script? No: default `sandbox` when unset, reject other values at service construction.
++- Browser `testBuyerCountry`: only sandbox + `PAYPAL_TEST_BUYER_COUNTRY` set; unset => key omitted entirely.
++
++## Operations in scope (one pass, from map/operations/orders.md)
++All: flat channel-blind request, `op(request, options?)`, `ApiPromise<T,E>`, auth `oauth2`, server group default. SDK sends `Idempotency-Key` minted per call on non-GET plus identity headers — not ours, no row needed for them; caller idempotency uses declared `PayPal-Request-Id` field where listed.
++
++### createOrder — `client.orders.createOrder(request: Orders.CreateOrderRequest): ApiPromise<Order, Orders.CreateOrderError>`
++Wire `POST /v2/checkout/orders`. Fields: `payPalMockResponse` header `PayPal-Mock-Response` opt; `payPalRequestId` header `PayPal-Request-Id` opt; `payPalPartnerAttributionId` header opt; `payPalClientMetadataId` header opt; `prefer` header `Prefer` opt default `"return=minimal"`; `payPalAuthAssertion` header opt; `body: OrderRequest` body REQUIRED.
++Error arms (tag=status): `error`=400, `error2`=401, `error3`=422, `error4`=default, `undeclared`=raw. Body model `Error` {name:string req, message:string req, debugId (`debug_id`):string req, details?: ErrorDetails[{issue:string req, field?,value?,location? default body,description?}], links?}.
++`OrderRequest` (src/models/order-request.ts): `intent: CheckoutPaymentIntent` req (`Capture:"CAPTURE"`, `Authorize:"AUTHORIZE"`), `purchaseUnits: PurchaseUnitRequest[]` req, `processingInstruction?`, `payer?`, `paymentSource?`, `applicationContext?` (wire purchase_units etc).
++`PurchaseUnitRequest`: `amount: AmountWithBreakdown` req, `referenceId?`, `payee?`, `paymentInstruction?`, `description?`, `customId?` (wire custom_id), `invoiceId?` (invoice_id), `softDescriptor?`, `items?: ItemRequest[]`, `shipping?`, `supplementaryData?`.
++`AmountWithBreakdown`: `currencyCode` req (currency_code), `value` req string, `breakdown?: {itemTotal?: Money, shipping?, handling?, taxTotal?, insurance?, shippingDiscount?, discount?}` (item_total...). `Money`: `currencyCode` req, `value` req string.
++`ItemRequest`: `name` req, `unitAmount: Money` req (unit_amount), `quantity` req string, `tax?`, `description?`, `sku?`, `url?`, `category?`, `imageUrl?`, `upc?`, `billingPlan?`.
++Returns `Order` (all optional — assert `id !== undefined` after call): `id?`, `status?: OrderStatus` (CREATED/SAVED/APPROVED/VOIDED/COMPLETED/PAYER_ACTION_REQUIRED), `purchaseUnits?: PurchaseUnit[]`, `intent?`, links etc. `PurchaseUnit`: `amount?: AmountWithBreakdown`, `customId?`, `invoiceId?`, `referenceId?`, `payments?: {captures?: OrdersCapture[], authorizations?, refunds?}`, `items?`. `OrdersCapture`: `status?: CaptureStatus` (COMPLETED/DECLINED/PARTIALLY_REFUNDED/PENDING/REFUNDED/FAILED), `id?`, `amount?: Money`, `invoiceId?`, `customId?`, `finalCapture` default false, `disbursementMode` default INSTANT.
++
++### captureOrder — `client.orders.captureOrder(request: Orders.CaptureOrderRequest): ApiPromise<Order, Orders.CaptureOrderError>`
++Wire `POST /v2/checkout/orders/{id}/capture`. Fields: `id` path req string; `payPalMockResponse` header opt; `payPalRequestId` header `PayPal-Request-Id` opt; `prefer` header opt default `"return=minimal"`; `payPalClientMetadataId`, `payPalAuthAssertion` opt; `body?: OrderCaptureRequest` opt (`{paymentSource?}` only). **Contract corrected by real sandbox (2026-11-08): despite being optional in the SDK, `body` MUST be passed as `{}` — omitting it sends no body and no `Content-Type`, and real PayPal answered `415 UNSUPPORTED_MEDIA_TYPE: The request payload is not supported` (debug `ca571d11c6846`) leaving the order pending. Passing `body: {}` makes the SDK send `"{}"` with `Content-Type: application/json`.**
++Error arms: `error`=400, `error2`=401, `error3`=403, `error4`=404, `error5`=422, `error6`=500, `error7`=default, `undeclared`. Same `Error` body model.
++
++### getOrder — `client.orders.getOrder(request: Orders.GetOrderRequest): ApiPromise<Order, Orders.GetOrderError>`
++Wire `GET /v2/checkout/orders/{id}`. Fields: `id` path req, `fields` query opt, `payPalMockResponse`, `payPalAuthAssertion` headers opt. Error arms: `error`=401, `error2`=404, `error3`=default, `undeclared`. Returns `Order` — assert `id`, `purchaseUnits` members we depend on.
++
++No SDK operation exists for webhook verification (40 ops: orders/payments/vault/transactionSearch/subscriptions only) — `POST /v1/notifications/verify-webhook-signature` and its client-credentials token are therefore direct `fetch` calls to `PAYPAL_API_BASE` in our service (same injectable `fetch` seam, same base). This is the one PayPal REST surface the SDK does not cover; recorded here, not filled from memory: body `{auth_algo,cert_url,transmission_id,transmission_sig,transmission_time,webhook_id,webhook_event}` per hardening #6 task contract.
++
++## Response-mode & member assertions
++Await (throwing) mode everywhere (no success headers needed). After each success assert depended members: create `order.id`; capture/get `id`, `purchaseUnits[0].customId`, captures' `status/amount`. A missing member = provider-unreadable/unknown, never paid. `DecodeError` (kind decode) on a 2xx is unknown for writes, not failure.
++
++## Amount conversion (hardening #2)
++One function `centsToPayPalAmount(cents)` in `lib/paypal.js` (integer math): 4900->"49.00", 5->"0.05", 300->"3.00". Currency: shop `usd` -> PayPal `"USD"`. Items: unitAmount per catalog unit cents, quantity `String(qty)`, breakdown `item_total` == total value, amount.value == total. Parse webhook dollars->cents with string split (no floats).
++
++## 1b.1 DURABLE WRITES
++Claim order for every write: claim row -> SDK call -> record result.
++
++DUPLICATE CLAIMS
++| Write | Where the claim is stored | What rejects the second one | Where that rejection is caught | Where in the code |
++|---|---|---|---|---|
++| createOrder | `payment_claims` row, claim_key=`create:<shopOrderId>` (shop order created first in `orders`) + orders.paypal_order_id UNIQUE | PRIMARY KEY on payment_claims.claim_key (shopOrderId derived once per shop order) and UNIQUE(orders.paypal_order_id); driver error recognised by /UNIQUE constraint failed/ message check via code-or-message helper `isUniqueViolation` | try/catch around `db.tryClaim(...)` in create route; loser uses winner's stored paypal_order_id | `lib/db.js:tryClaim/isUniqueViolation`, `server.js POST /api/paypal/orders` (claim before `paypalService.createOrder`); claim-present asserted inside faked fetch in `test/paypal.test.js` create test |
++| captureOrder | `payment_claims` row, claim_key=`capture:<shopOrderId>` inserted BEFORE SDK call | PRIMARY KEY on claim_key (same shop order for every caller) | try/catch around `db.tryClaim(...)` in capture path; loser settles by re-reading PayPal order (getOrder), never captures twice blindly | `lib/db.js:tryClaim`, `server.js POST /api/paypal/orders/:paypalOrderId/capture` (claim before `paypalService.captureOrder`, second caller -> `settleViaGetOrder`); tested by concurrent-capture test |
++
++`PayPal-Request-Id` sent on create/capture = shopOrderId (the claim's stored reference), so provider-side joins our retries. SDK's own per-call Idempotency-Key sits beside, never replaces, this.
++Release claim when provider refuses (ApiError 4xx incl INSTRUMENT_DECLINED, AuthError, EncodeError): delete claim row so a later legitimate attempt is not blocked. On success/PENDING keep shop order pending/paid flow; capture claim is released after the outcome is settled (paid/pending/refused/unknown-settled) — the atomic paid transition, not the claim, is the fulfil-once guard thereafter; an already-paid order short-circuits before any new claim.
++
++UNKNOWN OUTCOMES
++| Write | The operation you re-read with | The reference you search by | Where in the code | The test that fails the connection |
++|---|---|---|---|---|
++| createOrder | getOrder | payPalRequestId=shopOrderId cannot be searched by id before we know PayPal id — NO search-by-request-id op exists in SDK. Blocker mitigated: on connection/timeout after create, outcome unknown: return 502 unknown, leave shop order pending with claim released, create a NEW shop order on buyer retry (PayPal-Request-Id per shop order makes a same-order retry joinable only if route is retried for same shop order; our create route makes a fresh shop order per request, so an unknown create is abandoned unpaid/unfulfilled — safe, never paid) | `server.js POST /api/paypal/orders` catch -> 502 unknown, claim released | N/A for create (no re-read possible, documented blocker); capture connection tests prove re-read path |
++| captureOrder | getOrder | PayPal order id (path id we captured) | `server.js settleViaGetOrder` called from capture catch on unknown/ORDER_ALREADY_CAPTURED | `test/paypal.test.js`: 'connection failure on capture re-reads...' (asserts GET was made) and 'ORDER_ALREADY_CAPTURED settles by re-reading'; never-sent (401/auth path) uses no re-read — covered by 401 test expecting direct 502 |
++
++Never-sent failures (AuthError kind auth, EncodeError kind encode) get NO re-read and a 502 config/integration outcome. Connection/timeout/decode-on-write: re-read; found COMPLETED-matching => settle paid; not found / re-read fails => 502 "outcome unknown", never "failed", never markFailed.
++
++## 1b.2 CROSS-OPERATION INVARIANTS
++| Invariant | Where the legal set comes from | Enforced where | The test that proves it |
++|---|---|---|---|
++| Capture/get/webhook settle only the shop order bound at create: purchase-unit `custom_id` == shop order id, and PayPal order id == orders.paypal_order_id stored at create | Our `orders` row (created before createOrder) | settle function before any paid claim; capture route first loads shop order BY PayPal order id | fake capture with wrong custom_id/foreign paypal id => unpaid, capture/settle rejected |
++| Capture amount+currency == shop order total (USD) | Shop order total_cents from catalog pricing | settle function | fake COMPLETED capture with 0.01 => unpaid, no shipment |
++| SKUs/qty legal | `lib/catalog.js` via priceCart | create route before shop order + claim | existing priceCart tests + replay test with price fields ignored |
++
++## 1b.3 OPTIONAL REQUEST FIELDS
++createOrder request:
++| Field | What requires it | Set it? |
++|---|---|---|
++| payPalRequestId | DUPLICATE CLAIMS row (shopOrderId) | ✅ = shopOrderId |
++| prefer | we depend on full representation (id/purchase_units/captures on response) — SDK default return=minimal may omit them | ✅ `"return=representation"` |
++| payPalMockResponse | nothing (attacker-controllable negative testing) | ❌ leave out, never forward browser headers |
++| payPalPartnerAttributionId / payPalClientMetadataId / payPalAuthAssertion | nothing | ❌ |
++| body.intent | required member; task capture-immediately | ✅ CheckoutPaymentIntent.Capture = "CAPTURE" |
++| body.purchaseUnits[0].customId / invoiceId | hardening #3 bind PayPal order to shop order | ✅ shopOrderId |
++| body.purchaseUnits[0].amount.breakdown.itemTotal | hardening #2 breakdown sums to total | ✅ |
++| body.purchaseUnits[0].items[] (name,unitAmount,quantity,sku) | hardening #2 item breakdown | ✅ |
++| all other OrderRequest/PurchaseUnitRequest/ItemRequest optionals (payer, paymentSource, applicationContext, payee, description, shipping, tax, category...) | nothing | ❌ |
++
++captureOrder request:
++| Field | What requires it | Set it? |
++|---|---|---|
++| payPalRequestId | DUPLICATE CLAIMS row | ✅ = shopOrderId |
++| prefer | need captures[] in response to verify COMPLETED/amount | ✅ `"return=representation"` |
++| payPalMockResponse / payPalClientMetadataId / payPalAuthAssertion | nothing | ❌ never forward |
++| body | real sandbox requires a JSON payload: omitting it sends no `Content-Type` and PayPal returns 415 UNSUPPORTED_MEDIA_TYPE (debug ca571d11c6846) | ✅ `body: {}` (empty JSON object, no `paymentSource`) |
++
++getOrder request: `fields`, `payPalMockResponse`, `payPalAuthAssertion` — nothing requires => ❌ all omitted, only `id`.
++Test proving it: faked-fetch test parses every SDK-built request and asserts no header/body key beyond sheet rows (allow SDK-sent: authorization, content-type, idempotency-key, identity headers).
++
++## 1b.4 WHEN THE API SAYS NO (per operation, caller = browser checkout)
++Reason extraction: for typed arms read `err.payload.body` (Error model: message + details[].issue/description) when payload.kind != "undeclared"; for undeclared decode rawBody text, try JSON message/name — never put SDK `err.message` (method+URL) on the wire. Log reason + status server-side AND return it per table.
++
++createOrder / getOrder / captureOrder (same ladder, capture extras below):
++| status | your app answers | the caller reads | test |
++|---|---|---|---|
++| 4xx other than 401/403/429 | same 4xx | API reason text from err.payload | fake 422/400 with reason; assert reason in response, order unpaid |
++| 401/403 | 502 | fixed "Payment provider unavailable." (our credentials) | fake 401; assert 502 + fixed text, reason NOT leaked beyond PayPal's own 4xx rule — 401/403 fixed only |
++| 429 | 503 | fixed temporarily-unavailable | — (ladder code shared, covered by unit mapping test if cheap) |
++| 5xx | 502 | fixed provider-error | fake 500 on capture => 502, unpaid |
++| no response, on a write | per UNKNOWN OUTCOMES (re-read capture; create = unknown 502) | "outcome unknown", never failed | connection-fail tests below |
++| no response, on a read | 502 | fixed | getOrder connection fail in capture-settle => unknown 502 |
++
++capture extras: 422 details issue `INSTRUMENT_DECLINED` => 422, body `{error:<PayPal reason>, code:"INSTRUMENT_DECLINED"}`, order stays **pending** (buyer picks another method, can re-click; v6 skill §4). `TRANSACTION_REFUSED`/other 422 issues => 422 with PayPal reason, pending/unpaid. `ORDER_ALREADY_CAPTURED` => re-read getOrder and settle from PayPal (hardening #10), not an error to buyer if capture COMPLETED-matching (return paid). Capture status `PENDING` => 202 `{status:"pending"}`, no fulfil; `PAYMENT.CAPTURE.COMPLETED` webhook settles later. Capture `DECLINED`/`FAILED` status in a 2xx => 422 unpaid.
++
++Webhook verify failures: verification_status != SUCCESS => 400, change nothing (event NOT recorded). Missing transmission headers => 400. Token/verify transport failure => 502, change nothing.
++
++## Webhooks (hardening #6,#7,#9)
++`POST /api/paypal/webhooks`. Verify BEFORE trusting: token via `POST {PAYPAL_API_BASE}/v1/oauth2/token` (Basic, client_credentials), then verify call with headers' auth_algo/cert_url/transmission_id/transmission_sig/transmission_time + `webhook_id: PAYPAL_WEBHOOK_ID` + parsed `webhook_event`. Only `SUCCESS` proceeds.
++Idempotency: `webhook_events(event_id TEXT PRIMARY KEY)` inserted after verification, before acting; duplicate insert => 200, no change.
++Act: `PAYMENT.CAPTURE.COMPLETED` => locate shop order (resource.custom_id = shop id, else supplementary_data.related_ids.order_id -> orders.paypal_order_id), require resource.status COMPLETED (event implies), amount string parsed to cents == total_cents and currency == USD (case-insens), custom_id matches; then atomic claim. `CHECKOUT.ORDER.APPROVED` and all other types: record + 200, never paid. Out-of-order/duplicate after paid: atomic claim changes 0 rows, no fulfil, no backwards.
++
++## Fulfil exactly once (hardening #8,#4)
++`db.claimPaidForPayPal(id,...)`: `UPDATE orders SET status='paid', payment_method='paypal', payment_reference=?, paid_cents=?, paid_at=? WHERE id=? AND status='pending'`; fulfil only if `changes===1`, then `fulfilOrder` (sets fulfilled). Concurrent capture+webhook: loser changes 0, no second label. Note card flow keeps existing markPaid+fulfil (its test expects fulfilled).
++
++## DB changes (lib/db.js, additive, migration-safe)
++- orders: add `paypal_order_id TEXT UNIQUE` (CREATE for fresh; PRAGMA table_info check + ALTER for existing files).
++- `webhook_events(event_id TEXT PRIMARY KEY, event_type TEXT, created_at TEXT)`, `payment_claims(claim_key TEXT PRIMARY KEY, shop_order_id TEXT, paypal_order_id TEXT, created_at TEXT)`.
++- Methods: `setPaypalOrderId`, `getOrderByPaypalId`, `tryClaim(key,shop,paypal)`->bool, `releaseClaim(key)`, `claimPaidForPayPal`, `recordWebhookEvent(id,type)`->bool.
++
++## Routes (server.js, createApp gains optional `paypal` service; default built from env when creds present)
++- `GET /api/paypal/config` => `{clientId, scriptUrl, currency:"USD", ...(sandbox&&testBuyerCountry?{testBuyerCountry}:{})}` — client id only, never secret (hardening #12).
++- `POST /api/paypal/orders` `{items,email}` — ignores any price/amount/total/currency keys (priceCart only). Create shop order (method paypal) -> claim -> SDK create -> store paypal_order_id -> `{id:<paypalOrderId>, orderId:<shopId>}`. Browser maps `{orderId: data.id}`.
++- `POST /api/paypal/orders/:paypalOrderId/capture` — load shop order by paypal id (404 if none), if already paid/fulfilled return current status; claim -> SDK capture -> validate/settle -> `{orderId, status}`.
++- `POST /api/paypal/webhooks` as above.
++- Production main: build paypal service from env (PAYPAL_CLIENT_ID/SECRET/API_BASE/WEBHOOK_ID/ENV/TEST_BUYER_COUNTRY); if creds absent, paypal=null (config returns clientId null, paypal routes 503) so card shop still boots locally; injected service in tests.
++
++## Browser (heistproof:paypal-web-sdk-v6)
++- Fetch `/api/paypal/config`, dynamically load `scriptUrl` once (never hardcode env twice), `onload` init.
++- `sdk = await window.paypal.createInstance({clientId, components:["paypal-payments","venmo-payments","paypal-messages"], pageType:"checkout", ...(testBuyerCountry?{testBuyerCountry}:{})})`; `methods = await sdk.findEligibleMethods({currencyCode:"USD"})`; unhide only eligible of paypal/venmo/paylater; paylater details `methods.getDetails("paylater")` -> set button.productCode/countryCode before unhide.
++- Buttons `<paypal-button type="pay">`, `<venmo-button>`, `<paypal-pay-later-button>` hidden in index.html beside card form.
++- One session per method (`createPayPalOneTimePaymentSession`/`createVenmoOneTimePaymentSession`/`createPayLaterOneTimePaymentSession`) with shared onApprove (POST capture route; server decides paid; 422 INSTRUMENT_DECLINED => show "choose another way to pay"), onCancel, onError (show msg, never paid).
++- Click: `const p = createOrder(); await session.start({presentationMode:"auto"}, p);` — do NOT await createOrder first (popup activation). createOrder POSTs bag `{sku,qty}` only, returns `{orderId: data.id}`.
++- Pay Later message: `<paypal-message amount currency-code="USD" auto-bootstrap>` after `sdk.createPayPalMessages()`, update `amount` (decimal string from bag total cents) on `bag:change`.
++
++## Assumptions & Blockers
++- Minor: SDK has no webhook-verify operation (map checked) — direct fetch to PAYPAL_API_BASE for token+verify, documented above. No live calls during build (no creds); harness runs sandbox after.
++- Minor: unknown outcome on createOrder cannot be re-read by request-id (no such SDK op) — abandoned pending shop order, buyer retry creates a new one; never paid/fulfilled, so safe.
++- No blockers requiring user answer.
++
++## REQUIRED READING
++- MUST load `paypal:typescript-error-handling` (loaded — error ladder, arm tags per operation, rethrow outside family)
++- MUST load `paypal:typescript-client-initialization` (loaded — build once, serverOptions.baseUrl override, logging off explicit)
++- MUST load `paypal:typescript-authentication` (loaded — oauth2 creds, AuthError = never sent, validate at factory)
++- MUST load `paypal:typescript-calling-endpoints` (loaded — flat request, prefer default sent, ApiPromise)
++- MUST load `paypal:typescript-models` (loaded — required vs optional, Money strings end-to-end, Error alias warning)
++- MUST load `paypal:typescript-configuration-resilience` (loaded — retry off for writes, fetch seam forwards Request/signal, no stacked retries)
++- MUST load `paypal:typescript-testing` (loaded — fake fetch via ClientOptions.fetch, token request first, retry maxRetries 0, wire-shaped stubs)
++All loaded before implementation, per Step 1c floor.
+diff --git a/public/app.js b/public/app.js
+index fc14e08..70a62cb 100644
+--- a/public/app.js
++++ b/public/app.js
+@@ -85,6 +85,12 @@ export function renderBag() {
+   const total = formatMoney(bagTotalCents());
+   $("#bag-total").textContent = total;
+   $("#pay-card").textContent = `Pay ${total}`;
++  const msg = document.querySelector("#paylater-message");
++  if (msg) {
++    const cents = bagTotalCents();
++    msg.amount = `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
++    msg.setAttribute("amount", msg.amount);
++  }
+   document.dispatchEvent(new CustomEvent("bag:change", { detail: { items, totalCents: bagTotalCents() } }));
+ }
+ 
+@@ -142,6 +148,116 @@ async function payByCard(event) {
+   }
+ }
+ 
++async function initPayPal() {
++  let config;
++  try {
++    config = await (await fetch("/api/paypal/config")).json();
++  } catch {
++    return;
++  }
++  if (!config.clientId || !config.scriptUrl || !window) return;
++  await new Promise((resolve, reject) => {
++    const s = document.createElement("script");
++    s.async = true;
++    s.src = config.scriptUrl;
++    s.onload = resolve;
++    s.onerror = reject;
++    document.head.appendChild(s);
++  }).catch(() => null);
++  if (!window.paypal) return;
++  try {
++    const sdk = await window.paypal.createInstance({
++      clientId: config.clientId,
++      components: ["paypal-payments", "venmo-payments", "paypal-messages"],
++      pageType: "checkout",
++      ...(config.testBuyerCountry ? { testBuyerCountry: config.testBuyerCountry } : {}),
++    });
++    try {
++      sdk.createPayPalMessages();
++    } catch {}
++    const msg = $("#paylater-message");
++    if (msg) msg.hidden = false;
++    const methods = await sdk.findEligibleMethods({ currencyCode: "USD" });
++
++    async function createOrder() {
++      const email = document.querySelector("#email")?.value;
++      const res = await fetch("/api/paypal/orders", {
++        method: "POST",
++        headers: { "content-type": "application/json" },
++        body: JSON.stringify({ items: bag.read(), email }),
++      });
++      const data = await res.json();
++      if (!res.ok) throw new Error(data.error ?? "Could not start PayPal checkout");
++      return { orderId: data.id };
++    }
++
++    const sessionOptions = {
++      async onApprove({ orderId }) {
++        showError("");
++        try {
++          const res = await fetch(`/api/paypal/orders/${encodeURIComponent(orderId)}/capture`, {
++            method: "POST",
++            headers: { "content-type": "application/json" },
++            body: JSON.stringify({}),
++          });
++          const data = await res.json();
++          if (!res.ok) {
++            if (data.code === "INSTRUMENT_DECLINED") throw new Error("Your payment method was declined. Please choose another way to pay.");
++            throw new Error(data.error ?? "Payment failed");
++          }
++          if (data.status === "pending") {
++            showError("Your payment is pending. We'll confirm once PayPal completes it.");
++            return;
++          }
++          await showConfirmation(data.orderId);
++        } catch (err) {
++          showError(err.message);
++        }
++      },
++      onCancel({ orderId }) {
++        showError("Checkout cancelled. Nothing was paid.");
++      },
++      onError(error) {
++        showError(error?.message ?? "PayPal checkout failed. Nothing was paid.");
++      },
++    };
++
++    const sessions = [
++      ["paypal", "#paypal-button", () => sdk.createPayPalOneTimePaymentSession(sessionOptions)],
++      ["venmo", "#venmo-button", () => sdk.createVenmoOneTimePaymentSession(sessionOptions)],
++      ["paylater", "#paylater-button", () => sdk.createPayLaterOneTimePaymentSession(sessionOptions)],
++    ];
++    for (const [method, selector, makeSession] of sessions) {
++      if (!methods.isEligible(method)) continue;
++      const button = $(selector);
++      if (!button) continue;
++      if (method === "paylater") {
++        const details = methods.getDetails("paylater");
++        if (details) {
++          button.productCode = details.productCode;
++          button.countryCode = details.countryCode;
++        }
++      }
++      const session = makeSession();
++      button.hidden = false;
++      button.addEventListener("click", async () => {
++        showError("");
++        try {
++          // Do NOT await createOrder before start(): awaiting loses transient activation and blocks the popup.
++          const createOrderPromise = createOrder();
++          await session.start({ presentationMode: "auto" }, createOrderPromise);
++        } catch (err) {
++          showError(err?.message ?? "PayPal checkout failed. Nothing was paid.");
++        }
++      });
++    }
++    renderBag();
++  } catch (err) {
++    // PayPal unavailable: card checkout remains.
++    console.warn("PayPal unavailable", err);
++  }
++}
++
+ async function main() {
+   products = await (await fetch("/api/products")).json();
+   renderHero();
+@@ -161,6 +277,7 @@ async function main() {
+   $("#close-panel").addEventListener("click", closePanel);
+   $("#scrim").addEventListener("click", closePanel);
+   $("#card-form").addEventListener("submit", payByCard);
++  initPayPal();
+ }
+ 
+ main();
+diff --git a/public/index.html b/public/index.html
+index 67ee4c4..e2e4753 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -49,8 +49,14 @@
+                   <label>CVC<input id="card-cvc" name="cvc" inputmode="numeric" placeholder="123" required /></label>
+                 </div>
+                 <button id="pay-card" class="pay" type="submit">Pay</button>
+-                <p class="fine">Cards only for now. Payments are processed securely.</p>
++                <p class="fine">Cards, PayPal, Venmo and Pay Later accepted. Payments are processed securely.</p>
+               </form>
++              <div id="paypal-options" class="paypal-options">
++                <paypal-message id="paylater-message" currency-code="USD" auto-bootstrap hidden></paypal-message>
++                <paypal-button id="paypal-button" type="pay" hidden></paypal-button>
++                <venmo-button id="venmo-button" hidden></venmo-button>
++                <paypal-pay-later-button id="paylater-button" hidden></paypal-pay-later-button>
++              </div>
+             </div>
+             <p class="error" id="checkout-error" role="alert"></p>
+           </section>
+diff --git a/public/styles.css b/public/styles.css
+index 6c36251..8d937e7 100644
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -11,6 +11,7 @@
+ }
+ 
+ * { box-sizing: border-box; }
++[hidden] { display: none !important; }
+ html, body { margin: 0; }
+ body {
+   font-family: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
+@@ -86,6 +87,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 32px 40px 80px; }
+ .fine { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+ .error { color: #b42318; font-weight: 600; min-height: 1em; }
+ 
++.paypal-options { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+ .confirmation { padding: 12px 0; }
+ .confirmation h3 { font-size: 30px; margin: 0 0 12px; }
+ 
+diff --git a/server.js b/server.js
+index d6ffe58..2bbf958 100644
+--- a/server.js
++++ b/server.js
+@@ -6,10 +6,12 @@ import { priceCart, formatMoney } from "./lib/cart.js";
+ import { openDb } from "./lib/db.js";
+ import { createCardProcessor } from "./lib/card-processor.js";
+ import { fulfilOrder } from "./lib/fulfilment.js";
++import { payPalServiceFromEnv, evaluatePayPalOrder, centsToPayPalAmount, payPalAmountToCents, PayPalServiceError } from "./lib/paypal.js";
+ 
+ const here = path.dirname(fileURLToPath(import.meta.url));
+ 
+-export function createApp({ db, cards, adminKey }) {
++export function createApp({ db, cards, adminKey, paypal }) {
++  const paypalService = paypal !== undefined ? paypal : payPalServiceFromEnv();
+   const app = express();
+   app.use(express.json({ limit: "100kb" }));
+   app.use(express.static(path.join(here, "public")));
+@@ -44,6 +46,210 @@ export function createApp({ db, cards, adminKey }) {
+     res.json({ orderId: order.id, status: db.getOrder(order.id).status });
+   });
+ 
++  // ---- PayPal ----
++  function settleFromPayPalOrder(shopOrder, paypalOrder) {
++    // Returns {settled:boolean, pending?:boolean, declined?:boolean, mismatch?:string}
++    const fresh = db.getOrder(shopOrder.id);
++    if (!fresh) return { settled: false, mismatch: "shop order missing" };
++    if (fresh.status === "fulfilled" || fresh.status === "paid") return { settled: true, already: true };
++    const result = evaluatePayPalOrder(paypalOrder, fresh);
++    if (result.capture) {
++      const paidCents = payPalAmountToCents(result.capture.amount.value);
++      const claimed = db.claimPaidForPayPal(fresh.id, { reference: result.capture.id ?? paypalOrder.id, paidCents });
++      if (claimed) {
++        fulfilOrder(db, fresh.id);
++        return { settled: true };
++      }
++      // Lost race: someone else claimed; if now fulfilled that's success, no second fulfil.
++      const after = db.getOrder(fresh.id);
++      return { settled: after?.status === "fulfilled" || after?.status === "paid", already: true };
++    }
++    if (result.pendingCapture) return { settled: false, pending: true };
++    if (result.declinedCapture) return { settled: false, declined: true };
++    return { settled: false, mismatch: result.mismatch ?? "no matching completed capture" };
++  }
++
++  async function settleViaGetOrder(shopOrder, paypalOrderId) {
++    const paypalOrder = await paypalService.getOrder({ paypalOrderId });
++    return { paypalOrder, ...settleFromPayPalOrder(shopOrder, paypalOrder) };
++  }
++
++  app.get("/api/paypal/config", (_req, res) => {
++    if (!paypalService) return res.json({ clientId: null, scriptUrl: null, currency: "USD" });
++    res.json({
++      clientId: paypalService.clientId,
++      scriptUrl: paypalService.scriptUrl,
++      currency: "USD",
++      ...(paypalService.testBuyerCountry ? { testBuyerCountry: paypalService.testBuyerCountry } : {}),
++    });
++  });
++
++  app.post("/api/paypal/orders", async (req, res) => {
++    if (!paypalService) return res.status(503).json({ error: "PayPal is not configured" });
++    const { items, email } = req.body ?? {};
++    let cart;
++    try {
++      cart = priceCart(items); // ignores any price/amount/total/currency from browser
++    } catch (err) {
++      return res.status(400).json({ error: err.message });
++    }
++    const order = db.createOrder({ email, lines: cart.lines, totalCents: cart.totalCents, currency: cart.currency, method: "paypal" });
++    const claimKey = `create:${order.id}`;
++    if (!db.tryClaim(claimKey, order.id, null)) {
++      return res.status(409).json({ error: "Order creation already in progress", orderId: order.id });
++    }
++    try {
++      const paypalOrder = await paypalService.createOrder({ shopOrderId: order.id, cart });
++      db.setPaypalOrderId(order.id, paypalOrder.id);
++      db.releaseClaim(claimKey);
++      return res.json({ id: paypalOrder.id, orderId: order.id, status: paypalOrder.status ?? "CREATED" });
++    } catch (err) {
++      db.releaseClaim(claimKey);
++      if (err instanceof PayPalServiceError) {
++        if (err.unknown) console.error(`[paypal] create unknown for ${order.id}:`, err.cause?.message ?? err.message);
++        else console.error(`[paypal] create failed for ${order.id}: status=${err.status} reason=${err.reason ?? err.message}`);
++        return res.status(err.status).json({ error: err.message, ...(err.reason && err.status >= 400 && err.status < 500 ? { reason: err.reason } : {}), orderId: order.id });
++      }
++      console.error("[paypal] create unexpected", err);
++      return res.status(500).json({ error: "Unexpected error", orderId: order.id });
++    }
++  });
++
++  app.post("/api/paypal/orders/:paypalOrderId/capture", async (req, res) => {
++    if (!paypalService) return res.status(503).json({ error: "PayPal is not configured" });
++    const paypalOrderId = req.params.paypalOrderId;
++    const shopOrder = db.getOrderByPaypalId(paypalOrderId);
++    if (!shopOrder) return res.status(404).json({ error: "Order not found" });
++    const current = db.getOrder(shopOrder.id);
++    if (current.status === "fulfilled" || current.status === "paid") {
++      return res.json({ orderId: shopOrder.id, id: paypalOrderId, status: current.status });
++    }
++    const claimKey = `capture:${shopOrder.id}`;
++    if (!db.tryClaim(claimKey, shopOrder.id, paypalOrderId)) {
++      // Second concurrent caller: settle from what PayPal holds, never capture blindly twice.
++      try {
++        const settled = await settleViaGetOrder(shopOrder, paypalOrderId);
++        if (settled.settled) return res.json({ orderId: shopOrder.id, id: paypalOrderId, status: db.getOrder(shopOrder.id).status });
++        if (settled.pending) return res.status(202).json({ orderId: shopOrder.id, id: paypalOrderId, status: "pending" });
++        return res.status(409).json({ error: "Capture already in progress", orderId: shopOrder.id, status: db.getOrder(shopOrder.id).status });
++      } catch (err) {
++        if (err instanceof PayPalServiceError) return res.status(err.status).json({ error: err.message, orderId: shopOrder.id });
++        return res.status(500).json({ error: "Unexpected error", orderId: shopOrder.id });
++      }
++    }
++    try {
++      let paypalOrder;
++      try {
++        paypalOrder = await paypalService.captureOrder({ paypalOrderId, shopOrderId: shopOrder.id });
++      } catch (err) {
++        // ORDER_ALREADY_CAPTURED or unknown outcome: re-read and settle from PayPal.
++        const code = err?.code;
++        if (err instanceof PayPalServiceError && (err.unknown || code === "ORDER_ALREADY_CAPTURED")) {
++          try {
++            const settled = await settleViaGetOrder(shopOrder, paypalOrderId);
++            if (settled.settled) return res.json({ orderId: shopOrder.id, id: paypalOrderId, status: db.getOrder(shopOrder.id).status });
++            if (settled.pending) return res.status(202).json({ orderId: shopOrder.id, id: paypalOrderId, status: "pending" });
++          } catch (reReadErr) {
++            if (reReadErr instanceof PayPalServiceError) return res.status(502).json({ error: "Payment outcome unknown. Please check your order status.", orderId: shopOrder.id });
++            throw reReadErr;
++          }
++          if (code === "ORDER_ALREADY_CAPTURED") {
++            return res.status(422).json({ error: err.reason ?? err.message, orderId: shopOrder.id });
++          }
++          return res.status(502).json({ error: "Payment outcome unknown. Please check your order status.", orderId: shopOrder.id });
++        }
++        if (err instanceof PayPalServiceError) {
++          // INSTRUMENT_DECLINED & other 4xx: unpaid, buyer can choose another method; keep pending.
++          const isDeclined = code === "INSTRUMENT_DECLINED";
++          console.error(`[paypal] capture refused for ${shopOrder.id}: status=${err.status} code=${code ?? ""} reason=${err.reason ?? err.message}`);
++          return res.status(err.status).json({
++            error: isDeclined ? (err.reason ?? "Your payment method was declined. Please choose another way to pay.") : (err.status >= 400 && err.status < 500 && err.status !== 401 && err.status !== 403 ? (err.reason ?? err.message) : err.message),
++            ...(code ? { code } : {}),
++            orderId: shopOrder.id,
++            status: db.getOrder(shopOrder.id).status,
++          });
++        }
++        throw err;
++      }
++      const outcome = settleFromPayPalOrder(shopOrder, paypalOrder);
++      if (outcome.settled) return res.json({ orderId: shopOrder.id, id: paypalOrderId, status: db.getOrder(shopOrder.id).status });
++      if (outcome.pending) return res.status(202).json({ orderId: shopOrder.id, id: paypalOrderId, status: "pending" });
++      if (outcome.declined) return res.status(422).json({ error: "Your payment method was declined. Please choose another way to pay.", code: "INSTRUMENT_DECLINED", orderId: shopOrder.id, status: db.getOrder(shopOrder.id).status });
++      console.error(`[paypal] capture did not settle ${shopOrder.id}: ${outcome.mismatch}`);
++      return res.status(422).json({ error: "Payment could not be verified.", orderId: shopOrder.id, status: db.getOrder(shopOrder.id).status });
++    } catch (err) {
++      console.error("[paypal] capture unexpected", err);
++      return res.status(500).json({ error: "Unexpected error", orderId: shopOrder.id });
++    } finally {
++      db.releaseClaim(claimKey);
++    }
++  });
++
++  app.post("/api/paypal/webhooks", async (req, res) => {
++    if (!paypalService) return res.status(503).json({ error: "PayPal is not configured" });
++    const event = req.body ?? {};
++    let verification;
++    try {
++      verification = await paypalService.verifyWebhook({ headers: req.headers, event });
++    } catch (err) {
++      if (err instanceof PayPalServiceError) return res.status(err.status).json({ error: err.message });
++      console.error("[paypal] webhook verify unexpected", err);
++      return res.status(500).json({ error: "Unexpected error" });
++    }
++    if (!verification.verified) return res.status(400).json({ error: "Webhook verification failed" });
++    const eventId = event.id;
++    if (!eventId) return res.status(400).json({ error: "Missing event id" });
++    if (!db.recordWebhookEvent(eventId, event.event_type)) {
++      return res.json({ received: true, duplicate: true }); // idempotent replay: 200, no change
++    }
++    try {
++      if (event.event_type === "PAYMENT.CAPTURE.COMPLETED") {
++        const resource = event.resource ?? {};
++        // Only act on a COMPLETED capture resource.
++        if (resource.status === "COMPLETED") {
++          const relatedOrderId = resource.supplementary_data?.related_ids?.order_id;
++          let shopOrder = resource.custom_id ? db.getOrder(resource.custom_id) : null;
++          if (!shopOrder && relatedOrderId) shopOrder = db.getOrderByPaypalId(relatedOrderId);
++          if (!shopOrder && resource.custom_id) shopOrder = null;
++          if (shopOrder) {
++            // Never move backwards / never act on mismatched amount.
++            if (!(shopOrder.status === "fulfilled" || shopOrder.status === "paid")) {
++              const cents = payPalAmountToCents(resource.amount?.value);
++              const currency = resource.amount?.currency_code;
++              const customOk = !resource.custom_id || resource.custom_id === shopOrder.id;
++              if (customOk && cents === shopOrder.total_cents && String(currency).toUpperCase() === "USD") {
++                const claimed = db.claimPaidForPayPal(shopOrder.id, { reference: resource.id ?? relatedOrderId ?? null, paidCents: cents });
++                if (claimed) fulfilOrder(db, shopOrder.id);
++              } else {
++                console.error(`[paypal] webhook capture mismatch for ${shopOrder.id}: cents=${cents} currency=${currency} custom=${resource.custom_id}`);
++              }
++            }
++          }
++        }
++      } else if (event.event_type === "CHECKOUT.ORDER.COMPLETED") {
++        // Settle only if the order payload itself carries a COMPLETED matching capture.
++        const resource = event.resource ?? {};
++        const shopOrder = db.getOrderByPaypalId(resource.id);
++        if (shopOrder && Array.isArray(resource.purchase_units)) {
++          const sdkLike = {
++            id: resource.id,
++            purchaseUnits: resource.purchase_units.map((u) => ({
++              customId: u.custom_id,
++              amount: u.amount ? { currencyCode: u.amount.currency_code, value: u.amount.value } : undefined,
++              payments: u.payments ? { captures: (u.payments.captures ?? []).map((c) => ({ id: c.id, status: c.status, customId: c.custom_id, amount: c.amount ? { currencyCode: c.amount.currency_code, value: c.amount.value } : undefined })) } : undefined,
++            })),
++          };
++          settleFromPayPalOrder(shopOrder, sdkLike);
++        }
++      }
++      // CHECKOUT.ORDER.APPROVED and all others: recorded, never paid, no backwards move.
++    } catch (err) {
++      console.error("[paypal] webhook handling error", err);
++      // Event already recorded (idempotent); do not ask PayPal to retry into a duplicate fulfil.
++    }
++    return res.json({ received: true });
++  });
++
+   // Order status for the thank-you page.
+   app.get("/api/orders/:id", (req, res) => {
+     const order = db.getOrder(req.params.id);
+@@ -67,6 +273,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
+   const host = process.env.HOST ?? "127.0.0.1";
+   const db = openDb(process.env.SHOP_DB ?? path.join(here, "data", "shop.db"));
+   const cards = createCardProcessor({ apiKey: process.env.CARD_PROCESSOR_KEY ?? "test_card_key" });
+-  const app = createApp({ db, cards, adminKey: process.env.ADMIN_KEY ?? "local-admin" });
++  const paypal = payPalServiceFromEnv();
++  if (!paypal) console.log("[paypal] PAYPAL_CLIENT_ID/PAYPAL_CLIENT_SECRET not set; PayPal checkout disabled");
++  const app = createApp({ db, cards, adminKey: process.env.ADMIN_KEY ?? "local-admin", paypal });
+   app.listen(port, host, () => console.log(`Fogline shop on http://${host === "0.0.0.0" ? "localhost" : host}:${port}`));
+ }
+diff --git a/test/paypal.test.js b/test/paypal.test.js
+new file mode 100644
+index 0000000..02ae57c
+--- /dev/null
++++ b/test/paypal.test.js
+@@ -0,0 +1,373 @@
++import { test } from "node:test";
++import assert from "node:assert/strict";
++import { createApp } from "../server.js";
++import { openDb } from "../lib/db.js";
++import { createCardProcessor } from "../lib/card-processor.js";
++import { createPayPalService, centsToPayPalAmount, payPalAmountToCents } from "../lib/paypal.js";
++
++const jsonRes = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
++const TOKEN = { access_token: "T", token_type: "Bearer", expires_in: 3600 };
++const ppError = (issue, message = "The requested action could not be performed.") =>
++  jsonRes(422, { name: "UNPROCESSABLE_ENTITY", message, debug_id: "dbg1", details: [{ issue, description: `${issue} detail` }] });
++
++function makeFakePayPal(overrides = {}) {
++  const calls = [];
++  const state = { created: new Map(), captured: new Map(), verifyStatus: overrides.verifyStatus ?? "SUCCESS", seq: 0 };
++  const fetchImpl = async (input, init) => {
++    const request = new Request(input, init);
++    const url = new URL(request.url);
++    const text = request.body === null ? "" : await request.clone().text();
++    const call = { url, request, text, body: text ? safeJson(text) : null };
++    calls.push(call);
++    if (overrides.onCall) overrides.onCall(call);
++
++    if (url.pathname === "/v1/oauth2/token") return jsonRes(200, TOKEN);
++    if (url.pathname === "/v1/notifications/verify-webhook-signature") {
++      state.lastVerify = call;
++      return jsonRes(200, { verification_status: state.verifyStatus });
++    }
++    if (url.pathname === "/v2/checkout/orders" && request.method === "POST") {
++      if (overrides.createResponder) return overrides.createResponder(call, state);
++      const pu = call.body.purchase_units[0];
++      const id = `PAYPAL-${++state.seq}`;
++      state.created.set(id, { custom_id: pu.custom_id, value: pu.amount.value, currency: pu.amount.currency_code });
++      return jsonRes(201, { id, status: "CREATED", intent: "CAPTURE", purchase_units: [{ custom_id: pu.custom_id, invoice_id: pu.invoice_id, amount: pu.amount }] });
++    }
++    const capMatch = url.pathname.match(/^\/v2\/checkout\/orders\/([^/]+)\/capture$/);
++    if (capMatch && request.method === "POST") {
++      if (overrides.captureResponder) return overrides.captureResponder(call, state, capMatch[1]);
++      const info = state.created.get(capMatch[1]);
++      const capture = { id: "CAP-1", status: overrides.captureStatus ?? "COMPLETED", custom_id: info.custom_id, amount: { currency_code: info.currency, value: overrides.captureValue ?? info.value } };
++      state.captured.set(capMatch[1], capture);
++      return jsonRes(200, completedOrder(capMatch[1], info, capture));
++    }
++    const getMatch = url.pathname.match(/^\/v2\/checkout\/orders\/([^/]+)$/);
++    if (getMatch && request.method === "GET") {
++      if (overrides.getResponder) return overrides.getResponder(call, state, getMatch[1]);
++      const info = state.created.get(getMatch[1]);
++      const capture = state.captured.get(getMatch[1]);
++      if (!info) return jsonRes(404, { name: "RESOURCE_NOT_FOUND", message: "not found", debug_id: "d" });
++      return jsonRes(200, capture ? completedOrder(getMatch[1], info, capture) : { id: getMatch[1], status: "APPROVED", purchase_units: [{ custom_id: info.custom_id, amount: { currency_code: info.currency, value: info.value }, payments: { captures: [] } }] });
++    }
++    return jsonRes(404, { name: "NOT_FOUND", message: url.pathname, debug_id: "d" });
++  };
++  return { fetch: fetchImpl, calls, state };
++}
++function completedOrder(id, info, capture) {
++  return { id, status: "COMPLETED", purchase_units: [{ custom_id: info.custom_id, amount: { currency_code: info.currency, value: info.value }, payments: { captures: [capture] } }] };
++}
++function safeJson(t) { try { return JSON.parse(t); } catch { return null; } }
++
++async function startShop(fake, serviceOpts = {}) {
++  const db = openDb(":memory:");
++  const service = createPayPalService({ clientId: "cid-test", clientSecret: "secret-test-DO-NOT-LEAK", webhookId: "WH-1", apiBase: "https://paypal.test", env: "sandbox", fetchImpl: fake.fetch, ...serviceOpts });
++  const app = createApp({ db, cards: createCardProcessor({ apiKey: "test" }), adminKey: "k", paypal: service });
++  const server = await new Promise((r) => { const s = app.listen(0, "127.0.0.1", () => r(s)); });
++  return { db, service, base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise((r) => server.close(r)) };
++}
++const post = (url, body, headers = {}) => fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body ?? {}) });
++async function createViaApi(shop, items = [{ sku: "FOG-HOODIE", qty: 1 }]) {
++  const res = await post(`${shop.base}/api/paypal/orders`, { items, email: "b@example.com", price: 1, amount: "0.01", total: 1, currency: "EUR" });
++  assert.equal(res.status, 200);
++  return res.json(); // {id, orderId}
++}
++const webhookHeaders = { "paypal-auth-algo": "SHA256withRSA", "paypal-cert-url": "https://paypal.test/cert", "paypal-transmission-id": "tid", "paypal-transmission-sig": "sig", "paypal-transmission-time": "2026-01-01T00:00:00Z" };
++function captureCompletedEvent(shopOrderId, paypalId, { id = "EVT-1", value = "49.00", currency = "USD" } = {}) {
++  return { id, event_type: "PAYMENT.CAPTURE.COMPLETED", resource: { id: "CAP-1", status: "COMPLETED", custom_id: shopOrderId, amount: { value, currency_code: currency }, supplementary_data: { related_ids: { order_id: paypalId } } } };
++}
++
++test("centsToPayPalAmount converts exactly", () => {
++  assert.equal(centsToPayPalAmount(4900), "49.00");
++  assert.equal(centsToPayPalAmount(5), "0.05");
++  assert.equal(centsToPayPalAmount(300), "3.00");
++  assert.equal(centsToPayPalAmount(0), "0.00");
++  assert.equal(payPalAmountToCents("49.00"), 4900);
++  assert.equal(payPalAmountToCents("0.05"), 5);
++});
++
++test("config exposes only client id, sandbox script, test buyer country when set", async () => {
++  const fake = makeFakePayPal();
++  const shop = await startShop(fake, { testBuyerCountry: "GB" });
++  try {
++    const res = await fetch(`${shop.base}/api/paypal/config`);
++    const body = await res.json();
++    assert.equal(body.clientId, "cid-test");
++    assert.equal(body.scriptUrl, "https://www.sandbox.paypal.com/web-sdk/v6/core");
++    assert.equal(body.testBuyerCountry, "GB");
++    assert.ok(!JSON.stringify(body).includes("secret-test"));
++    const live = createPayPalService({ clientId: "c", clientSecret: "s", apiBase: "https://paypal.test", env: "live", testBuyerCountry: "GB", fetchImpl: fake.fetch });
++    assert.equal(live.scriptUrl, "https://www.paypal.com/web-sdk/v6/core");
++    assert.equal(live.testBuyerCountry, undefined);
++  } finally { await shop.close(); }
++});
++
++test("create prices from catalog, ignores browser prices, sends exact SDK wire (claim present during call)", async () => {
++  let shopRef;
++  const seen = [];
++  const fake = makeFakePayPal({ onCall(call) {
++    if (call.url.pathname === "/v2/checkout/orders" && call.request.method === "POST") {
++      const pu = call.body.purchase_units[0];
++      seen.push({ claim: shopRef.db.hasClaim(`create:${pu.custom_id}`), headers: call.request.headers, body: call.body });
++    }
++  }});
++  const shop = await startShop(fake); shopRef = shop;
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    assert.ok(id.startsWith("PAYPAL-"));
++    const order = shop.db.getOrder(orderId);
++    assert.equal(order.total_cents, 4900);
++    assert.equal(order.paypal_order_id, id);
++    assert.equal(seen.length, 1);
++    assert.equal(seen[0].claim, true, "claim row must exist when SDK request leaves");
++    assert.equal(seen[0].body.intent, "CAPTURE");
++    const pu = seen[0].body.purchase_units[0];
++    assert.deepEqual(Object.keys(pu).sort(), ["amount", "custom_id", "invoice_id", "items"].sort());
++    assert.equal(pu.custom_id, orderId);
++    assert.equal(pu.amount.value, "49.00");
++    assert.equal(pu.amount.breakdown.item_total.value, "49.00");
++    assert.deepEqual(pu.items, [{ name: "Fogline Hoodie", sku: "FOG-HOODIE", quantity: "1", unit_amount: { currency_code: "USD", value: "49.00" } }]);
++    assert.equal(seen[0].headers.get("paypal-request-id"), orderId);
++    assert.equal(seen[0].headers.get("prefer"), "return=representation");
++    assert.equal(seen[0].headers.get("paypal-mock-response"), null);
++    // token went to PAYPAL_API_BASE
++    assert.ok(fake.calls.some((c) => c.url.href === "https://paypal.test/v1/oauth2/token"));
++    // optional-fields proof: no invented body keys anywhere
++    assert.deepEqual(Object.keys(seen[0].body).sort(), ["intent", "purchase_units"]);
++  } finally { await shop.close(); }
++});
++
++test("bad bag is rejected before any PayPal call", async () => {
++  const fake = makeFakePayPal();
++  const shop = await startShop(fake);
++  try {
++    for (const items of [[{ sku: "NOPE", qty: 1 }], [{ sku: "FOG-HOODIE", qty: 0 }], [{ sku: "FOG-HOODIE", qty: 1.5 }], [{ sku: "FOG-HOODIE", qty: 999 }], [{ sku: "FOG-HOODIE", qty: -1 }]]) {
++      const res = await post(`${shop.base}/api/paypal/orders`, { items });
++      assert.equal(res.status, 400);
++    }
++    assert.equal(fake.calls.filter((c) => c.url.pathname === "/v2/checkout/orders").length, 0);
++  } finally { await shop.close(); }
++});
++
++test("capture sends empty JSON body with application/json content-type (real sandbox 415 regression)", async () => {
++  const fake = makeFakePayPal();
++  const shop = await startShop(fake);
++  try {
++    const { id } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 200);
++    const captures = fake.calls.filter((c) => c.url.pathname.endsWith("/capture"));
++    assert.equal(captures.length, 1);
++    // Omitting body sends no body and no Content-Type; real PayPal answered
++    // 415 UNSUPPORTED_MEDIA_TYPE (debug ca571d11c6846). Must send "{}" as JSON.
++    assert.match(captures[0].request.headers.get("content-type") ?? "", /application\/json/);
++    assert.equal(captures[0].text, "{}");
++    assert.deepEqual(captures[0].body, {});
++  } finally { await shop.close(); }
++});
++
++test("capture COMPLETED fulfils once; second capture is safe and does not re-capture", async () => {
++  const fake = makeFakePayPal();
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 200);
++    assert.equal((await res.json()).status, "fulfilled");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++    const again = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(again.status, 200);
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++    assert.equal(fake.calls.filter((c) => c.url.pathname.endsWith("/capture")).length, 1);
++  } finally { await shop.close(); }
++});
++
++test("two concurrent captures fulfil exactly once", async () => {
++  const fake = makeFakePayPal({ captureResponder: async (call, state, pid) => {
++    await new Promise((r) => setTimeout(r, 60));
++    const info = state.created.get(pid);
++    const capture = { id: "CAP-1", status: "COMPLETED", custom_id: info.custom_id, amount: { currency_code: "USD", value: info.value } };
++    state.captured.set(pid, capture);
++    return jsonRes(200, completedOrder(pid, info, capture));
++  }});
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const [a, b] = await Promise.all([post(`${shop.base}/api/paypal/orders/${id}/capture`, {}), post(`${shop.base}/api/paypal/orders/${id}/capture`, {})]);
++    assert.ok([a.status, b.status].includes(200));
++    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++  } finally { await shop.close(); }
++});
++
++test("INSTRUMENT_DECLINED stays pending/unpaid, returns PayPal reason + code, claim released", async () => {
++  const fake = makeFakePayPal({ captureResponder: () => ppError("INSTRUMENT_DECLINED") });
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 422);
++    const body = await res.json();
++    assert.equal(body.code, "INSTRUMENT_DECLINED");
++    assert.match(body.error, /INSTRUMENT_DECLINED detail|performed/);
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
++    assert.equal(shop.db.hasClaim(`capture:${orderId}`), false);
++  } finally { await shop.close(); }
++});
++
++test("TRANSACTION_REFUSED stays unpaid with PayPal reason", async () => {
++  const fake = makeFakePayPal({ captureResponder: () => ppError("TRANSACTION_REFUSED") });
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 422);
++    assert.match((await res.json()).error, /TRANSACTION_REFUSED|performed/);
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
++  } finally { await shop.close(); }
++});
++
++test("401 from PayPal maps to 502 fixed message, unpaid", async () => {
++  const fake = makeFakePayPal({ captureResponder: () => jsonRes(401, { name: "AUTHENTICATION_FAILURE", message: "bad creds detail", debug_id: "d" }) });
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 502);
++    assert.equal((await res.json()).error, "Payment provider unavailable.");
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++  } finally { await shop.close(); }
++});
++
++test("ORDER_ALREADY_CAPTURED settles by re-reading the order", async () => {
++  const fake = makeFakePayPal({ captureResponder: (call, state, pid) => {
++    const info = state.created.get(pid);
++    state.captured.set(pid, { id: "CAP-9", status: "COMPLETED", custom_id: info.custom_id, amount: { currency_code: "USD", value: info.value } });
++    return ppError("ORDER_ALREADY_CAPTURED");
++  }});
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 200);
++    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++    assert.ok(fake.calls.some((c) => c.request.method === "GET" && c.url.pathname === `/v2/checkout/orders/${id}`), "re-read must happen");
++  } finally { await shop.close(); }
++});
++
++test("connection failure on capture re-reads; if PayPal holds no capture it is unknown, never failed", async () => {
++  const fake = makeFakePayPal({ captureResponder: () => { throw new Error("ECONNRESET"); } });
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 502);
++    assert.match((await res.json()).error, /unknown/i);
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
++    assert.ok(fake.calls.some((c) => c.request.method === "GET"), "unknown outcome must re-read");
++  } finally { await shop.close(); }
++});
++
++test("connection failure on capture settles when re-read shows COMPLETED", async () => {
++  const fake = makeFakePayPal({ captureResponder: (call, state, pid) => {
++    const info = state.created.get(pid);
++    state.captured.set(pid, { id: "CAP-7", status: "COMPLETED", custom_id: info.custom_id, amount: { currency_code: "USD", value: info.value } });
++    throw new Error("ECONNRESET");
++  }});
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 200);
++    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++  } finally { await shop.close(); }
++});
++
++test("PENDING capture does not fulfil; verified CAPTURE.COMPLETED webhook settles it once, replay is no-op", async () => {
++  const fake = makeFakePayPal({ captureStatus: "PENDING" });
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 202);
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
++
++    const evt = captureCompletedEvent(orderId, id);
++    const wh = await post(`${shop.base}/api/paypal/webhooks`, evt, webhookHeaders);
++    assert.equal(wh.status, 200);
++    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++    // verify call shape
++    const v = fake.state.lastVerify.body;
++    assert.equal(v.webhook_id, "WH-1");
++    assert.equal(v.transmission_id, "tid");
++    assert.equal(v.webhook_event.id, "EVT-1");
++    // replay
++    const replay = await post(`${shop.base}/api/paypal/webhooks`, evt, webhookHeaders);
++    assert.equal(replay.status, 200);
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++  } finally { await shop.close(); }
++});
++
++test("forged webhook (verification FAILURE) is 400 and changes nothing; APPROVED never pays", async () => {
++  const fake = makeFakePayPal();
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    fake.state.verifyStatus = "FAILURE";
++    const forged = await post(`${shop.base}/api/paypal/webhooks`, captureCompletedEvent(orderId, id, { id: "EVT-FORGE" }), webhookHeaders);
++    assert.equal(forged.status, 400);
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++    assert.equal(shop.db.hasWebhookEvent("EVT-FORGE"), false);
++    fake.state.verifyStatus = "SUCCESS";
++    const approved = await post(`${shop.base}/api/paypal/webhooks`, { id: "EVT-APPR", event_type: "CHECKOUT.ORDER.APPROVED", resource: { id, status: "APPROVED" } }, webhookHeaders);
++    assert.equal(approved.status, 200);
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
++  } finally { await shop.close(); }
++});
++
++test("webhook with wrong amount does not pay; out-of-order APPROVED after paid does not move backwards", async () => {
++  const fake = makeFakePayPal();
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const bad = await post(`${shop.base}/api/paypal/webhooks`, captureCompletedEvent(orderId, id, { id: "EVT-BADAMT", value: "0.01" }), webhookHeaders);
++    assert.equal(bad.status, 200);
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++    const cap = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(cap.status, 200);
++    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
++    const late = await post(`${shop.base}/api/paypal/webhooks`, { id: "EVT-LATE", event_type: "CHECKOUT.ORDER.APPROVED", resource: { id, status: "APPROVED" } }, webhookHeaders);
++    assert.equal(late.status, 200);
++    assert.equal(shop.db.getOrder(orderId).status, "fulfilled");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 1);
++  } finally { await shop.close(); }
++});
++
++test("capture with mismatched amount stays unpaid", async () => {
++  const fake = makeFakePayPal({ captureValue: "0.01" });
++  const shop = await startShop(fake);
++  try {
++    const { id, orderId } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 422);
++    assert.equal(shop.db.getOrder(orderId).status, "pending");
++    assert.equal(shop.db.shipmentsFor(orderId).length, 0);
++  } finally { await shop.close(); }
++});
++
++test("capture for unknown PayPal order is 404, no PayPal capture call", async () => {
++  const fake = makeFakePayPal();
++  const shop = await startShop(fake);
++  try {
++    const res = await post(`${shop.base}/api/paypal/orders/PAYPAL-NOPE/capture`, {});
++    assert.equal(res.status, 404);
++    assert.equal(fake.calls.filter((c) => c.url.pathname.endsWith("/capture")).length, 0);
++  } finally { await shop.close(); }
++});

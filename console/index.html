@@ -33,8 +33,16 @@
     <section class="home" id="home" hidden>
       <div class="intro">
         <h1>Add PayPal. Then try to rob it.</h1>
-        <p class="why">AI agents now build shops, and soon they will shop in them. One mistake in a checkout is free money for the first agent that finds it. Heistproof robs a PayPal checkout first: it buys from the running shop for real in PayPal's sandbox, tries ten scripted robberies, lets an AI thief invent more, and checks the shop's books against PayPal's own records. Its AI coding agent can add PayPal and fix whatever gets through; the checkout ships only when every robbery fails.</p>
+        <p class="lead">Heistproof robs a PayPal checkout in PayPal's sandbox before anyone else can, and ships it only when every robbery fails.</p>
       </div>
+
+      <!-- The result in two numbers, computed from the recorded runs: a hand-written checkout and the coding agent's. -->
+      <section class="result" id="result" aria-labelledby="result-title" hidden>
+        <h2 id="result-title">The same ten robberies, on two checkouts</h2>
+        <div class="result-tiles" id="result-tiles"></div>
+      </section>
+
+      <p class="why">AI agents now build shops, and soon they will shop in them. One mistake in a checkout is free money for the first agent that finds it. Heistproof buys from the running shop for real in PayPal's sandbox, tries ten scripted robberies, lets an AI thief invent more, and checks the shop's books against PayPal's own records. Its AI coding agent can add PayPal and fix whatever gets through.</p>
 
       <section class="runs yours" id="your-runs" aria-labelledby="yours-title" hidden>
         <h2 id="yours-title">Your runs</h2>
@@ -44,7 +52,7 @@
       </section>
 
       <section class="compare" aria-labelledby="compare-title">
-        <h2 id="compare-title">What Heistproof caught before anything shipped</h2>
+        <h2 id="compare-title">What Heistproof caught in PayPal's sandbox</h2>
         <div class="compare-grid" id="compare"></div>
         <p class="compare-note" id="compare-note"></p>
       </section>
@@ -153,7 +161,7 @@
 
     <!-- Explanations behind the small "i" buttons -->
     <div class="tip" id="tip-verdict" hidden><b>Safe to ship</b> means the real sandbox purchase went through once, all 10 scripted robberies were blocked, nothing the AI thief tried got through and the shop's books match PayPal's records (when the AI thief did not run, the verdict says so). <b>Do not ship</b> means at least one robbery worked, or the purchase itself failed. <b>Incomplete</b> means not every robbery could run, or the books could not be matched, so there is no verdict on the rest; an incomplete check is never called safe.</div>
-    <div class="tip" id="tip-rows" hidden>Each robbery is a real attempt on the running shop through PayPal's sandbox, not a simulation. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Skipped</b>: it could not run on this shop, so it was not blocked either. <b>Not run</b>: it was not part of this recording. Open a row for the result, the screenshots and PayPal's own ids.</div>
+    <div class="tip" id="tip-rows" hidden>Each robbery is a real attempt on the running shop through PayPal's sandbox, not a simulation. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Could not run</b>: it needs something this run did not have (a paid order, say), so it was not blocked either. Open a row for the result, the screenshots and PayPal's own ids.</div>
     <div class="tip" id="tip-proof" hidden>Everything here comes from PayPal's sandbox, so no real money moves. <b>PayPal order</b>: PayPal's id for the purchase. <b>Capture</b>: the moment PayPal actually took the money. <b>Signed webhook</b>: PayPal's own "payment completed" message, its signature checked with PayPal. The raw answers are the recorded calls, byte for byte.</div>
 
     <dialog id="viewer" aria-label="Screenshot">

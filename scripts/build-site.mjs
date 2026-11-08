@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { summarize, brokenShots } from "../src/console/summary.ts";
+import { summarize, shotInfo } from "../src/console/summary.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -50,12 +50,15 @@ for (const id of fs.readdirSync(path.join(root, "runs")).sort().reverse()) {
   fs.mkdirSync(path.join(out, "runs", id), { recursive: true });
   // Back-office screenshots that caught a server error page instead of the back office are not proof: they are left
   // out of the site (the run folder keeps them) and listed, so the console never shows or captions them.
+  // Byte-for-byte copies of a screenshot and the outlined order on each back-office page are listed with the run too,
+  // so the console never shows one picture twice in a group and can crop a back-office page to the order it proves.
   const all = fs.readdirSync(dir).filter((f) => !f.endsWith(".db"));
-  const broken = brokenShots(dir, all);
+  const info = shotInfo(dir, all);
+  const broken = info.brokenShots;
   const files = all.filter((f) => !broken.includes(f));
   for (const f of files) fs.copyFileSync(path.join(dir, f), path.join(out, "runs", id, f));
   const events = fs.readFileSync(path.join(dir, "events.jsonl"), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
-  fs.writeFileSync(path.join(out, "runs", id, "run.json"), JSON.stringify({ id, events, files, brokenShots: broken }));
+  fs.writeFileSync(path.join(out, "runs", id, "run.json"), JSON.stringify({ id, events, files, ...info }));
   if (broken.length) skipped.push(`${id}: ${broken.length}`);
   index.push({ ...summarize(id, events), recorded: true });
 }

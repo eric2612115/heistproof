@@ -15,8 +15,12 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const money = (v) => `$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const amt = (a) => (!a ? "" : !a.currency || a.currency === "USD" || a.currency_code === "USD" ? money(a.value) : `${a.value} ${a.currency ?? a.currency_code}`);
+/** "$4,900" or "$0.01": cents only when there are some. */
+const money0 = (v) => (Number(v) % 1 ? money(v) : `$${Number(v).toLocaleString("en-US")}`);
 const robberies = (n) => (n === 1 ? "1 robbery" : `${n} robberies`);
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+/** The engine's "3 parcel(s)" and "1 labels", in plain plurals. */
+const plurals = (s) => String(s ?? "").replace(/\b(\d+) ([a-z]+)\(s\)/gi, (m, n, w) => `${n} ${w}${n === "1" ? "" : "s"}`).replace(/\b1 (label|parcel|order|capture|robbery|file|step|turn)s\b/g, "1 $1");
 const times = (n) => (n === 2 ? "twice" : `${n} times`);
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const low = (s) => (s ? s[0].toLowerCase() + s.slice(1) : s);
@@ -38,20 +42,45 @@ const ATTACKS = [
 ];
 const ATTACK_NAME = Object.fromEntries(ATTACKS.map(([id, name]) => [id, name]));
 const ATTACK_WHAT = Object.fromEntries(ATTACKS.map(([id, , what]) => [id, what]));
-const STAMP = { waiting: "Waiting", running: "Trying…", held: "Blocked", robbed: "Robbed", skipped: "Skipped", error: "Error", notrun: "Not run", repeat: "Repeat" };
+// One word per outcome, everywhere: a robbery that could not run (skipped, failed to start, or never reached because the
+// purchase it needs did not complete) is "Could not run", never Skipped, Error or Not run.
+const STAMP = { waiting: "Waiting", running: "Trying…", held: "Blocked", robbed: "Robbed", skipped: "Could not run", error: "Could not run", notrun: "Could not run", repeat: "Repeat" };
 const VERDICT = { running: "Running", safe: "Safe to ship", unsafe: "Do not ship", incomplete: "Incomplete" };
 const BUTTONS = { paypal: "PayPal", venmo: "Venmo", paylater: "Pay Later" };
 const KEY_FACTS = ["PayPal order", "Capture", "Signed webhook"];
 
-/* Recorded runs that tell the story, with hand-written titles; any other run gets a title from its own events. */
+/* Recorded runs that tell the story, with hand-written titles and leads; every number in them is read from the run's
+   own summary (a run recorded again keeps its words true). Any other run gets a title from its own events. */
 const FEATURED = {
-  "2026-11-08-full-run": { title: "AI adds PayPal; PayPal refuses; AI fixes it", short: "AI + Heistproof", desc: "The coding agent's own tests passed, but PayPal's real sandbox refused its first capture with 415. Heistproof sent PayPal's answer back and the agent fixed it. The second purchase paid, every scripted robbery was blocked, and nothing the AI thief invented got through." },
-  "2026-11-08-ai-alone": { title: "AI alone, with no PayPal skills", short: "AI alone", desc: "The control: the same model, with no APIMatic plugin and no Heistproof skills, wrote a checkout that paid at the first try and blocked every robbery. Heistproof does not assume AI code is unsafe; it proves a checkout either way." },
-  "2026-11-08-afternoon-robbed": { title: "A hand-written checkout, robbed 8 ways", short: "Hand-written", desc: "A sample PayPal checkout written by hand with planted mistakes, checked as it is with no coding agent. Eight of the ten robberies worked and the shop's books do not match PayPal's; the AI thief only repeated problems the books already showed." },
-  "2026-11-08-naive-penny-heist": { title: "A $4,900 order stopped, then the $0.01 hoodie", short: "$4,900 stopped", desc: "The purchase was stopped before any money moved: PayPal would have charged $4,900 for a $49 bag. Then the robberies that need no buyer: the $49 hoodie shipped after PayPal captured $0.01." },
-  "2026-11-08-copper-kettle": { title: "A second shop, built differently", short: "Copper Kettle", desc: "No framework, a session cookie and a CSRF token on every request, other routes and fields. All ten robberies ran and were blocked, nothing the AI thief tried got through, and the books match PayPal's." },
-  "2026-11-08-naive-hardened": { title: "AI fixes a hand-written checkout", short: "AI fixes it", desc: "A hand-written checkout with planted mistakes, handed to the coding agent. The first check stopped a $4,900 charge for a $49 bag and caught two robberies; one fix later the purchase paid, every robbery was blocked and nothing the AI thief tried got through." },
-  "2026-11-08-agent-checkout-recheck": { title: "The agent's checkout, checked again", short: "Recheck", desc: "The checkout the coding agent wrote in an earlier run, checked again as it is, with no coding agent. All ten robberies blocked and nothing the AI thief tried got through." },
+  "2026-11-08-full-run": {
+    title: (r) => (r.refusal ? "AI adds PayPal; PayPal refuses; AI fixes it" : null),
+    short: "AI + Heistproof",
+    desc: (r) => (r.refusal ? `The shop's ${r.refusal.testsPassed ? `${r.refusal.testsPassed} ` : ""}tests (the coding agent's included) passed, but PayPal's real sandbox refused its first ${refusedWhat(r.refusal)} with HTTP ${r.refusal.status}. Heistproof sent PayPal's answer back and the agent fixed it. Then ${outcome(r, { paid: true })}.` : null),
+  },
+  "2026-11-08-ai-alone": { title: () => "AI alone, with no PayPal skills", short: "AI alone", desc: (r) => `The control: the same model, with no APIMatic plugin and no Heistproof skills, wrote a checkout on its own. ${cap(outcome(r, { paid: true }))}. Heistproof does not assume AI code is unsafe; it proves a checkout either way.` },
+  "2026-11-08-afternoon-robbed": { title: (r) => (r.robbed > 1 ? `A hand-written checkout, robbed ${r.robbed} ways` : null), short: "Hand-written", desc: (r) => `A sample PayPal checkout written by hand with planted mistakes, checked as it is with no coding agent. ${cap(outcome(r))}.` },
+  "2026-11-08-naive-penny-heist": {
+    title: (r) => (r.mismatch ? `A ${money0(r.mismatch.paypal)} order stopped${r.cheap ? `, then the ${cheapWords(r)}` : ""}` : null),
+    short: (r) => (r.mismatch ? `${money0(r.mismatch.paypal)} charge stopped` : null),
+    desc: (r) => (r.mismatch ? `The purchase was stopped before any money moved: PayPal would have charged ${money0(r.mismatch.paypal)} for a ${money0(r.mismatch.bag)} bag. Then the robberies that need no buyer: ${r.cheap ? `${low(plainSentence(r.cheap.summary)).replace(/\.$/, "")}; ` : ""}${outcome(r, { buy: false })}.` : null),
+  },
+  "2026-11-08-copper-kettle": { title: () => "A second shop, built differently", short: "Copper Kettle", desc: (r) => `No framework, a session cookie and a CSRF token on every request, other routes and fields. ${cap(outcome(r))}.` },
+  "2026-11-08-naive-hardened": {
+    title: () => "AI fixes a hand-written checkout",
+    short: "AI fixes it",
+    desc: (r) => `A hand-written checkout with planted mistakes, handed to the coding agent. The first check ${r.mismatch ? `stopped a ${money0(r.mismatch.paypal)} charge for a ${money0(r.mismatch.bag)} bag and ` : ""}caught ${robberies(r.robbedEver)}; ${r.fixes ? `${r.fixes === 1 ? "one fix" : `${r.fixes} fixes`} later, ` : ""}${outcome(r, { paid: true })}.`,
+  },
+  "2026-11-08-agent-checkout-recheck": { title: () => "The agent's checkout, checked again", short: "Recheck", desc: (r) => `The checkout the coding agent wrote in an earlier run, checked again as it is, with no coding agent. ${cap(outcome(r))}.` },
+  "2026-11-08-thief-binding": {
+    title: (r) => (r.thief?.robbed ? "The AI thief finds a mistake the ten cannot" : "The AI thief against a planted mistake"),
+    short: "AI thief finds it",
+    desc: (r) => `A test shop with one planted mistake that none of the ten scripted robberies can reach: its capture route lets a field in the request choose which order a payment pays for. ${cap(outcome(r))}.`,
+  },
+};
+/** A featured run's own words, or null when the run does not (or no longer) bear them out. */
+const featured = (r, key) => {
+  const f = FEATURED[r?.id]?.[key];
+  return typeof f === "function" ? f(r) : (f ?? null);
 };
 const HANDWRITTEN = new Set(["fogline-naive", "fogline-afternoon"]);
 const SHOPS = {
@@ -60,10 +89,22 @@ const SHOPS = {
   "fogline-afternoon": "a hand-written PayPal checkout",
   "fogline-after": "Fogline, with the checkout Heistproof's agent wrote",
   "copper-kettle": "Copper Kettle, a second shop built differently on purpose",
+  "copper-kettle-binding": "Copper Kettle with one planted mistake, a test shop",
+  "copper-kettle-bug-binding": "Copper Kettle with one planted mistake, a test shop",
 };
-const SHOP_WHY = {
-  "fogline-afternoon": "takes the amount from the browser, ships whatever the capture returned and trusts every message that claims to be from PayPal",
-  "fogline-naive": "sends cents as dollars, takes the amount from the browser, ships whatever the capture returned and trusts every message that claims to be from PayPal",
+/** "About this shop", for the sample shops that carry planted mistakes on purpose. */
+const HAND_NOTE = (t, why) => `About this shop: ${t} is a sample PayPal checkout written by hand with planted mistakes (it ${why}). It is kept in shops/ as a test target, not as a survey of real shops.`;
+const BINDING_NOTE = (t) => `About this shop: ${t} is Copper Kettle with one planted mistake: its capture route lets a field in the request choose which order the payment pays for, so one payment can pay for two orders. None of the ten scripted robberies can reach it; it is kept in shops/ to show what the AI thief finds, judged by the books.`;
+const SHOP_NOTE = {
+  "fogline-afternoon": HAND_NOTE("fogline-afternoon", "takes the amount from the browser, ships whatever the capture returned and trusts every message that claims to be from PayPal"),
+  "fogline-naive": HAND_NOTE("fogline-naive", "sends cents as dollars, takes the amount from the browser, ships whatever the capture returned and trusts every message that claims to be from PayPal"),
+  "copper-kettle-binding": BINDING_NOTE("copper-kettle-binding"),
+  "copper-kettle-bug-binding": BINDING_NOTE("copper-kettle-bug-binding"),
+};
+/** Why a hand-written shop printed several shipping labels for one order: it ships each time it hears the order is paid. */
+const SHOP_LABELS = {
+  "fogline-afternoon": "This shop prints a shipping label each time it is told the order is paid: once at the capture, and again for every message that says it comes from PayPal.",
+  "fogline-naive": "This shop prints a shipping label each time it is told the order is paid: once at the capture, and again for every message that says it comes from PayPal.",
 };
 const MODES = { heistproof: "AI adds PayPal", check: "checked as it is, no coding agent", existing: "AI fixes the checkout", baseline: "AI adds PayPal without Heistproof" };
 const RAIL_DEFAULT = { migrate: "AI coding agent", prove: "real sandbox purchase", attack: "10 robberies", thief: "a model invents robberies", books: "the shop against PayPal's records", ship: "fix what failed, then ship" };
@@ -83,6 +124,16 @@ const aPurchase = () => (offline() ? `a purchase with ${STANDIN}` : "a real purc
 /** What the shopper buys: "a hoodie" when the run's events name it, else nothing (the words then say "from the shop"). */
 const anItem = () => (state?.item ? `${/^[aeiou]/i.test(state.item) ? "an" : "a"} ${state.item}` : "");
 const theItem = () => state?.item ?? "order";
+/** The engine's result text for an offline run: what it says PayPal did, the stand-in did. */
+function byStandIn(s) {
+  const text = String(s ?? "");
+  if (!offline()) return text;
+  const out = text
+    .replace(/\bPayPal's (own )?records\b/g, "the stand-in's records")
+    .replace(/\bPayPal's '(approved|completed|payment completed)'/g, "the stand-in's '$1'")
+    .replace(/\bPayPal (captured|refused|answered|holds|says|would|took|charged|captures)\b/g, "the stand-in $1");
+  return /^PayPal\b/.test(text) ? cap(out) : out;
+}
 
 let RUNS = [];
 let state;
@@ -109,7 +160,13 @@ function route() {
   const run = id && id !== "how" && RUNS.find((r) => r.id === id) ? id : "";
   if (run) showRun(run);
   else showHome();
-  if (id === "how") requestAnimationFrame(() => document.getElementById("how")?.scrollIntoView({ block: "start" }));
+  // "#how" opens the home page at "How a run goes", whether it was clicked or loaded (static site or server). The jump
+  // waits for the layout (and the web fonts) to settle, and is instant, so nothing scrolls it back to the top.
+  if (id === "how" || (!run && location.hash === "#how")) {
+    const jump = () => document.getElementById("how")?.scrollIntoView({ block: "start", behavior: "instant" });
+    requestAnimationFrame(() => requestAnimationFrame(jump));
+    document.fonts?.ready.then(() => requestAnimationFrame(jump));
+  }
 }
 
 function showHome() {
@@ -123,7 +180,7 @@ function showHome() {
   $("#nav-runs").setAttribute("aria-current", "page");
   document.title = "Heistproof: recorded PayPal sandbox robberies";
   renderHome();
-  window.scrollTo(0, 0);
+  window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 function closeViewers() {
@@ -147,42 +204,102 @@ function showRun(id) {
    Home
    ====================================================================================== */
 
-const runTitle = (r) => FEATURED[r.id]?.title ?? r.title ?? r.id;
-const runShort = (r) => FEATURED[r.id]?.short ?? (r.mode === "check" ? "Hand-written" : r.mode === "existing" ? "AI fixes it" : r.mode === "baseline" ? "AI alone" : "AI + Heistproof");
+const runTitle = (r) => featured(r, "title") ?? r.title ?? r.id;
+const runShort = (r) => featured(r, "short") ?? (r.mode === "check" ? "Hand-written" : r.mode === "existing" ? "AI fixes it" : r.mode === "baseline" ? "AI alone" : "AI + Heistproof");
 const verdictClass = (r) => r.verdict ?? "running";
 const verdictWord = (r) => VERDICT[r.verdict ?? "running"];
 /** A safe verdict without the AI thief is safe against the scripted robberies only, and says so. */
 const safeScope = (r) => (r.verdict === "safe" && !r.thief ? `${r.total ?? 10} scripted robberies; the AI thief did not run` : "");
+/** "capture", "order" or "payment": what a refused PayPal call was, from its path. */
+const refusedWhat = (x) => (/\/capture$/.test(String(x?.call ?? "")) ? "capture" : /\/orders$/.test(String(x?.call ?? "")) ? "order" : "payment");
+/** "$0.01 hoodie": what the price tampering robbery got, from the run's summary. */
+const cheapWords = (r) => {
+  const item = /the \$[\d,.]+ ([a-z][\w-]*)/i.exec(String(r.cheap?.summary ?? ""))?.[1] ?? "order";
+  const v = /^([\d.,]+)/.exec(String(r.cheap?.captured ?? ""))?.[1];
+  return v ? `${money0(v)} ${item}` : item;
+};
+/** "PayPal's" or "the stand-in's" records, for a run summary. */
+const recordsOf = (r) => (r.offline ? "the stand-in's" : "PayPal's");
+
+/** How the round's own purchase ended, in a few words ("paid, but the shop shipped 3 times"); "" when it paid once. */
+function purchaseWords(r) {
+  const p = r.purchase;
+  const by = r.offline ? "the stand-in" : "PayPal";
+  if (p) {
+    if (p.status === "paid") return "";
+    if (p.status === "overshipped") return p.labels ? `the purchase paid, but the shop shipped it ${times(p.labels)}` : "the purchase paid, but nothing shipped";
+    if (p.status === "refused") return `${by} refused the purchase${p.http ? ` (HTTP ${p.http})` : ""}`;
+    if (p.status === "mismatch") return r.mismatch ? `the purchase was stopped: ${by} would have charged ${money0(r.mismatch.paypal)} for a ${money0(r.mismatch.bag)} bag` : "the purchase was stopped: wrong amount";
+    if (p.status === "nobutton") return "the PayPal button never appeared, so no purchase was possible";
+    return "the purchase did not complete";
+  }
+  // Summaries from before purchases were told apart: only what is certain.
+  if (r.paid === false) return r.refusal ? `${by} refused the purchase (HTTP ${r.refusal.status})` : r.mismatch ? "the purchase was stopped: wrong amount" : "the purchase did not pay once";
+  return "";
+}
+
+/** The run's result in one plain clause: the purchase when it went wrong (or, with paid, when it went right), the
+    robberies, the AI thief, the books. buy: false leaves the purchase out (the sentence before it told it already). */
+function outcome(r, { paid = false, buy = true } = {}) {
+  if (!r.verdict) return "the run is still going";
+  const parts = [];
+  const bought = buy ? purchaseWords(r) : "";
+  if (bought) parts.push(bought);
+  else if (buy && paid && r.purchase?.status === "paid") parts.push(`the ${r.rounds > 1 ? "last " : ""}purchase paid${r.purchase.amount ? ` $${r.purchase.amount}` : ""} once`);
+  const notRun = Math.max(0, (r.total ?? 10) - (r.ran ?? 0)) + (r.skipped ?? 0);
+  if (r.robbed) parts.push(`${r.robbed} of the ${r.ran} scripted robberies worked${notRun ? ` (${notRun} could not run)` : ""}`);
+  else if (r.ran && notRun) parts.push(`${r.held} scripted ${r.held === 1 ? "robbery was" : "robberies were"} blocked (${notRun} could not run)`);
+  else if (r.ran) parts.push(`all ${r.ran} scripted robberies were blocked`);
+  else parts.push("no scripted robbery ran");
+  if (r.thief) parts.push(r.thief.robbed ? `the AI thief got ${r.thief.robbed} of its ${robberies(r.thief.tried)} through` : r.thief.repeat ? `the AI thief only repeated problems the books already showed` : `nothing the AI thief invented got through`);
+  if (r.booksMismatches) parts.push(`${plural(r.booksMismatches, "order")} in the shop's books ${r.booksMismatches === 1 ? "does" : "do"} not match ${recordsOf(r)} records`);
+  else if (r.booksError) parts.push(`the shop's books could not be matched against ${recordsOf(r)} records`);
+  else if (r.booksMismatches === 0 && r.thief) parts.push(`the books match ${recordsOf(r)}`);
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+}
 
 /** One line a judge can read on a card, from the run's own numbers. */
 function runDesc(r) {
-  if (FEATURED[r.id]?.desc) return FEATURED[r.id].desc;
+  const own = featured(r, "desc");
+  if (own) return own;
   const shop = SHOPS[r.template] ?? (r.template || "the shop");
-  const rob = r.verdict ? (r.robbed ? `${r.robbed} of ${robberies(r.ran)} worked` : r.skipped ? `${r.held} of ${r.ran} robberies blocked, ${r.skipped} could not run` : r.ran === 1 ? "the one robbery that ran was blocked" : r.ran ? `all ${r.ran} robberies blocked` : "no robbery ran") : "still running";
-  const before = r.robbedEver > r.robbed ? ` (${r.robbedEver} worked before the fixes)` : "";
-  const partial = `${r.verdict && r.ran && r.ran < r.total ? `; only ${r.ran} of ${r.total} ran` : ""}${r.paid === false ? `; the purchase itself did not complete${r.refusal ? ` (HTTP ${r.refusal.status})` : r.mismatch ? " (wrong amount)" : ""}` : ""}${r.thief?.robbed ? `; the AI thief got ${r.thief.robbed} of ${r.thief.tried} through` : ""}${r.booksMismatches ? `; ${plural(r.booksMismatches, "order")} in the books ${r.booksMismatches === 1 ? "does" : "do"} not match` : ""}`;
-  const checks = r.offline ? "checks against Heistproof's offline PayPal stand-in" : "real sandbox checks";
-  if (r.mode === "check") return `${cap(shop)}, checked as it is with no coding agent${r.offline ? ", offline" : ""}. ${cap(rob)}${partial}.`;
-  if (r.mode === "existing") return `An AI coding agent fixed ${shop} after each failed check, ${plural(r.rounds, "round")} in all. ${cap(rob)}${before}${partial}.`;
-  if (r.mode === "baseline") return `An AI coding agent added PayPal to ${shop} on its own, without APIMatic's plugin or Heistproof's skills. ${cap(rob)}${before}${partial}.`;
-  return `An AI coding agent added PayPal to ${shop}${r.fixes ? `, with ${plural(r.fixes, "fix round")} after ${checks}` : ""}. ${cap(rob)}${before}${partial}.`;
+  const before = r.robbedEver > r.robbed ? ` (${robberies(r.robbedEver)} worked before the fixes)` : "";
+  const result = `${cap(outcome(r))}${before}.`;
+  if (r.mode === "check") return `${cap(shop)}, checked as it is with no coding agent${r.offline ? `, with ${STANDIN}` : ""}. ${result}`;
+  if (r.mode === "existing") return `An AI coding agent fixed ${shop} after each failed check, ${plural(r.rounds, "round")} in all. ${result}`;
+  if (r.mode === "baseline") return `An AI coding agent added PayPal to ${shop} on its own, without APIMatic's plugin or Heistproof's skills. ${result}`;
+  return `An AI coding agent added PayPal to ${shop}${r.fixes ? `, with ${plural(r.fixes, "fix round")} after ${r.offline ? "checks against the stand-in" : "real sandbox checks"}` : ""}. ${result}`;
 }
 
-/* ---------- What Heistproof caught: catch cards computed from the run summaries (sandbox runs only, newest wins) ---------- */
+/** "8 of 10 robbed", "2 robbed, 6 could not run", plus the AI thief when it got through. */
+function robbedCount(r, short = false) {
+  if (!r.verdict) return "running";
+  if (!r.ran) return "no robbery ran";
+  const notRun = Math.max(0, (r.total ?? 10) - r.ran) + (r.skipped ?? 0);
+  const base = notRun ? `${r.robbed} robbed, ${notRun} could not run` : short ? `${r.robbed}/${r.ran} robbed` : `${r.robbed} of ${r.ran} robbed`;
+  return r.thief?.robbed ? `${base} · AI thief ${r.thief.robbed} of ${r.thief.tried}` : base;
+}
+
+/* ---------- The result in two numbers, then what Heistproof caught: all computed from the run summaries ---------- */
 
 const newest = (list) => [...list].sort((a, b) => String(b.started).localeCompare(String(a.started)))[0] ?? null;
 
-/** The run behind each catch: recorded sandbox runs first, the visitor's own sandbox runs when no recorded run has it. */
+/** The run behind each claim: recorded sandbox runs first, the visitor's own sandbox runs when no recorded run has it. */
 function catches(runs) {
   const sandbox = runs.filter((r) => r.verdict && !r.offline);
   const recorded = sandbox.filter((r) => r.recorded !== false);
   const pick = (test, order = newest) => order(recorded.filter(test)) ?? order(sandbox.filter(test));
   const mostRobbed = (list) => [...list].sort((a, b) => b.robbed - a.robbed || String(b.started).localeCompare(String(a.started)))[0] ?? null;
+  const complete = (r) => r.ran >= r.total && r.thief;
   return {
     refused: pick((r) => r.refusal && (r.mode === "heistproof" || r.mode === "existing")),
     mismatch: pick((r) => r.mismatch),
-    hand: pick((r) => r.mode === "check" && HANDWRITTEN.has(r.template) && r.robbed > 0, mostRobbed),
+    hand: pick((r) => r.mode === "check" && HANDWRITTEN.has(r.template) && r.robbed > 0 && r.ran >= r.total, mostRobbed) ?? pick((r) => r.mode === "check" && HANDWRITTEN.has(r.template) && r.robbed > 0, mostRobbed),
+    // The checkout Heistproof's own coding agent wrote: added in a full run, safe against everything, else checked again as it is.
+    agent: pick((r) => r.mode === "heistproof" && r.verdict === "safe" && complete(r)) ?? pick((r) => r.template === "fogline-after" && r.verdict === "safe" && complete(r)),
     control: pick((r) => r.mode === "baseline"),
+    // The AI thief getting through where the ten scripted robberies could not (a shop with a mistake only it can see).
+    thief: pick((r) => r.thief?.robbed > 0 && !r.robbed),
   };
 }
 
@@ -195,8 +312,9 @@ function afterwards(r) {
 
 const catchVerdict = (r) => `<span class="catch-verdict"><span class="vdot ${verdictClass(r)}"></span><b>${esc(verdictWord(r))}${safeScope(r) ? ` (${esc(safeScope(r))})` : ""}</b><span>${esc(runTitle(r))}</span></span>`;
 
+/** A catch card takes the colour of its own run's final verdict; only the number it caught stays red. */
 function catchCard(r, big, line, then) {
-  return `<a class="catch" href="${runHref(r.id)}" data-run="${esc(r.id)}"><span class="catch-num">${esc(big)}</span><span class="catch-line">${esc(line)}</span><span class="catch-then">${esc(then)}</span>${catchVerdict(r)}</a>`;
+  return `<a class="catch ${verdictClass(r)}" href="${runHref(r.id)}" data-run="${esc(r.id)}"><span class="catch-num">${esc(big)}</span><span class="catch-line">${esc(line)}</span><span class="catch-then">${esc(then)}</span>${catchVerdict(r)}</a>`;
 }
 
 /** "Shipped the $49.00 hoodie after PayPal captured USD 0.01 (order …); the shop's back office says fulfilled." -> its first plain sentence. */
@@ -205,22 +323,60 @@ function plainSentence(s) {
   return first ? `${cap(first)}.` : "";
 }
 
+/** One of the two numbers: how many of the ten robberies worked on a checkout, and whether it may ship. */
+function resultTile(r, who, sub) {
+  const v = verdictClass(r);
+  const notRun = Math.max(0, r.total - r.ran) + (r.skipped ?? 0);
+  return `<a class="tile ${v}" href="${runHref(r.id)}" data-run="${esc(r.id)}">
+    <span class="who">${esc(who)}</span>
+    <span class="num">${r.robbed} of ${r.total}<small>${r.robbed === 1 ? "robbery worked" : "robberies worked"}${notRun ? `, ${notRun} could not run` : ""}</small></span>
+    <span class="ship"><span class="vdot ${v}"></span>${esc(verdictWord(r))}</span>
+    <span class="sub">${esc(sub)}</span>
+    <span class="open">${esc(runTitle(r))}</span>
+  </a>`;
+}
+
+function renderResult(c) {
+  const tiles = [];
+  if (c.hand) {
+    const h = c.hand;
+    const sub = [h.cheap?.summary ? plainSentence(h.cheap.summary) : "", h.booksMismatches ? `${plural(h.booksMismatches, "order")} in its books ${h.booksMismatches === 1 ? "does" : "do"} not match PayPal's.` : ""].filter(Boolean).join(" ");
+    tiles.push(resultTile(h, "A hand-written PayPal checkout with planted mistakes", sub || `${cap(outcome(h))}.`));
+  }
+  if (c.agent) {
+    const a = c.agent;
+    const x = a.refusal;
+    const lead = x ? `PayPal's sandbox refused its first ${refusedWhat(x)} (HTTP ${x.status})${x.testsPassed ? ` although the shop's ${x.testsPassed} tests, the agent's included, passed` : ""}; the agent fixed it. Then ` : "";
+    const who = a.mode === "heistproof" ? "The checkout Heistproof's coding agent wrote" : "The coding agent's checkout, checked again";
+    tiles.push(resultTile(a, who, `${lead}${lead ? outcome(a) : cap(outcome(a))}.`));
+  }
+  $("#result-tiles").innerHTML = tiles.join("");
+  $("#result").hidden = tiles.length === 0;
+}
+
 function renderCatches(recordedAndLocal) {
   const c = catches(recordedAndLocal);
+  renderResult(c);
   const cards = [];
   if (c.refused) {
     const x = c.refused.refusal;
-    const what = /\/capture$/.test(String(x.call ?? "")) ? "capture" : /\/orders$/.test(String(x.call ?? "")) ? "order" : "payment";
     const whose = c.refused.mode === "heistproof" ? "the AI's" : "the checkout's";
-    const tests = x.testsPassed ? ` while the agent's own ${x.testsPassed} tests passed` : "";
-    cards.push(catchCard(c.refused, `HTTP ${x.status}`, `PayPal's sandbox refused ${whose} ${what}${tests}.`, afterwards(c.refused)));
+    const tests = x.testsPassed ? `; the shop's ${x.testsPassed} tests, the agent's included, had passed` : "";
+    cards.push(catchCard(c.refused, `HTTP ${x.status}`, `PayPal's sandbox refused ${whose} ${refusedWhat(x)}${tests}.`, afterwards(c.refused)));
   }
   if (c.mismatch) {
     const m = c.mismatch.mismatch;
     const then = c.mismatch.mode === "existing" ? afterwards(c.mismatch) : c.mismatch.robbed ? `Then the robberies that need no buyer: ${c.mismatch.robbed} of ${robberies(c.mismatch.ran)} worked.` : afterwards(c.mismatch);
-    cards.push(catchCard(c.mismatch, m.paypal != null ? money(m.paypal) : "Wrong amount", `asked of PayPal for a ${money(m.bag)} bag; stopped before any money moved.`, then));
+    cards.push(catchCard(c.mismatch, m.paypal != null ? money(m.paypal) : "Wrong amount", `PayPal would have charged this for a ${money(m.bag)} bag; Heistproof stopped the purchase before any money moved.`, then));
   }
-  if (c.hand) {
+  if (c.thief) {
+    const t = c.thief.thief;
+    const m = c.thief.booksMismatches;
+    cards.push(catchCard(c.thief, `${t.robbed} of ${t.tried}`, `of the AI thief's own robberies got through where all ${c.thief.held} scripted robberies were blocked.`, m ? `The books caught ${m === 1 ? "it" : "them"}: ${plural(m, "order")} in the shop's books ${m === 1 ? "does" : "do"} not match PayPal's records.` : ""));
+  }
+  // The hand-written checkout leads the page already (the first of the two numbers); it is a catch card only when the
+  // two numbers could not be shown.
+  if (c.hand && !c.agent) {
     const h = c.hand;
     const parts = [h.cheap?.summary ? plainSentence(h.cheap.summary) : "", h.booksMismatches ? `${plural(h.booksMismatches, "order")} in the shop's books no longer ${h.booksMismatches === 1 ? "matches" : "match"} PayPal's.` : ""].filter(Boolean);
     cards.push(catchCard(h, `${h.robbed} of ${h.ran}`, "robberies got through a hand-written checkout with planted mistakes.", parts.join(" ")));
@@ -250,15 +406,18 @@ function renderHome() {
   $("#more-runs").hidden = older.length === 0;
   $("#more-summary").textContent = `${plural(older.length, "older run")} on this machine`;
   $("#more-list").innerHTML = older
-    .map((r) => `<li><a href="${runHref(r.id)}" data-run="${esc(r.id)}">${esc(runTitle(r))}</a><span>${esc(when(r, true))}${r.verdict ? ` · ${esc(verdictWord(r).toLowerCase())} · ${r.robbed} of ${r.ran} robbed` : " · unfinished"}${r.offline ? " · offline stand-in" : ""}</span></li>`)
+    .map((r) => `<li><a href="${runHref(r.id)}" data-run="${esc(r.id)}">${esc(runTitle(r))}</a><span>${esc(when(r, true))}${r.verdict ? ` · ${esc(verdictWord(r))} · ${esc(robbedCount(r))}` : " · unfinished"}${r.offline ? " · offline stand-in" : ""}</span></li>`)
     .join("");
 
-  const order = [...Object.keys(FEATURED).map((id) => recorded.find((r) => r.id === id)).filter(Boolean), ...recorded.filter((r) => !FEATURED[r.id])];
+  const order = featuredOrder(recorded);
   $("#cards").innerHTML = order.map((r) => card(r)).join("");
   $("#recorded-runs").hidden = order.length === 0;
   $("#nav-video").hidden = !LINKS.video;
   if (LINKS.video) $("#nav-video").href = LINKS.video;
 }
+
+/** Featured runs in their story order, then any other recorded run. */
+const featuredOrder = (recorded) => [...Object.keys(FEATURED).map((id) => recorded.find((r) => r.id === id)).filter(Boolean), ...recorded.filter((r) => !FEATURED[r.id])];
 
 /** "Nov 8, 2026", or with the time for the visitor's own runs (several a day). */
 function when(r, withTime = false) {
@@ -270,10 +429,9 @@ function when(r, withTime = false) {
 
 function card(r, local = false) {
   const v = verdictClass(r);
-  const count = r.verdict ? (r.ran ? `${r.robbed} of ${r.ran} robbed` : "no robbery ran") : "running";
   const meta = [MODES[r.mode] ?? r.mode, r.rounds > 1 ? plural(r.rounds, "round") : "", r.model ? `model ${r.model}` : "", r.thiefModel && !r.model ? `AI thief ${r.thiefModel}` : "", when(r, local)].filter(Boolean);
   return `<a class="card ${v}" href="${runHref(r.id)}" data-run="${esc(r.id)}">
-    <span class="verdict-line"><span class="vdot ${v}"></span>${esc(verdictWord(r))}<span class="count">${esc(count)}</span></span>${safeScope(r) ? `<span class="verdict-qual">(${esc(safeScope(r))})</span>` : ""}
+    <span class="verdict-line"><span class="vdot ${v}"></span>${esc(verdictWord(r))}<span class="count">${esc(robbedCount(r))}</span></span>${safeScope(r) ? `<span class="verdict-qual">(${esc(safeScope(r))})</span>` : ""}
     <h3>${esc(runTitle(r))}</h3>
     <span class="desc">${esc(runDesc(r))}</span>
     <span class="meta">${meta.map((m) => `<span>${esc(m)}</span>`).join("")}${r.offline ? `<span class="offline">offline · PayPal stand-in</span>` : ""}</span>
@@ -282,15 +440,23 @@ function card(r, local = false) {
 
 function renderChips() {
   const recorded = RUNS.filter((r) => r.recorded !== false);
-  const order = [...Object.keys(FEATURED).map((id) => recorded.find((r) => r.id === id)).filter(Boolean), ...recorded.filter((r) => !FEATURED[r.id])];
+  const order = featuredOrder(recorded);
   const current = state?.runId;
   $("#chips").innerHTML = order
-    .map((r) => `<a class="${verdictClass(r)}" href="${runHref(r.id)}" data-run="${esc(r.id)}"${r.id === current ? ' aria-current="page"' : ""}><span class="vdot ${verdictClass(r)}"></span>${esc(runShort(r))} <b>${r.verdict ? `${r.robbed}/${r.ran} robbed` : "running"}</b></a>`)
+    .map((r) => `<a class="${verdictClass(r)}" href="${runHref(r.id)}" data-run="${esc(r.id)}"${r.id === current ? ' aria-current="page"' : ""}><span class="vdot ${verdictClass(r)}"></span>${esc(runShort(r))} <b>${esc(robbedCount(r, true))}</b></a>`)
     .join("");
   if (current && !order.some((r) => r.id === current)) {
     const r = RUNS.find((x) => x.id === current) ?? { id: current };
-    $("#chips").insertAdjacentHTML("afterbegin", `<a class="${verdictClass(r)}" aria-current="page" href="${runHref(current)}" data-run="${esc(current)}"><span class="vdot ${verdictClass(r)}"></span>Your run <b>${r.verdict ? `${r.robbed}/${r.ran} robbed` : "running"}</b></a>`);
+    $("#chips").insertAdjacentHTML("afterbegin", `<a class="${verdictClass(r)}" aria-current="page" href="${runHref(current)}" data-run="${esc(current)}"><span class="vdot ${verdictClass(r)}"></span>Your run <b>${esc(robbedCount(r, true))}</b></a>`);
   }
+  // The open run's chip is always in view, however far along the strip it sits.
+  const strip = $("#chips");
+  const chip = strip.querySelector('[aria-current="page"]');
+  if (chip) requestAnimationFrame(() => {
+    const s = strip.getBoundingClientRect();
+    const c = chip.getBoundingClientRect();
+    if (c.left < s.left || c.right > s.right) strip.scrollLeft += c.left - s.left - (s.width - c.width) / 2;
+  });
 }
 
 /* ======================================================================================
@@ -305,10 +471,13 @@ function renderThief() {
   const robbed = plans.filter((p) => p.verdict === "robbed").length;
   const held = plans.filter((p) => p.verdict === "held").length;
   const repeat = plans.filter((p) => p.verdict === "repeat").length; // only repeated a problem the books already showed
+  const failed = plans.filter((p) => p.verdict === "error").length;
   $("#thief").hidden = false;
-  const done = held + robbed + repeat;
-  const rep_ = repeat ? ` · ${repeat} repeat${repeat === 1 ? "" : "s"}` : "";
-  $("#thief-chip").textContent = t.skipped ? "not run" : robbed ? `${robbed} of ${plans.length} got through${rep_}` : (held || repeat) && done === plans.length ? `none of ${plans.length} got through${rep_}` : held ? `${held} of ${plans.length} blocked${rep_}` : `${plans.length} invented`;
+  const done = held + robbed + repeat + failed;
+  const rep_ = `${repeat ? ` · ${repeat} repeat${repeat === 1 ? "" : "s"}` : ""}${failed ? ` · ${failed} could not run` : ""}`;
+  const chip = $("#thief-chip");
+  chip.textContent = t.skipped ? "did not run" : robbed ? `${robbed} of ${plans.length} got through${rep_}` : (held || repeat || failed) && done === plans.length ? `none of ${plans.length} got through${rep_}` : held ? `${held} of ${plans.length} blocked${rep_}` : `${plans.length} invented`;
+  chip.classList.toggle("bad", robbed > 0);
   const note_ = $("#thief-note");
   if (t.skipped) {
     // A short, plain reason; the engine's full text stays one click away.
@@ -316,26 +485,35 @@ function renderThief() {
     note_.title = String(t.skipped);
   } else {
     note_.removeAttribute("title");
-    note_.textContent = `${t.source === "replay" ? "Robberies an AI thief invented in an earlier run, replayed here." : `An AI model${t.model ? ` (${t.model})` : ""} played a dishonest shopper.`} It saw what any visitor can see (the storefront's code, the page's own requests) and invented these robberies itself. The shop's books against PayPal's own records decide each one, not the model.`;
+    const got = robbed ? ` ${robbed === 1 ? "One of them" : `${robbed} of them`} got through: ${robbed === 1 ? "a way in" : "ways in"} that none of the ten scripted robberies found.` : "";
+    note_.textContent = `${t.source === "replay" ? "Robberies an AI thief invented in an earlier run, replayed here." : `An AI model${t.model ? ` (${t.model})` : ""} played a dishonest shopper.`} It saw what any visitor can see (the storefront's code, the page's own requests) and invented these robberies itself. The shop's books against ${offline() ? "the stand-in's" : "PayPal's own"} records decide each one, not the model.${got}`;
   }
-  // Each row leads with what happened (bold), then the model's idea (grey).
+  // Each row leads with the robbery's name (bold), then what happened, then the model's idea (grey).
   $("#thief-rows").innerHTML = plans
     .map((p) => {
-      const outcome = p.summary || (p.verdict === "running" ? "Trying it now…" : "");
-      const idea = `${p.name}${p.idea ? `: ${p.idea}` : ""}`;
-      return `<li class="row ${esc(p.verdict)}"><span class="stamp">${esc(STAMP[p.verdict] ?? (p.verdict === "running" ? "Trying…" : "Waiting"))}</span><div class="thief-text">${outcome ? `<b class="thief-outcome">${esc(outcome)}</b>` : ""}<span class="thief-idea">${esc(idea)}</span></div></li>`;
+      const outcome = thiefOutcome(p);
+      return `<li class="row ${esc(p.verdict)}"><span class="stamp">${esc(STAMP[p.verdict] ?? (p.verdict === "running" ? "Trying…" : "Waiting"))}</span><div class="thief-text"><b class="thief-name">${esc(p.name ?? "A robbery")}</b>${outcome ? `<span class="thief-outcome">${esc(outcome)}</span>` : ""}${p.idea ? `<span class="thief-idea">The model's idea: ${esc(p.idea)}</span>` : ""}</div></li>`;
     })
     .join("");
 }
 
+/** What one of the AI thief's robberies did, in plain words: a robbery that got through says how, in the books' terms. */
+function thiefOutcome(p) {
+  if (p.verdict === "running") return "Trying it now…";
+  if (p.verdict === "waiting") return "";
+  const s = byStandIn(plurals(p.summary ?? ""));
+  if (p.verdict === "error") return s ? `Could not run: ${low(s)}` : "Could not run.";
+  if (p.verdict === "robbed" && /already pays for order/.test(s)) return `${s.replace(/\.$/, "")}. One payment now pays for two orders.`;
+  return s;
+}
 /** Why the AI thief did not run, in a few plain words. */
 function thiefWhy(reason) {
   const r = String(reason ?? "");
-  if (/no model key/i.test(r)) return "AI thief not run: no model key. Add one with npm run setup.";
-  if (/no plan/i.test(r)) return "AI thief not run: the model gave no robbery Heistproof could carry out.";
-  if (/could not be asked/i.test(r)) return "AI thief not run: the model could not be reached.";
+  if (/no model key/i.test(r)) return "The AI thief did not run: no model key. Add one with npm run setup.";
+  if (/no plan/i.test(r)) return "The AI thief did not run: the model gave no robbery Heistproof could carry out.";
+  if (/could not be asked/i.test(r)) return "The AI thief did not run: the model could not be reached.";
   const first = r.split(/[.:;(]/)[0].trim();
-  return `AI thief not run${first ? `: ${first.length > 90 ? `${first.slice(0, 90).replace(/\s+\S*$/, "")}…` : first}` : ""}.`;
+  return `The AI thief did not run${first ? `: ${first.length > 90 ? `${first.slice(0, 90).replace(/\s+\S*$/, "")}…` : first}` : ""}.`;
 }
 
 function reset(runId) {
@@ -384,6 +562,10 @@ function reset(runId) {
     autoOpened: false,
     item: null, // what the shopper buys, when the run's events name it ("hoodie")
     broken: new Set(), // back-office screenshots that caught a server error page, not the back office
+    same: {}, // screenshot -> the first screenshot with the same pixels (never shown twice in one group)
+    focus: {}, // back-office screenshot -> where the outlined order is (see shotInfo in src/console/summary.ts)
+    signedIn: new Set(), // purchases whose buyer signed in to PayPal (their "-paypal" screenshot is the sign-in page)
+    hasAgent: false, // a coding agent ran: only then is there an agent log to show
     fixText: "",
     shipText: "",
   };
@@ -443,7 +625,7 @@ function toggleRow(head, open = head.getAttribute("aria-expanded") !== "true") {
 function setTips() {
   const off = offline();
   $("#tip-verdict").innerHTML = `<b>Safe to ship</b> means ${off ? "the purchase with Heistproof's offline PayPal stand-in" : "the real sandbox purchase"} went through once, all 10 scripted robberies were blocked, nothing the AI thief tried got through and the shop's books match ${off ? "the stand-in's" : "PayPal's"} records (when the AI thief did not run, the verdict says so). <b>Do not ship</b> means at least one robbery worked, or the purchase itself failed. <b>Incomplete</b> means not every robbery could run, or the books could not be matched, so there is no verdict on the rest; an incomplete check is never called safe.`;
-  $("#tip-rows").innerHTML = `Each robbery is a real attempt on the running shop ${off ? `with ${STANDIN} (no network, no PayPal account)` : "through PayPal's sandbox, not a simulation"}. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Skipped</b>: it could not run on this shop, so it was not blocked either. <b>Not run</b>: it was not part of this recording. Open a row for the result, the screenshots and ${off ? "the stand-in's" : "PayPal's own"} ids.`;
+  $("#tip-rows").innerHTML = `Each robbery is a real attempt on the running shop ${off ? `with ${STANDIN} (no network, no PayPal account)` : "through PayPal's sandbox, not a simulation"}. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Could not run</b>: it needs something this run did not have (a paid order, say), so it was not blocked either. Open a row for the result, the screenshots and ${off ? "the stand-in's" : "PayPal's own"} ids.`;
   $("#tip-proof").innerHTML = off
     ? `Everything here comes from ${STANDIN}, which answers like PayPal's sandbox without a network or an account; no money moves. <b>PayPal order</b>: the stand-in's id for the purchase. <b>Capture</b>: the moment the stand-in took the money. <b>Signed webhook</b>: the stand-in's "payment completed" message. The raw answers are the recorded calls, byte for byte.`
     : `Everything here comes from PayPal's sandbox, so no real money moves. <b>PayPal order</b>: PayPal's id for the purchase. <b>Capture</b>: the moment PayPal actually took the money. <b>Signed webhook</b>: PayPal's own "payment completed" message, its signature checked with PayPal. The raw answers are the recorded calls, byte for byte.`;
@@ -477,7 +659,8 @@ function toggleTip(btn) {
 /* ---------- Rail ---------- */
 
 function setPhase(phase) {
-  if (state.phase && state.phase !== phase) state.done.add(state.phase);
+  // "Fix, then ship" is never done before the run ends: after a fix the checkout is checked again first.
+  if (state.phase && state.phase !== phase && state.phase !== "ship") state.done.add(state.phase);
   state.phase = phase;
   paintRail();
 }
@@ -554,6 +737,21 @@ function step(key, kind, title, detail = "", r = state.round, restamp = false) {
   state.latest = li.querySelector("b").textContent;
 }
 
+/** Gives a line of the story the time something happened, when an event reports it later (the resends, say). */
+function stampAt(key, iso) {
+  const li = document.getElementById(`t-${key}`);
+  if (!li || !iso || !state.t0) return;
+  const sec = Math.max(0, Math.round((new Date(iso) - new Date(state.t0)) / 1000));
+  if (!Number.isFinite(sec)) return;
+  li.dataset.at = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+  const t = li.querySelector("time");
+  if (t) t.textContent = li.dataset.at;
+  // In its place in time among the round's lines.
+  const secs = (x) => x.split(":").reduce((n, v) => n * 60 + Number(v), 0);
+  const later = [...li.parentElement.children].find((x) => x !== li && x.dataset.at && secs(x.dataset.at) > sec);
+  if (later) li.parentElement.insertBefore(li, later);
+}
+
 /** Did the AI thief run in the last round (at least one of its robberies carried out)? */
 const thiefRan = () => {
   const t = state.R[state.R.length - 1]?.thief;
@@ -569,7 +767,8 @@ function log(kind, key, html) {
   li.innerHTML = `<span class="k">${esc(key)}</span><span class="v">${html}</span>`;
   $("#agent-log").append(li);
   state.logCount++;
-  $("#log-box").hidden = false;
+  // A run with no coding agent has no agent log to offer (its few lines are all in the story already).
+  $("#log-box").hidden = !state.hasAgent;
   $("#log-count").textContent = `(${state.logCount} ${state.logCount === 1 ? "step" : "steps"})`;
 }
 
@@ -632,18 +831,25 @@ function moneyFact(a) {
   if (ft?.captured) {
     const bag = state.labels["round0-purchase"]?.bag ?? state.R[0]?.buy?.bag;
     const price = ft.shopPaidCents ? money(ft.shopPaidCents / 100) : bag ? money(bag) : "";
-    return `PayPal captured ${amt(ft.captured)} and the shop ${ft.shopStatus === "fulfilled" || ft.shopStatus === "shipped" ? "shipped" : "marked paid"} the ${price ? `${price} ` : "full-price "}${theItem()}`;
+    return `${offline() ? "the stand-in" : "PayPal"} captured ${amt(ft.captured)} and the shop ${ft.shopStatus === "fulfilled" || ft.shopStatus === "shipped" ? "shipped" : "marked paid"} the ${price ? `${price} ` : "full-price "}${theItem()}`;
   }
-  return low(String(a.summary ?? "").replace(/\.$/, ""));
+  return low(byStandIn(plurals(String(a.summary ?? "").replace(/\.$/, ""))));
 }
 
 /** What the shop did after the worst robbery, in one sentence. */
 function shopLine(a) {
   const ft = a.evidence?.followThrough;
-  const figs = moneyFigures(a).filter(([, l]) => !/^PayPal captured|^shop recorded/.test(l));
+  const figs = moneyFigures(a).filter(([, l]) => !/captured$|^shop recorded/.test(l));
   const extra = figs.length ? ` ${figs.map(([n, l]) => `${n} ${l}`).join(", ")}.` : "";
   if (ft?.captured) return `The shop recorded ${ft.shopPaidCents ? money(ft.shopPaidCents / 100) : "the full price"} as paid${ft.shopStatus === "fulfilled" || ft.shopStatus === "shipped" ? ` and shipped the ${theItem()}` : ""}.${extra}`;
   return `${cap(moneyFact(a))}.${extra}`;
+}
+
+/** Shipping labels a robbery added: one label is one parcel leaving the warehouse. */
+function labelCount(a) {
+  const ev = a.evidence ?? {};
+  const orders = Array.isArray(ev.orders) ? ev.orders : [];
+  return ev.followThrough?.labelsAdded ?? ev.labelsAdded ?? (typeof ev.labelsAfter === "number" && typeof ev.labelsBefore === "number" ? ev.labelsAfter - ev.labelsBefore : orders.length ? orders.reduce((n, o) => n + ((o.labelsAfter ?? 0) - (o.labelsBefore ?? 0)), 0) : 0);
 }
 
 /** The figures behind a robbery that worked: what PayPal took, what the shop recorded, what left the warehouse. */
@@ -651,14 +857,17 @@ function moneyFigures(a) {
   const ev = a.evidence ?? {};
   const out = [];
   const ft = ev.followThrough;
-  if (ft?.captured) out.push([amt(ft.captured), "PayPal captured"]);
+  const took = offline() ? "the stand-in captured" : "PayPal captured";
+  if (ft?.captured) out.push([amt(ft.captured), cap(took)]);
   if (ft?.shopPaidCents) out.push([money(ft.shopPaidCents / 100), `shop recorded as paid${ft.shopStatus ? `, ${ft.shopStatus}` : ""}`]);
   const orders = Array.isArray(ev.orders) ? ev.orders : [];
-  const labels = ft?.labelsAdded ?? ev.labelsAdded ?? (typeof ev.labelsAfter === "number" && typeof ev.labelsBefore === "number" ? ev.labelsAfter - ev.labelsBefore : orders.length ? orders.reduce((n, o) => n + ((o.labelsAfter ?? 0) - (o.labelsBefore ?? 0)), 0) : null);
-  if (labels) out.push([String(labels), labels === 1 ? "shipping label printed" : "shipping labels printed"]);
+  const labels = labelCount(a);
+  const oneOrder = Boolean(ft) || orders.length <= 1;
+  // A shipping label is a parcel on its way: say what that means for the shop, not just the count.
+  if (labels) out.push([String(labels), labels === 1 ? "shipping label printed: the order ships" : oneOrder ? `shipping labels printed for one order: it would ship ${times(labels)}` : `shipping labels printed across ${plural(orders.length, "order")}`]);
   const paid = typeof ev.paidAfter === "number" && typeof ev.paidBefore === "number" ? ev.paidAfter - ev.paidBefore : orders.length ? orders.filter((o) => ["paid", "fulfilled"].includes(o.after) && !["paid", "fulfilled"].includes(o.before)).length : null;
   if (paid && !ft) out.push([String(paid), paid === 1 ? "order marked paid" : "orders marked paid"]);
-  if (ev.injected?.status) out.push([`HTTP ${ev.injected.status}`, `${ev.injected.issue ?? "refused"} from PayPal, ignored by the shop`]);
+  if (ev.injected?.status) out.push([`HTTP ${ev.injected.status}`, `${ev.injected.issue ?? "refused"} from ${offline() ? "the stand-in" : "PayPal"}, ignored by the shop`]);
   return out;
 }
 
@@ -682,13 +891,15 @@ function story(c, shop) {
     if (running && state.phase === "migrate") return `${alone} AI coding agent is adding ${what} to ${shop}. Heistproof will then ${buy("buy")} ${forReal()} and try ${robberies(total)} ${onShop}.`;
     if (running && !robbing) return `${added} Heistproof is now ${buy("buying")} ${forReal()}, before trying ${robberies(total)} ${onShop}.`;
     if (refusal && !state.paid) return `${added} Heistproof then started ${aPurchase()}, which ${payPal} refused (${refused}), and ${tried} on the shop.`;
-    if (refusal && state.paid) return `${added} ${cap(payPal)} refused Heistproof's first purchase (${refused})${state.R[0]?.tests?.ok ? " although the agent's own tests passed" : ""}; the agent fixed it, and Heistproof then ${buy("bought")} ${forReal()} and ${tried} ${onShop}.`;
+    if (refusal && state.paid) return `${added} ${cap(payPal)} refused Heistproof's first purchase (${refused})${state.R[0]?.tests?.ok ? " although the shop's tests, the agent's included, passed" : ""}; the agent fixed it, and Heistproof then ${buy("bought")} ${forReal()} and ${tried} ${onShop}.`;
     return `${added} Heistproof then ${buy("bought")} ${forReal()} and ${tried} ${onShop}.`;
   }
   if (state.mode === "check") {
     if (running && !robbing) return `Heistproof is checking ${shop}, as it is: ${buy("buying")} ${forReal()}, then trying ${robberies(total)} ${onShop}. No AI changes any code in this run.`;
     if (state.mismatch && !state.paid) return `Heistproof checked ${shop}, as it is. It started ${aPurchase()}, but ${payPal} would have charged ${money(state.mismatch.paypal)} for the ${money(state.mismatch.bag)} bag, so it stopped before any money moved; then it ${tried} on the shop. No AI changed any code in this run.`;
     if (!state.paid && state.finished) return `Heistproof checked ${shop}, as it is. It started ${aPurchase()}; the purchase did not complete, and it ${tried} on the shop. No AI changed any code in this run.`;
+    const last = [...state.R].reverse().find((x) => x.buy)?.buy;
+    if (state.finished && last?.status === "overshipped") return `Heistproof checked ${shop}, as it is: it ${buy("bought")} ${forReal()}, paid ${last.amount || "once"} but the shop shipped it ${last.labels ? times(last.labels) : "a wrong number of times"}, and it ${tried} ${onShop}. No AI changed any code in this run.`;
     return `Heistproof checked ${shop}, as it is: it ${buy("bought")} ${forReal()} and ${tried} ${onShop}. No AI changed any code in this run.`;
   }
   if (state.mode === "existing") {
@@ -698,9 +909,6 @@ function story(c, shop) {
   }
   return "";
 }
-
-/** "capture", "order" or "payment": what a refused PayPal call was, from its path. */
-const refusedWhat = (x) => (/\/capture$/.test(String(x?.call ?? "")) ? "capture" : /\/orders$/.test(String(x?.call ?? "")) ? "order" : "payment");
 
 /** The key moments, one line per round, with the money facts; read from the events, nothing hand-written. */
 function beats(c) {
@@ -763,7 +971,7 @@ function beats(c) {
     const mism = x.books?.mismatches?.length ?? 0;
     if (mism && closed) {
       bad = true;
-      parts.push(`${plural(mism, "order")} in the shop's books ${mism === 1 ? "does" : "do"} not match PayPal's`);
+      parts.push(`${plural(mism, "order")} in the shop's books ${mism === 1 ? "does" : "do"} not match ${offline() ? "the stand-in's" : "PayPal's"}`);
     }
     if (parts.length) {
       const text = `${prefix}${parts.map((p, i) => (i === 0 && prefix ? p : cap(p))).join(". ")}`;
@@ -785,6 +993,22 @@ function notRunReason(c, withNames = true) {
   return `${n} of the ${c.total} robberies${names} were not part of this recording.`;
 }
 
+/** Why a finished run may not ship, in a few words: the robberies first, then the AI thief, the purchase, the books. */
+function unsafeWhy(c) {
+  const t = state.R[state.R.length - 1]?.thief;
+  const buy = [...state.R].reverse().find((x) => x.buy)?.buy;
+  const mism = state.books?.mismatches?.length ?? 0;
+  const who = offline() ? "the stand-in" : "PayPal";
+  if (c.robbed) return c.ran === 1 ? `the ${low(attackName([...state.results.keys()][0]))} robbery worked` : `${c.robbed} of ${robberies(c.ran)} worked`;
+  if (t?.robbed) return `the AI thief got ${t.robbed} of its ${robberies(t.tried)} through${mism ? ` · ${plural(mism, "order")} in the books ${mism === 1 ? "does" : "do"} not match` : ""}`;
+  if (buy?.status === "overshipped") return buy.labels ? `paid, but the shop shipped ${times(buy.labels)}` : "paid, but nothing shipped";
+  if (buy?.status === "mismatch" || state.mismatch) return "the purchase was stopped: wrong amount";
+  if (buy?.status === "refused") return `${who} refused the purchase${buy.refusal?.status ? ` (HTTP ${buy.refusal.status})` : ""}`;
+  if (buy?.status === "nobutton") return "the PayPal button never appeared";
+  if (mism) return `${plural(mism, "order")} in the books ${mism === 1 ? "does" : "do"} not match ${offline() ? "the stand-in's" : "PayPal's"}`;
+  return `the ${offline() ? "" : "real "}purchase did not complete`;
+}
+
 /* ---------- Render everything that depends on state ---------- */
 
 function render() {
@@ -796,12 +1020,13 @@ function render() {
   const slogan = state.mode === "check" ? "Try to rob a PayPal checkout." : state.mode === "existing" ? "Fix a PayPal checkout. Then try to rob it." : "Add PayPal. Then try to rob it.";
   const known = RUNS.find((x) => x.id === state.runId);
   $("#headline").textContent = known ? runTitle(known) : slogan;
-  $("#proof-chip").textContent = offline() ? "offline stand-in, no real money" : "sandbox, no real money";
+  $("#proof-title").textContent = offline() ? "Proof from Heistproof's PayPal stand-in" : "Proof from PayPal";
+  $("#proof-chip").textContent = offline() ? "no real money" : "sandbox, no real money";
   $("#proof-empty").textContent = offline() ? "The stand-in's answers appear here once the purchase starts." : "PayPal's answers appear here once the real purchase starts.";
   $("#story").textContent = story(c, shop) || "Loading the run…";
-  const why = SHOP_WHY[state.template];
-  $("#shop-note").hidden = !why;
-  if (why) $("#shop-note").textContent = `About this shop: ${state.template} is a sample PayPal checkout written by hand with planted mistakes (it ${why}). It is kept in shops/ as a test target, not as a survey of real shops.`;
+  const about = SHOP_NOTE[state.template];
+  $("#shop-note").hidden = !about;
+  if (about) $("#shop-note").textContent = about;
   $("#beats").innerHTML = beats(c).map(([kind, text]) => `<li class="${kind}">${esc(text)}</li>`).join("");
 
   const v = verdictOf(c);
@@ -810,7 +1035,7 @@ function render() {
   let vnote = "";
   if (v === "running") vnote = state.activity;
   else if (v === "safe") vnote = [thiefRan() ? `all ${c.tried} blocked` : `${c.total} scripted robberies; the AI thief did not run`, state.paid ? `paid ${state.paid.amount} once` : "", state.pr ? "pull request opened" : state.branch ? "branch ready" : ""].filter(Boolean).join(" · ");
-  else if (v === "unsafe") vnote = c.robbed ? (c.ran === 1 ? `the ${low(attackName([...state.results.keys()][0]))} robbery worked` : `${c.robbed} of ${robberies(c.ran)} worked`) : state.mismatch ? "the purchase was stopped: wrong amount" : `the ${offline() ? "" : "real "}purchase did not complete`;
+  else if (v === "unsafe") vnote = unsafeWhy(c);
   else vnote = [c.notRun ? `only ${c.ran} of ${c.total} robberies ran` : "", c.skipped ? `${c.skipped} could not run` : "", state.books && !state.books.matched ? "the books could not be matched" : "", "an incomplete check is never called safe"].filter(Boolean).join(" · ");
   $("#verdict-note").textContent = vnote;
 
@@ -818,13 +1043,17 @@ function render() {
   if (state.mode) {
     cells.push(`<div class="blocked"><b>${c.blocked}</b><span>blocked</span></div>`);
     cells.push(`<div class="robbed"><b>${c.robbed}</b><span>robbed</span></div>`);
-    if (c.skipped) cells.push(`<div class="other"><b>${c.skipped}</b><span>skipped</span></div>`);
-    if (state.finished && c.notRun) cells.push(`<div class="other"><b>${c.notRun}</b><span>not run</span></div>`);
+    const couldNot = c.skipped + (state.finished ? c.notRun : 0);
+    if (couldNot) cells.push(`<div class="other"><b>${couldNot}</b><span>could not run</span></div>`);
+    const t = state.R[state.R.length - 1]?.thief;
+    if (t?.robbed) cells.push(`<div class="robbed"><b>${t.robbed}</b><span>by the AI thief</span></div>`);
   }
   $("#tally").innerHTML = cells.join("");
   $("#replay-btn").hidden = !(state.finished || replaying);
-  $("#replay-hint").hidden = $("#replay-btn").hidden || replaying;
-  if (state.replayHint) $("#replay-hint").textContent = state.replayHint;
+  // While a replay plays, the hint is its clock: how far into the real run the replay has got.
+  const hint = $("#replay-hint");
+  hint.hidden = $("#replay-btn").hidden;
+  hint.textContent = replaying ? `${elapsed() || "0:00"} into the run` : (state.replayHint ?? "");
 
   $("#board-chip").textContent = state.finished ? (c.ran < c.total ? `${c.ran} of ${c.total} ran` : "") : state.activity && state.phase === "attack" ? state.activity : "";
   $("#proof-empty").hidden = state.facts.size > 0 || !$("#amount").hidden || !$("#refusal").hidden || !$("#heist-box").hidden;
@@ -851,7 +1080,7 @@ function renderNotRun(c) {
   }
   for (const row of document.querySelectorAll(".row.notrun")) row.hidden = true;
   note_.hidden = false;
-  note_.textContent = `${c.notRun} not run. ${notRunReason(c)}`;
+  note_.textContent = notRunReason(c);
 }
 
 /** On a robbed run the proof panel leads with the worst robbery's money facts, never with a reassuring green box. */
@@ -868,7 +1097,7 @@ function renderHeistBox(c, v) {
   const captured = worst.evidence?.followThrough?.captured;
   box.hidden = false;
   box.innerHTML = `<div class="amount-round">${esc(attackName(worst.id))}: ${esc(state.names.get(worst.id)?.what ?? ATTACK_WHAT[worst.id] ?? "")}</div>
-    <div class="labels"><span>Bag total</span><span>${captured ? "PayPal captured" : "Result"}</span></div>
+    <div class="labels"><span>Bag total</span><span>${captured ? (offline() ? "The stand-in captured" : "PayPal captured") : "Result"}</span></div>
     <div class="big"><span>${money(bag)}</span><span>${captured ? esc(amt(captured)) : "robbed"}</span></div>
     <div class="shop-line">${esc(shopLine(worst))}</div>`;
   // The legit purchase's green "amounts match" box is not the point on a robbed run.
@@ -884,6 +1113,9 @@ function onEvent(e) {
     state.t0 ??= e.t;
     state.now = e.t;
   }
+  // The engine closes every round with round.done, the last one too; the next round begins with its first own event.
+  if (state.pendingRound && e.type !== "run.done") startRound();
+  if (e.type === "prove.logged_in" && e.label) state.signedIn.add(String(e.label));
   const phase = railPhase(e);
   if (phase) setPhase(phase);
   if (e.type === "prove.amount_check" && e.label) state.labels[e.label] = { bag: e.bagTotal, pp: e.paypalAmount?.value ?? null, ok: e.ok, currency: e.paypalAmount?.currency };
@@ -908,8 +1140,38 @@ function railPhase(e) {
   if (e.type.startsWith("thief.") || /-thief-\d+/.test(String(e.label ?? ""))) return "thief";
   if (e.type === "books.reconciled") return "books";
   if (e.phase === "fix") return e.type.startsWith("prove") ? "prove" : "ship";
-  if (e.type === "prove.webhook") return null; // told after the robberies; it belongs to the purchase, not to a new step
+  if (e.type === "prove.webhook" || e.type === "webhook.resends") return null; // told after the robberies; it belongs to the purchase, not to a new step
   return e.phase;
+}
+
+/** A new round starts from its own tally and its own steps: the robberies wait again (each row keeps its earlier
+    rounds as history), the steps after the fix are pending again, and the AI thief and the books are cleared until this
+    round's own come in. Nothing from the round before is shown as done before it happens again. */
+function startRound() {
+  state.pendingRound = false;
+  state.results = new Map();
+  state.attack = null;
+  for (const row of document.querySelectorAll("#rows .row")) {
+    const id = row.id.slice(4);
+    row.hidden = false;
+    row.className = "row waiting";
+    row.querySelector(".stamp").textContent = STAMP.waiting;
+    clearRow(row, state.names.get(id)?.what ?? ATTACK_WHAT[id] ?? "");
+    const hist = state.history.get(id) ?? [];
+    row.querySelector(".history").textContent = hist.map((h) => `Round ${h.round + 1}: ${STAMP[h.verdict]?.toLowerCase() ?? h.verdict}`).join(" · ");
+  }
+  for (const p of ["prove", "attack", "thief", "books"]) {
+    state.done.delete(p);
+    state.bad.delete(p);
+  }
+  state.phase = null;
+  for (const p of ["attack", "thief", "books"]) note(p, `round ${state.round + 1}: ${RAIL_DEFAULT[p]}`);
+  state.thief = null;
+  $("#thief").hidden = true;
+  $("#thief-rows").innerHTML = "";
+  state.books = null;
+  $("#books-line").hidden = true;
+  paintRail();
 }
 
 /** A purchase made by a robbery: a short live note on that robbery's row, its screenshots kept for the row. */
@@ -944,6 +1206,25 @@ function learnItem(e) {
   if (!m || !bag || /^(item|order|bag|product)s?$/i.test(m[2])) return;
   const ratio = bag / Number(m[1].replace(/,/g, ""));
   if (ratio >= 1 && Math.abs(ratio - Math.round(ratio)) < 0.001) state.item = m[2].trim().toLowerCase();
+}
+
+/** While the coding agent works, the verdict card and the rail say what it has done so far (skills read, the plan,
+    files changed, steps taken), so a replay shows the work moving from its first seconds. */
+function agentProgress(e) {
+  const a = R().agent ?? (R().agent = { fixing: !(state.round === 0 && (state.mode === "heistproof" || state.mode === "baseline")), done: false, turns: 0, min: 0, files: 0, skills: 0, plan: false, steps: 0 });
+  a.steps = (a.steps ?? 0) + 1;
+  let file = "";
+  try {
+    file = String(JSON.parse(e.input).file_path ?? "").split("/shop/").pop();
+  } catch {}
+  const skills = state.skills.get(state.round)?.size ?? 0;
+  const files = [...(state.files_.get(state.round) ?? [])].filter((f) => f !== "paypal-plan.md").length;
+  const now = e.name === "Skill" ? "reading a skill" : ["Edit", "Write", "MultiEdit"].includes(e.name) ? (file ? `editing ${file}` : "editing") : e.name === "Bash" ? "running a command" : ["Read", "Grep", "Glob"].includes(e.name) ? (file ? `reading ${file}` : "reading the code") : "";
+  const did = [skills ? `${plural(skills, "skill")} read` : "", a.plan ? "plan written" : "", files ? `${plural(files, "file")} changed` : ""].filter(Boolean);
+  state.activity = `${a.fixing ? "The AI coding agent is fixing what failed" : "The AI coding agent is adding PayPal"}: step ${a.steps}${now ? `, ${now}` : ""}${did.length ? ` · ${did.join(", ")}` : ""}…`;
+  const said = `at work: step ${a.steps}${did.length ? ` · ${did.join(", ")}` : ""}`;
+  if (a.fixing) setFix(said);
+  else note("migrate", said);
 }
 
 /** The robbery's plain description, with a price that no longer fits this shop's bag replaced by the bag itself. */
@@ -989,7 +1270,9 @@ function handle(e) {
     }
     case "agent.start": {
       const fixing = !(r === 0 && (state.mode === "heistproof" || state.mode === "baseline"));
-      R().agent = { fixing, done: false, turns: 0, min: 0, files: 0, skills: 0, plan: false };
+      R().agent = { fixing, done: false, turns: 0, min: 0, files: 0, skills: 0, plan: false, steps: 0 };
+      state.hasAgent = true;
+      $("#log-box").hidden = false;
       if (fixing) state.fixes++;
       step(`agent-${r}`, "run", fixing ? "The AI coding agent fixes what failed" : "The AI coding agent adds PayPal", `model ${esc(e.model)}${e.providerLabel ? ` via ${esc(e.providerLabel)}` : ""}`);
       if (fixing) setFix("AI coding agent at work…");
@@ -1041,6 +1324,7 @@ function handle(e) {
         log("edit", e.name.toLowerCase(), shortInput(e.input));
       } else if (e.name === "Bash") log("cmd", "run", shortInput(e.input));
       else if (["Read", "Grep", "Glob"].includes(e.name)) log("sys", e.name.toLowerCase(), shortInput(e.input));
+      agentProgress(e);
       break;
     }
     case "agent.done": {
@@ -1164,7 +1448,7 @@ function handle(e) {
       const verdict = String(e.verdict ?? "");
       const amount = /Paid (\$[\d.,]+)/.exec(verdict)?.[1] ?? (b.pp ? money(b.pp) : "");
       b.amount = amount;
-      const earlier = state.R.slice(0, r).map((x) => x.buy).filter(Boolean).map((p) => (p.status === "refused" ? `refused ${p.refusal?.status ?? ""}`.trim() : p.status === "mismatch" ? `${money(p.pp)} stopped` : p.status === "nobutton" ? "no button" : p.status === "overshipped" ? "shipped twice" : p.status === "failed" ? "failed" : ""))
+      const earlier = state.R.slice(0, r).map((x) => x.buy).filter(Boolean).map((p) => (p.status === "refused" ? `refused ${p.refusal?.status ?? ""}`.trim() : p.status === "mismatch" ? `${money(p.pp)} stopped` : p.status === "nobutton" ? "no button" : p.status === "overshipped" ? `shipped ${times(p.labels ?? 2)}` : p.status === "failed" ? "failed" : ""))
         .filter(Boolean);
       if (e.ok && e.captureId) {
         b.status = "paid";
@@ -1183,12 +1467,12 @@ function handle(e) {
           b.labels = n;
           state.paid = { ...e, amount };
           const went = n === 0 ? "nothing shipped" : `shipped ${times(n)}`;
-          buyStep(r, "bad", `Paid${amount ? ` ${amount}` : ""}, but ${went}`, `${esc(verdict)} · capture <code>${esc(e.captureId)}</code>`);
+          buyStep(r, "bad", `Paid${amount ? ` ${amount}` : ""}, but ${went}`, `${esc(plurals(verdict))} · capture <code>${esc(e.captureId)}</code>`);
           note("prove", `paid, but ${went}`);
           state.activity = `Paid, but ${went}`;
         } else {
           if (b.status !== "nobutton" && b.status !== "refused") b.status = "failed";
-          buyStep(r, "bad", "The purchase did not complete", esc(verdict)); // PayPal's own refusal, when it follows, replaces this line
+          buyStep(r, "bad", "The purchase did not complete", esc(plurals(verdict))); // PayPal's own refusal, when it follows, replaces this line
           note("prove", "purchase failed");
           state.activity = "The purchase did not complete";
         }
@@ -1235,7 +1519,7 @@ function handle(e) {
     case "thief.skipped": {
       state.thief = { ...(state.thief ?? { plans: new Map() }), skipped: e.reason };
       R(e.round ?? r).thief = { tried: 0, robbed: 0, repeat: 0, skipped: e.reason };
-      note("thief", /no model key/i.test(String(e.reason)) ? "not run: no model key" : "not run");
+      note("thief", /no model key/i.test(String(e.reason)) ? "did not run: no model key" : "did not run");
       renderThief();
       break;
     }
@@ -1256,6 +1540,10 @@ function handle(e) {
         state.bad.add("thief");
       } else if (e.verdict === "repeat") t.repeat = (t.repeat ?? 0) + 1;
       note("thief", `${t.robbed ? `${t.robbed} of ${t.tried} got through` : `${t.tried} tried, none got through`}${t.repeat ? ` · ${t.repeat} repeat${t.repeat === 1 ? "" : "s"}` : ""}`);
+      state.activity = `AI thief: ${t.tried} of ${state.thief.plans.size} tried${t.robbed ? `, ${t.robbed} got through` : ""}`;
+      // One line in the story for the AI thief, kept up to date as its robberies come in.
+      const through = [...state.thief.plans.values()].filter((p) => p.verdict === "robbed").map((p) => esc(p.name));
+      step(`thief-${e.round ?? r}`, t.robbed ? "bad" : "ok", t.robbed ? `The AI thief got ${t.robbed} of its ${robberies(t.tried)} through` : `None of the AI thief's ${robberies(t.tried)} got through`, t.robbed ? `${through.join(", ")}: a way in none of the ten scripted robberies found` : `judged by the books${t.repeat ? ` · ${t.repeat} only repeated a problem the books already showed` : ""}`, e.round ?? r);
       renderThief();
       break;
     }
@@ -1263,6 +1551,10 @@ function handle(e) {
       state.books = e;
       R(e.round ?? r).books = e;
       renderBooks(e);
+      const mism = e.mismatches?.length ?? 0;
+      const theirs = offline() ? "the stand-in's" : "PayPal's";
+      state.activity = !e.matched ? "The books could not be matched" : mism ? `Books: ${plural(mism, "order")} ${mism === 1 ? "does" : "do"} not match` : `Books: they match ${theirs} records`;
+      step(`books-${e.round ?? r}`, !e.matched ? "info" : mism ? "bad" : "ok", !e.matched ? `The books could not be matched against ${theirs} records` : mism ? `${plural(mism, "order")} in the books ${mism === 1 ? "does" : "do"} not match ${theirs} records` : `The books match ${theirs} records`, !e.matched ? esc(plurals(e.error ?? e.reason ?? "the back office shows no PayPal ids")) : `${plural(e.paid ?? 0, "paid order")} checked against ${offline() ? "the stand-in's" : "PayPal's"} captures`, e.round ?? r);
       if (e.mismatches?.length) state.bad.add("books");
       else state.bad.delete("books");
       note("books", !e.matched ? (e.error ? "could not be read" : "not matched") : e.mismatches?.length ? `${plural(e.mismatches.length, "order")} do${e.mismatches.length === 1 ? "es" : ""} not match` : `${plural(e.paid, "paid order")} match ${offline() ? "the stand-in" : "PayPal"}`);
@@ -1298,11 +1590,22 @@ function handle(e) {
       break;
     }
     case "webhook.resends": {
-      // The sandbox had not delivered an event a robbery needs, so Heistproof asked PayPal to send it again.
+      // The sandbox had not delivered an event in time, so Heistproof asked PayPal to send it again. One line per event
+      // type however often it asked, stamped with the time of the first ask.
       const who = offline() ? "The stand-in" : "PayPal";
-      (e.resends ?? []).forEach((x, i) => {
-        const ids = [...(x.resent ?? [])].filter(Boolean);
-        step(`resend-${e.round ?? r}-${i}`, "info", `${who} had not delivered ${esc(x.eventType ?? "an event")}; Heistproof asked ${offline() ? "it" : "PayPal"} to resend it`, ids.length ? `resent ${ids.map((id) => `<code>${esc(id)}</code>`).join(", ")}` : "", e.round ?? r);
+      const round = e.round ?? r;
+      const byType = new Map();
+      for (const x of e.resends ?? []) {
+        const type = x.eventType ?? "an event";
+        const g = byType.get(type) ?? { asks: 0, resent: new Set(), at: x.at };
+        g.asks++;
+        for (const id of x.resent ?? []) if (id) g.resent.add(id);
+        byType.set(type, g);
+      }
+      [...byType].forEach(([type, g], i) => {
+        const ids = [...g.resent];
+        step(`resend-${round}-${i}`, "info", `${who} had not delivered ${esc(type)} in time; Heistproof asked ${offline() ? "it" : "PayPal"} to send it again${g.asks > 1 ? ` (${times(g.asks)})` : ""}`, ids.length ? `${ids.length === 1 ? "event" : `${ids.length} events`} resent: ${ids.map((id) => `<code>${esc(id)}</code>`).join(", ")}` : "nothing was resent", round);
+        stampAt(`resend-${round}-${i}`, g.at);
       });
       break;
     }
@@ -1312,10 +1615,11 @@ function handle(e) {
         step(`sent-${r}`, "info", `${plural(e.failures, "problem")} sent back to the coding agent`, "with PayPal's own evidence: status, issue name, debug id");
         setFix(`${plural(e.failures, "problem")} sent to the agent`);
         state.activity = `${plural(e.failures, "problem")} sent back to the coding agent…`;
-        log("say", "round", `Round ${r + 1}: ${e.failures} problem(s) sent back to the coding agent`);
+        log("say", "round", `Round ${r + 1}: ${plural(e.failures, "problem")} sent back to the coding agent`);
         state.rounds = Math.max(state.rounds, r + 2);
       } else if (state.sentBack) setFix(fixNote());
       state.round++;
+      state.pendingRound = true;
       break;
     case "run.done": {
       state.finished = true;
@@ -1337,9 +1641,9 @@ function handle(e) {
       if (state.mode !== "check") setFix(state.sentBack ? fixNote() : "nothing to fix");
       const c = counts();
       const v = verdictOf(c);
-      step("verdict", v === "unsafe" ? "bad" : v === "safe" ? "ok" : "info", VERDICT[v], v === "safe" ? `${thiefRan() ? "every robbery blocked" : `all ${c.total} scripted robberies blocked; the AI thief did not run`}${state.pr ? " · pull request opened" : state.branch ? " · branch ready" : ""}` : v === "incomplete" ? `${c.blocked} of ${c.total} robberies blocked, ${c.skipped + c.notRun} could not run` : c.robbed ? `${c.robbed} robbed` : `the ${offline() ? "" : "real "}purchase did not complete`, state.lastRound);
-      setShip(v === "safe" ? `safe${state.pr ? " · pull request opened" : state.branch ? " · branch ready" : ""}` : VERDICT[v].toLowerCase());
-      if (!state.thief) note("thief", "not run in this recording");
+      step("verdict", v === "unsafe" ? "bad" : v === "safe" ? "ok" : "info", VERDICT[v], v === "safe" ? `${thiefRan() ? "every robbery blocked" : `all ${c.total} scripted robberies blocked; the AI thief did not run`}${state.pr ? " · pull request opened" : state.branch ? " · branch ready" : ""}` : v === "incomplete" ? `${c.blocked} of ${c.total} robberies blocked, ${c.skipped + c.notRun} could not run` : unsafeWhy(c), state.lastRound);
+      setShip(`${VERDICT[v]}${v === "safe" && state.pr ? " · pull request opened" : v === "safe" && state.branch ? " · branch ready" : ""}`);
+      if (!state.thief) note("thief", "did not run in this recording");
       if (!state.books) note("books", "not matched in this run");
       state.activity = "";
       paintRail();
@@ -1354,25 +1658,26 @@ function handle(e) {
 /** The books line: on a robbed run a count by kind, with the orders folded underneath; otherwise one plain sentence. */
 function renderBooks(e) {
   const line = $("#books-line");
+  const records = offline() ? "the stand-in's" : "PayPal's";
   if (!e.matched) {
     // The books could not be read or matched: say why, since an unmatched check is never called safe.
     line.hidden = !e.error && !e.reason;
     line.className = "books-line info";
-    line.textContent = `The shop's books could not be matched against ${offline() ? "the stand-in's" : "PayPal's"} records${e.error || e.reason ? `: ${e.error ?? e.reason}` : ""}. The check stays incomplete until they are.`;
+    line.textContent = `The shop's books could not be matched against ${records} records${e.error || e.reason ? `: ${plurals(e.error ?? e.reason)}` : ""}. The check stays incomplete until they are.`;
     return;
   }
   line.hidden = false;
   const list = e.mismatches ?? [];
   line.className = `books-line ${list.length ? "bad" : "ok"}`;
   if (!list.length) {
-    line.textContent = `Books: ${plural(e.paid ?? 0, "PayPal order")} the shop calls paid, each backed by a completed PayPal capture that covers it; none shipped more than once.`;
+    line.textContent = `Books: ${plural(e.paid ?? 0, offline() ? "order" : "PayPal order")} the shop calls paid, each backed by a completed ${offline() ? "capture at the stand-in" : "PayPal capture"} that covers it; none shipped more than once.`;
     return;
   }
-  const kind = (m) => (/no completed capture/i.test(m.problem) ? "shipped with no capture" : /parcels? for \d+ completed capture/i.test(m.problem) ? "shipped more parcels than paid for" : "do not match for another reason");
+  const kind = (m) => (/already pays for order/i.test(m.problem) ? "paid with a payment that already pays for another order" : /no completed capture/i.test(m.problem) ? (/with 0 parcel/i.test(m.problem) ? "marked paid with no completed payment" : "shipped with no completed payment") : /parcels? for \d+ completed capture/i.test(m.problem) ? "shipped more parcels than were paid for" : /^PayPal captured \$[\d.,]+ for an order of/i.test(m.problem) ? "paid less than the order costs" : /same goods as the real purchase/i.test(m.problem) ? "shipped the same goods for less" : "do not match for another reason");
   const kinds = new Map();
   for (const m of list) kinds.set(kind(m), (kinds.get(kind(m)) ?? 0) + 1);
   const parts = [...kinds].sort((a, b) => a[1] - b[1]).map(([k, n]) => `${n} ${k}`);
-  line.innerHTML = `<b>${esc(plural(list.length, "order"))} ${list.length === 1 ? "does" : "do"} not match PayPal: ${esc(parts.join(", "))}.</b><details><summary>The orders</summary><ul>${list.map((m) => `<li><code>${esc(m.order)}</code> ${esc(m.problem)}</li>`).join("")}</ul></details>`;
+  line.innerHTML = `<b>${esc(plural(list.length, "order"))} ${list.length === 1 ? "does" : "do"} not match ${esc(records)} records: ${esc(parts.join(", "))}.</b><details><summary>The ${list.length === 1 ? "order" : "orders"}</summary><ul>${list.map((m) => `<li><code>${esc(m.order)}</code> ${esc(byStandIn(plurals(m.problem)))}</li>`).join("")}</ul></details>`;
 }
 
 /** "fixed in 1 min (43 turns)" or "2 fixes · 10 min": what the fix step says once the fixing is over. */
@@ -1417,23 +1722,44 @@ function clearRow(row, what) {
 
 /** Fills an open row: the result, the money figures, what could not be tested, PayPal's ids, large captioned proofs. */
 function fillRow(row, a, r) {
-  row.querySelector(".said").textContent = a.summary ?? "";
+  row.querySelector(".said").textContent = byStandIn(plurals(a.summary ?? ""));
   const hist = state.history.get(a.id) ?? [];
   const earlier = hist.slice(0, -1).filter((h) => h.verdict !== a.verdict);
   row.querySelector(".history").textContent = earlier.length ? `${earlier.map((h) => `Round ${h.round + 1}: ${STAMP[h.verdict]?.toLowerCase() ?? h.verdict}`).join(" · ")} · Round ${r + 1}: ${STAMP[a.verdict]?.toLowerCase() ?? a.verdict}` : "";
   const money_ = row.querySelector(".money");
   const figs = a.verdict === "robbed" ? moneyFigures(a) : [];
+  const labels = a.verdict === "robbed" ? labelCount(a) : 0;
+  const why = labels > 1 && SHOP_LABELS[state.template] ? `<p class="money-why">${esc(SHOP_LABELS[state.template])}</p>` : "";
   money_.hidden = figs.length === 0;
-  money_.innerHTML = figs.map(([n, l]) => `<div><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join("");
+  money_.innerHTML = figs.map(([n, l]) => `<div><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join("") + why;
   const untested = Array.isArray(a.untested) ? a.untested : [];
   row.querySelector(".untested").textContent = untested.length ? `Could not be tested in this run: ${untested.join(", ")}.` : "";
-  row.querySelector(".ids").innerHTML = evidenceIds(a.evidence).map(([kind, id]) => `<button type="button" class="raw-link" data-raw="${esc(id)}" title="PayPal's raw answer for ${esc(kind)} ${esc(id)}">${esc(kind)} ${esc(id)}</button>`).join("");
-  const shots = (a.shots ?? []).filter((f) => showShot(f, a));
+  row.querySelector(".ids").innerHTML = evidenceIds(a.evidence)
+    .map(({ label, ids }) => {
+      const links = ids.map((id) => `<button type="button" class="raw-link" data-raw="${esc(id)}" title="${esc(offline() ? "The stand-in's" : "PayPal's")} raw answer for ${esc(id)}">${esc(id)}</button>`).join("");
+      return ids.length > 2 ? `<details class="id-line"><summary>${esc(label)} (${ids.length})</summary><span class="id-list">${links}</span></details>` : `<p class="id-line"><span>${esc(label)}:</span> ${links}</p>`;
+    })
+    .join("");
+  // Each picture once: byte-for-byte copies collapse into one (the later file, whose caption says more), and two
+  // screenshots with the same caption keep only the later one.
+  const shots = onePerPicture((a.shots ?? []).filter((f) => showShot(f, a)));
   const big = shots.filter((f) => /-(review|backoffice|stuck|paypal-wrong-amount)\.png$/.test(f));
-  const large = big.length ? big : shots.slice(0, 2);
-  const small = shots.filter((f) => !large.includes(f));
+  const byCaption = new Map();
+  for (const f of big.length ? big : shots.slice(0, 2)) byCaption.set(captionFor(f, a), f);
+  const large = [...byCaption.values()];
+  const shown = new Set(large.map((f) => state.same[f] ?? f));
+  const small = shots.filter((f) => !large.includes(f) && !shown.has(state.same[f] ?? f) && !big.includes(f));
+  // Back-office pages first and full width: they are the proof of what the shop did.
+  large.sort((x, y) => Number(Boolean(state.focus[y])) - Number(Boolean(state.focus[x])));
   row.querySelector(".proofs").innerHTML = `${large.map((f) => figureFor(f, a)).join("")}${small.length ? `<div class="thumbs">${small.map((f) => imgFor(f, a)).join("")}</div>` : ""}`;
   row.querySelector(".row-head").disabled = false;
+}
+
+/** One file per picture: of byte-for-byte copies, the last one listed (in the place of the first). */
+function onePerPicture(files) {
+  const seen = new Map();
+  for (const f of files) seen.set(state.same[f] ?? f, f);
+  return [...seen.values()];
 }
 
 /** The shop order a blocked robbery aimed at, as the back office showed it afterwards (or null). */
@@ -1455,7 +1781,7 @@ function showShot(f, a) {
 const PAID = ["paid", "fulfilled", "shipped", "completed"];
 /** The back office's caption follows the robbery's verdict: marked paid only when it was robbed. */
 function backOfficeCaption(a) {
-  if (a?.verdict === "robbed") return "The shop's back office: the order marked paid, with its shipping labels";
+  if (a?.verdict === "robbed") return "The shop's back office: the outlined order is marked paid, with its shipping labels";
   const o = a && blockedOrder(a);
   if (!o) return "The shop's back office after the robbery";
   const paidAfter = PAID.includes(String(o.after).toLowerCase());
@@ -1480,13 +1806,15 @@ function captionFor(f, a = null) {
   const seen = state.labels[label] ?? {};
   const bag = seen.bag ? money(seen.bag) : "the";
   const pp = seen.pp != null ? amt({ value: seen.pp, currency: seen.currency }) : "";
-  const who = /(^|-)attack-/.test(label) ? "the thief's browser" : /-thief-\d+/.test(label) ? "the AI thief's browser" : "the shopper";
+  const who = /(^|-)attack-/.test(label) ? "the thief's browser" : /-thief-\d+/.test(label) ? "the AI thief's browser" : "the shopper's browser";
   const paypal = offline() ? "The stand-in's" : "PayPal's own";
   switch (token) {
     case "checkout":
       return seen.bag ? `The shop's checkout in ${who}: a ${bag} bag` : `The shop's checkout in ${who}`;
     case "paypal":
-      return offline() ? "The stand-in's sign-in page" : "PayPal's sandbox sign-in";
+      // The buyer signs in on the first purchase only; later purchases open straight on PayPal's review page.
+      if (offline()) return "The stand-in's approval page";
+      return state.signedIn.has(label) ? "PayPal's sandbox sign-in" : "PayPal's review page (the buyer was already signed in)";
     case "review":
       return pp && seen.ok === false ? `${paypal} review page: ${pp} for the ${bag} bag` : `${paypal} review page${pp || seen.bag ? `: ${pp || bag}` : ""}`;
     case "after":
@@ -1501,19 +1829,41 @@ function captionFor(f, a = null) {
       return token.replace(/-/g, " ");
   }
 }
-const imgFor = (f, a = null) => `<img src="${api.file(state.runId, f)}" alt="${esc(captionFor(f, a))}" data-view data-caption="${esc(captionFor(f, a))}" loading="lazy" />`;
-const figureFor = (f, a = null) => `<figure>${imgFor(f, a)}<figcaption>${esc(captionFor(f, a)).replace(/(\$[\d,.]+( [A-Z]{3})?)/g, "<b>$1</b>")}</figcaption></figure>`;
+const imgFor = (f, a = null) => `<img src="${api.file(state.runId, f)}" alt="${esc(captionFor(f, a))}" data-view data-caption="${esc(captionFor(f, a))}"${state.focus[f] ? ` data-focus="${esc(f)}"` : ""} loading="lazy" />`;
+const captionHtml = (f, a) => esc(captionFor(f, a)).replace(/(\$[\d,.]+( [A-Z]{3})?)/g, "<b>$1</b>");
+/** A screenshot with its caption; a back-office page is shown as strips of its own pixels (the column headings and the
+    outlined order), large enough to read, and opens whole on click. */
+function figureFor(f, a = null) {
+  const z = state.focus[f];
+  if (!z) return `<figure>${imgFor(f, a)}<figcaption>${captionHtml(f, a)}</figcaption></figure>`;
+  const cw = z.x[1] - z.x[0];
+  const caption = esc(captionFor(f, a));
+  const pct = (n) => `${Math.round(n * 10000) / 100}%`;
+  const wins = z.windows
+    .map(([y0, y1], i) => `<span class="win" style="aspect-ratio: ${cw} / ${y1 - y0}"><img src="${api.file(state.runId, f)}" alt="${i ? "" : caption}" data-view data-caption="${caption}" data-focus="${esc(f)}" loading="lazy" style="width: ${pct(z.w / cw)}; left: ${pct(-z.x[0] / cw)}; top: ${pct(-y0 / (y1 - y0))}" /></span>`)
+    .join("");
+  return `<figure class="bo"><span class="crop">${wins}</span><figcaption>${captionHtml(f, a)} <span class="zoom-hint">Open the whole page.</span></figcaption></figure>`;
+}
 
-/** PayPal's own ids from an attack's evidence: enough to look the robbery up in the sandbox account or in the raw calls. */
+/** PayPal's own ids from an attack's evidence, each group labelled with what it is: enough to look the robbery up in
+    the sandbox account or in the raw calls. */
 function evidenceIds(ev = {}) {
-  const ids = [];
-  const orders = [ev.paypalOrderId, ev.targetPayPalOrder, ev.followThrough?.paypalOrderId, ...(ev.tries ?? []).map((t) => t.paypalOrderId)].filter(Boolean);
-  for (const id of new Set(orders)) ids.push(["order", id]);
-  for (const c of ev.paypalCaptures ?? []) if (c.id) ids.push(["capture", c.id]);
-  if (ev.eventId) ids.push(["event", ev.eventId]);
-  if (ev.approvedWebhook) ids.push(["event", ev.approvedWebhook]);
-  if (ev.injected?.debugId) ids.push(["debug", ev.injected.debugId]);
-  return ids;
+  const groups = [];
+  const pp = offline() ? "Stand-in" : "PayPal";
+  const add = (label, ids) => {
+    const list = [...new Set(ids.filter(Boolean))].filter((id) => !groups.some((g) => g.ids.includes(id)));
+    if (list.length) groups.push({ label, ids: list });
+  };
+  const ft = ev.followThrough;
+  if (ft?.paypalOrderId) add(ft.captured ? `${pp} order captured for ${amt(ft.captured)}` : `${pp} order of the robbery's purchase`, [ft.paypalOrderId]);
+  add(`${pp} order it aimed at`, [ev.targetPayPalOrder]);
+  add(`${pp} order`, [ev.paypalOrderId]);
+  add(`${pp} orders the tampered requests created`, (ev.tries ?? []).map((t) => t.paypalOrderId));
+  add(`${pp} ${(ev.paypalCaptures ?? []).length === 1 ? "capture" : "captures"}`, (ev.paypalCaptures ?? []).map((c) => c.id));
+  add(`${pp} event it sent again`, [ev.eventId]);
+  add(`${pp}'s "approved" event`, [ev.approvedWebhook]);
+  add(`${pp} debug id of the card decline`, [ev.injected?.debugId]);
+  return groups;
 }
 
 /* ======================================================================================
@@ -1532,7 +1882,9 @@ function renderFacts() {
     if (v === "__webhook_pending__") return `<span class="note">${state.finished ? (state.paid?.captureId ? `not delivered by ${by} during this run` : "none expected: nothing was captured") : `not delivered by ${by} yet`}</span>`;
     return esc(v);
   };
-  const list = (keys) => keys.map((k) => `<dt>${esc(k)}</dt><dd>${show(k)}</dd>`).join("");
+  // Offline, the ids are the stand-in's, and the labels say so.
+  const name = (k) => (offline() ? { "PayPal order": "Stand-in order", Capture: "Stand-in capture", "Signed webhook": "Stand-in webhook" }[k] ?? k : k);
+  const list = (keys) => keys.map((k) => `<dt>${esc(name(k))}</dt><dd>${show(k)}</dd>`).join("");
   $("#proof-facts").innerHTML = list(KEY_FACTS.filter((k) => state.facts.has(k)));
   $("#proof-more-facts").innerHTML = list([...state.facts.keys()].filter((k) => !KEY_FACTS.includes(k)));
 }
@@ -1567,7 +1919,12 @@ function addShots(files) {
       g.innerHTML = `<p class="shots-title">${esc(shotGroupTitle(group))}</p><div class="shots-grid"></div>`;
       $("#shots").append(g);
     }
-    g.querySelector(".shots-grid").insertAdjacentHTML("beforeend", `<figure>${imgFor(f)}<figcaption>${esc(captionFor(f))}</figcaption></figure>`);
+    // The same picture twice in one purchase (PayPal's review page saved as two files): one figure, the later file.
+    const same = state.same[f] ?? f;
+    const html = `<figure data-same="${esc(same)}">${imgFor(f)}<figcaption>${esc(captionFor(f))}</figcaption></figure>`;
+    const twin = [...g.querySelectorAll("figure")].find((x) => x.dataset.same === same);
+    if (twin) twin.outerHTML = html;
+    else g.querySelector(".shots-grid").insertAdjacentHTML("beforeend", html);
   }
 }
 
@@ -1576,8 +1933,8 @@ const webhookFiles = () => state.files.filter((f) => /webhooks\.json$/.test(f));
 
 function renderProofLinks() {
   const links = [];
-  if (callFiles().length) links.push(`<button type="button" data-doc="calls">PayPal's raw answers</button>`);
-  if (webhookFiles().length) links.push(`<button type="button" data-doc="webhooks">PayPal's webhooks, byte for byte</button>`);
+  if (callFiles().length) links.push(`<button type="button" data-doc="calls">${offline() ? "The stand-in's raw answers" : "PayPal's raw answers"}</button>`);
+  if (webhookFiles().length) links.push(`<button type="button" data-doc="webhooks">${offline() ? "The stand-in's webhooks, byte for byte" : "PayPal's webhooks, byte for byte"}</button>`);
   for (const f of state.files.filter((x) => /shop\.log$/.test(x))) links.push(`<button type="button" data-doc="text" data-file="${esc(f)}">Shop log${/round(\d+)/.test(f) ? ` (round ${Number(/round(\d+)/.exec(f)[1]) + 1})` : ""}</button>`);
   $("#proof-links").innerHTML = links.join("");
 }
@@ -1595,7 +1952,7 @@ function renderEvidenceLinks() {
   if (patches.includes("final.patch")) fetch(api.file(state.runId, "final.patch")).then((x) => x.text()).then((t) => {
     if (!t.trim()) document.getElementById("link-final-patch")?.remove();
   }).catch(() => {});
-  if (callFiles().length) links.push(`<button type="button" data-doc="calls">PayPal's raw answers</button>`);
+  if (callFiles().length) links.push(`<button type="button" data-doc="calls">${offline() ? "The stand-in's raw answers" : "PayPal's raw answers"}</button>`);
   if (state.files.includes("events.jsonl")) links.push(`<button type="button" data-doc="text" data-file="events.jsonl">Event log</button>`);
   if (state.pr) links.push(`<a href="${esc(state.pr)}" rel="noopener" target="_blank">Pull request</a>`);
   $("#evidence-links").innerHTML = links.join("");
@@ -1611,7 +1968,7 @@ async function openDoc(kind, file, match = "") {
   const title = $("#doc-title");
   body.innerHTML = "<p>Loading…</p>";
   $("#doc-raw").href = file ? api.file(state.runId, file) : api.file(state.runId, callFiles()[0] ?? "");
-  title.textContent = kind === "calls" ? "PayPal's raw answers (recorded through the proxy)" : kind === "webhooks" ? "PayPal's webhooks, as delivered" : file;
+  title.textContent = kind === "calls" ? (offline() ? "The stand-in's raw answers (recorded through the proxy)" : "PayPal's raw answers (recorded through the proxy)") : kind === "webhooks" ? (offline() ? "The stand-in's webhooks, as delivered" : "PayPal's webhooks, as delivered") : file;
   if (!doc.open) doc.showModal();
   try {
     if (kind === "calls" || kind === "webhooks") {
@@ -1644,7 +2001,7 @@ function renderCalls(calls, match) {
     return `<li class="${hits(c) ? "hit" : ""}"><details${hits(c) ? " open" : ""}><summary><span class="m">${esc(c.method)} ${esc(c.path)}</span><span class="s ${bad ? "bad" : "ok"}">${esc(c.status)}${name ? ` ${esc(name)}` : ""}</span>${c.injected ? `<span>negative testing: ${esc(c.injected.mock_application_codes ?? JSON.stringify(c.injected))}</span>` : ""}<span class="t">${c.debugId ? `debug id ${esc(c.debugId)} · ` : ""}${esc(String(c.at).replace("T", " ").slice(0, 19))}</span></summary><pre>${esc(JSON.stringify({ requestBody: c.requestBody, responseBody: c.responseBody }, null, 2))}</pre></details></li>`;
   });
   const tokens = calls.length - real.length;
-  return `<p>${real.length} calls to ${offline() ? STANDIN : "PayPal's sandbox API"}, recorded by Heistproof's proxy with PayPal's own debug ids${tokens ? `; ${tokens} token calls left out` : ""}. ${match ? `Highlighted: the calls that mention <code>${esc(match)}</code>.` : ""}</p><ul class="calls">${items.join("")}</ul>`;
+  return `<p>${real.length} calls to ${offline() ? STANDIN : "PayPal's sandbox API"}, recorded by Heistproof's proxy with ${offline() ? "the stand-in's" : "PayPal's own"} debug ids${tokens ? `; ${tokens} token calls left out` : ""}. ${match ? `Highlighted: the calls that mention <code>${esc(match)}</code>.` : ""}</p><ul class="calls">${items.join("")}</ul>`;
 }
 
 function renderWebhooks(hooks, match) {
@@ -1655,20 +2012,21 @@ function renderWebhooks(hooks, match) {
       body = JSON.stringify(JSON.parse(h.body), null, 2);
     } catch {}
     const bad = h.shopStatus >= 400;
-    return `<li class="${hits(h) ? "hit" : ""}"><details${hits(h) ? " open" : ""}><summary><span class="m">${esc(h.source === "attacker" ? "thief" : "PayPal")} → shop</span><span>${esc(h.eventType ?? "(no event type)")}</span><span class="s ${bad ? "ok" : h.source === "attacker" ? "bad" : "ok"}">shop answered HTTP ${esc(h.shopStatus)}</span><span class="t">${esc(h.eventId ?? "")} · ${esc(String(h.at).replace("T", " ").slice(0, 19))}</span></summary><pre>${esc(body || "(empty body)")}</pre></details></li>`;
+    return `<li class="${hits(h) ? "hit" : ""}"><details${hits(h) ? " open" : ""}><summary><span class="m">${esc(h.source === "attacker" ? "thief" : offline() ? "stand-in" : "PayPal")} → shop</span><span>${esc(h.eventType ?? "(no event type)")}</span><span class="s ${bad ? "ok" : h.source === "attacker" ? "bad" : "ok"}">shop answered HTTP ${esc(h.shopStatus)}</span><span class="t">${esc(h.eventId ?? "")} · ${esc(String(h.at).replace("T", " ").slice(0, 19))}</span></summary><pre>${esc(body || "(empty body)")}</pre></details></li>`;
   });
-  return `<p>${hooks.length} deliveries to the shop's webhook route: PayPal's own, and the thief's forged and replayed copies. A row from the thief that the shop answered with HTTP 200 is a robbery.</p><ul class="calls">${items.join("")}</ul>`;
+  return `<p>${hooks.length} deliveries to the shop's webhook route: ${offline() ? "the stand-in's own" : "PayPal's own"}, and the thief's forged and replayed copies. A row from the thief that the shop answered with HTTP 200 is a robbery.</p><ul class="calls">${items.join("")}</ul>`;
 }
 
 /** Enough Markdown for the evidence report: headings, paragraphs, lists, tables, bold and code. Rounds are shown counted from 1. */
 function markdown(src) {
   const shift = /\bRound 0\b/.test(src);
   const fix = (s) => s.replace(/\bRound (\d+)\b/g, (m, n) => `Round ${shift ? Number(n) + 1 : n}`).replace(/verified and accepted/g, "accepted").replace(/Signed webhook: verified/g, "Signed webhook: accepted");
-  const inline = (s) => esc(fix(s)).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+  const inline = (s) => esc(plurals(fix(s))).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
   const lines = src.split("\n");
   let out = "";
   let i = 0;
-  const cell = (c) => (c === "HELD" ? `<td class="held">Blocked</td>` : c === "ROBBED" ? `<td class="robbed">Robbed</td>` : `<td>${inline(c)}</td>`);
+  // The report's result cells in the console's words: Blocked, Robbed, Could not run, Repeat.
+  const cell = (c) => (/^(HELD|Blocked|BLOCKED)$/.test(c) ? `<td class="held">Blocked</td>` : /^(ROBBED|Robbed)$/.test(c) ? `<td class="robbed">Robbed</td>` : /^(SKIPPED|Skipped|NOT RUN|Not run)$/.test(c) ? `<td>Could not run</td>` : /^(REPEAT|Repeat)$/.test(c) ? `<td>Repeat</td>` : `<td>${inline(c)}</td>`);
   while (i < lines.length) {
     const l = lines[i];
     if (/^#{1,3} /.test(l)) {
@@ -1726,8 +2084,7 @@ async function open(runId) {
   const speed = Number(params.get("replay"));
   const run = await (await fetch(api.run(runId))).json();
   if (state?.runId !== runId) return; // the viewer moved on while this loaded
-  state.files = run.files ?? [];
-  state.broken = new Set(run.brokenShots ?? []);
+  takeFiles(run);
   state.replayHint = replayLength(run.events ?? []);
   if (speed > 0) return replay(run, speed, Number(params.get("maxgap") ?? 300));
   if (STATIC || RUNS.find((r) => r.id === runId)?.verdict) {
@@ -1741,13 +2098,20 @@ async function open(runId) {
     onEvent(e);
     if (e.type === "run.done") fetch(api.run(runId)).then((x) => x.json()).then((x) => {
       if (state?.runId === runId) {
-        state.files = x.files ?? [];
-        state.broken = new Set(x.brokenShots ?? []);
+        takeFiles(x);
         renderEvidenceLinks();
         renderProofLinks();
       }
     });
   };
+}
+
+/** The run's files and what the server or the static build found in its screenshots (see shotInfo). */
+function takeFiles(run) {
+  state.files = run.files ?? [];
+  state.broken = new Set(run.brokenShots ?? []);
+  state.same = run.sameShots ?? {};
+  state.focus = run.focus ?? {};
 }
 
 /** "about 30 s, real timing compressed": how long the replay takes at the button's speed (40x, gaps capped at 0.3 s). */
@@ -1802,8 +2166,8 @@ async function startReplay() {
   const run = await (await fetch(api.run(id))).json();
   reset(id);
   renderChips();
-  state.files = run.files ?? [];
-  state.broken = new Set(run.brokenShots ?? []);
+  takeFiles(run);
+  state.replayHint = replayLength(run.events ?? []);
   window.scrollTo({ top: 0 });
   replay(run, 40, 300);
 }
@@ -1824,6 +2188,30 @@ function stopReplay(reload = true) {
    Wiring
    ====================================================================================== */
 
+/** A screenshot, large. A back-office page opens at a size its text can be read at (on a phone it scrolls sideways),
+    scrolled to the order it proves. */
+function openViewer(img) {
+  const viewer = $("#viewer");
+  const z = state?.focus?.[img.dataset.focus ?? ""];
+  $("#viewer-img").src = img.src;
+  $("#viewer-img").alt = img.alt || img.dataset.caption || "";
+  $("#viewer-caption").textContent = img.dataset.caption ?? img.alt;
+  viewer.classList.toggle("wide", Boolean(z));
+  viewer.showModal();
+  const fig = viewer.querySelector("figure");
+  fig.scrollTo(0, 0);
+  if (z) {
+    const fit = () => {
+      const shown = $("#viewer-img");
+      const scale = shown.clientWidth / z.w;
+      const [y0] = z.windows[z.windows.length - 1];
+      fig.scrollTo({ left: Math.max(0, z.x[0] * scale - 8), top: Math.max(0, y0 * scale - fig.clientHeight / 3) });
+    };
+    if ($("#viewer-img").complete) requestAnimationFrame(fit);
+    else $("#viewer-img").addEventListener("load", fit, { once: true });
+  }
+}
+
 function bind() {
   document.addEventListener("click", (e) => {
     const a = e.target.closest("a[data-run], a[data-home], a[data-how]");
@@ -1835,13 +2223,7 @@ function bind() {
       return;
     }
     const img = e.target.closest("img[data-view]");
-    if (img) {
-      $("#viewer-img").src = img.src;
-      $("#viewer-img").alt = img.alt;
-      $("#viewer-caption").textContent = img.dataset.caption ?? img.alt;
-      $("#viewer").showModal();
-      return;
-    }
+    if (img) return openViewer(img);
     const raw = e.target.closest("[data-raw]");
     if (raw) return openDoc("calls", "", raw.dataset.raw);
     const doc = e.target.closest("[data-doc]");

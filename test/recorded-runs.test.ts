@@ -28,9 +28,9 @@ test("the full run: PayPal refused the agent's first capture, the agent fixed it
   assert.equal(verdictOf(last), "safe");
 });
 
-test("the 415 is not chance: both earlier full runs hit the same refusal at capture", () => {
+test("the 415 is not chance: every earlier full run hit the same refusal at capture", () => {
   assert.ok(refusedCapture(calls(path.join("archive", "2026-11-07-full-run"), "prove-paypal-calls.json")), "2026-11-07");
-  assert.ok(refusedCapture(calls(path.join("archive", "2026-11-08-full-run-earlier"), "round0-paypal-calls.json")), "2026-11-08, earlier");
+  for (const id of ["2026-11-08-full-run-earlier", "2026-11-08-full-run-third", "2026-11-08-full-run-fourth"]) assert.ok(refusedCapture(calls(path.join("archive", id), "round0-paypal-calls.json")), id);
 });
 
 test("the same model without any PayPal skills wrote a checkout that was safe at the first try", () => {
@@ -98,4 +98,18 @@ test("the agent fixed a hand-written checkout in one round: a $4,900 charge and 
   assert.deepEqual(robbed(last), []);
   assert.ok(nothingFromTheThief(last));
   assert.equal(verdictOf(last), "safe");
+});
+
+test("live in PayPal's sandbox, the AI thief found the mistake none of the ten can see, and the books caught it", () => {
+  const r = lastRound("2026-11-08-thief-binding");
+  assert.equal(r.attacks.length, 10);
+  assert.ok(r.attacks.every((a) => a.verdict === "held"), "all ten scripted robberies pass this shop");
+  assert.equal(r.thief?.ran, true);
+  assert.equal(r.thief?.source, "model", "the plans were invented live, not replayed");
+  const got = r.thief?.plans.filter((p) => p.verdict === "robbed") ?? [];
+  assert.ok(got.some((p) => p.mismatches.some((m) => /already pays for order/.test(m.problem))), "one payment pays for two orders");
+  assert.equal(verdictOf(r), "unsafe");
+  // The first live run found it too; there the books caught it, before plans waited for PayPal's late events.
+  const first = JSON.parse(fs.readFileSync(path.join(RUNS, "archive", "2026-11-08-thief-binding-first", "rounds.json"), "utf8")).at(-1) as Round;
+  assert.ok(first.books?.mismatches.some((m) => /already pays for order/.test(m.problem)));
 });

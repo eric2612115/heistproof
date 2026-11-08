@@ -1,0 +1,65 @@
+diff --git a/lib/paypal.js b/lib/paypal.js
+index bb613eb..4fcdd27 100644
+--- a/lib/paypal.js
++++ b/lib/paypal.js
+@@ -146,7 +146,9 @@ export function createPayPalService({
+ 
+   async function captureOrder({ paypalOrderId, shopOrderId }) {
+     try {
+-      const order = await client.orders.captureOrder({ id: paypalOrderId, payPalRequestId: shopOrderId, prefer: "return=representation" });
++      // Real sandbox 415 UNSUPPORTED_MEDIA_TYPE (debug ca571d11c6846) when no body is sent:
++      // omitting `body` sends no Content-Type at all. PayPal capture requires an empty JSON object.
++      const order = await client.orders.captureOrder({ id: paypalOrderId, payPalRequestId: shopOrderId, prefer: "return=representation", body: {} });
+       if (!order?.id || !Array.isArray(order.purchaseUnits)) {
+         throw new PayPalServiceError(502, "Payment outcome unknown. Please check your order status.", { unknown: true });
+       }
+diff --git a/paypal-plan.md b/paypal-plan.md
+index f2151dc..86d8f94 100644
+--- a/paypal-plan.md
++++ b/paypal-plan.md
+@@ -39,7 +39,7 @@ Error arms (tag=status): `error`=400, `error2`=401, `error3`=422, `error4`=defau
+ Returns `Order` (all optional — assert `id !== undefined` after call): `id?`, `status?: OrderStatus` (CREATED/SAVED/APPROVED/VOIDED/COMPLETED/PAYER_ACTION_REQUIRED), `purchaseUnits?: PurchaseUnit[]`, `intent?`, links etc. `PurchaseUnit`: `amount?: AmountWithBreakdown`, `customId?`, `invoiceId?`, `referenceId?`, `payments?: {captures?: OrdersCapture[], authorizations?, refunds?}`, `items?`. `OrdersCapture`: `status?: CaptureStatus` (COMPLETED/DECLINED/PARTIALLY_REFUNDED/PENDING/REFUNDED/FAILED), `id?`, `amount?: Money`, `invoiceId?`, `customId?`, `finalCapture` default false, `disbursementMode` default INSTANT.
+ 
+ ### captureOrder — `client.orders.captureOrder(request: Orders.CaptureOrderRequest): ApiPromise<Order, Orders.CaptureOrderError>`
+-Wire `POST /v2/checkout/orders/{id}/capture`. Fields: `id` path req string; `payPalMockResponse` header opt; `payPalRequestId` header `PayPal-Request-Id` opt; `prefer` header opt default `"return=minimal"`; `payPalClientMetadataId`, `payPalAuthAssertion` opt; `body?: OrderCaptureRequest` opt (`{paymentSource?}` only).
++Wire `POST /v2/checkout/orders/{id}/capture`. Fields: `id` path req string; `payPalMockResponse` header opt; `payPalRequestId` header `PayPal-Request-Id` opt; `prefer` header opt default `"return=minimal"`; `payPalClientMetadataId`, `payPalAuthAssertion` opt; `body?: OrderCaptureRequest` opt (`{paymentSource?}` only). **Contract corrected by real sandbox (2026-11-08): despite being optional in the SDK, `body` MUST be passed as `{}` — omitting it sends no body and no `Content-Type`, and real PayPal answered `415 UNSUPPORTED_MEDIA_TYPE: The request payload is not supported` (debug `ca571d11c6846`) leaving the order pending. Passing `body: {}` makes the SDK send `"{}"` with `Content-Type: application/json`.**
+ Error arms: `error`=400, `error2`=401, `error3`=403, `error4`=404, `error5`=422, `error6`=500, `error7`=default, `undeclared`. Same `Error` body model.
+ 
+ ### getOrder — `client.orders.getOrder(request: Orders.GetOrderRequest): ApiPromise<Order, Orders.GetOrderError>`
+@@ -100,7 +100,7 @@ captureOrder request:
+ | payPalRequestId | DUPLICATE CLAIMS row | ✅ = shopOrderId |
+ | prefer | need captures[] in response to verify COMPLETED/amount | ✅ `"return=representation"` |
+ | payPalMockResponse / payPalClientMetadataId / payPalAuthAssertion | nothing | ❌ never forward |
+-| body | nothing requires it (OrderCaptureRequest.paymentSource nothing supplies) | ❌ omit body key |
++| body | real sandbox requires a JSON payload: omitting it sends no `Content-Type` and PayPal returns 415 UNSUPPORTED_MEDIA_TYPE (debug ca571d11c6846) | ✅ `body: {}` (empty JSON object, no `paymentSource`) |
+ 
+ getOrder request: `fields`, `payPalMockResponse`, `payPalAuthAssertion` — nothing requires => ❌ all omitted, only `id`.
+ Test proving it: faked-fetch test parses every SDK-built request and asserts no header/body key beyond sheet rows (allow SDK-sent: authorization, content-type, idempotency-key, identity headers).
+diff --git a/test/paypal.test.js b/test/paypal.test.js
+index 6d28cd0..02ae57c 100644
+--- a/test/paypal.test.js
++++ b/test/paypal.test.js
+@@ -148,6 +148,23 @@ test("bad bag is rejected before any PayPal call", async () => {
+   } finally { await shop.close(); }
+ });
+ 
++test("capture sends empty JSON body with application/json content-type (real sandbox 415 regression)", async () => {
++  const fake = makeFakePayPal();
++  const shop = await startShop(fake);
++  try {
++    const { id } = await createViaApi(shop);
++    const res = await post(`${shop.base}/api/paypal/orders/${id}/capture`, {});
++    assert.equal(res.status, 200);
++    const captures = fake.calls.filter((c) => c.url.pathname.endsWith("/capture"));
++    assert.equal(captures.length, 1);
++    // Omitting body sends no body and no Content-Type; real PayPal answered
++    // 415 UNSUPPORTED_MEDIA_TYPE (debug ca571d11c6846). Must send "{}" as JSON.
++    assert.match(captures[0].request.headers.get("content-type") ?? "", /application\/json/);
++    assert.equal(captures[0].text, "{}");
++    assert.deepEqual(captures[0].body, {});
++  } finally { await shop.close(); }
++});
++
+ test("capture COMPLETED fulfils once; second capture is safe and does not re-capture", async () => {
+   const fake = makeFakePayPal();
+   const shop = await startShop(fake);

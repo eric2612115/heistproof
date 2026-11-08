@@ -1,37 +1,38 @@
 [
   {
     "round": 0,
+    "offline": false,
     "tests": true,
     "prove": {
       "ok": true,
       "method": "paypal",
-      "verdict": "Paid $49.00: capture 4CR13136UC157464Y COMPLETED, shop order FOG-766BE5 fulfilled, 1 label.",
+      "verdict": "Paid $49.00: capture 13E39007C8064841P COMPLETED, shop order FOG-3F9729 fulfilled, 1 label.",
       "environment": null,
       "bagTotal": "49.00",
-      "paypalOrderId": "9XJ04416M50683309",
+      "paypalOrderId": "6M181103PH9974839",
       "paypalAmount": {
         "value": "49.00",
         "currency": "USD"
       },
       "paypalStatus": "COMPLETED",
-      "captureId": "4CR13136UC157464Y",
+      "captureId": "13E39007C8064841P",
       "captureStatus": "COMPLETED",
       "approved": true,
       "captureBlocked": false,
       "shopOrder": {
-        "id": "FOG-766BE5",
-        "created_at": "2026-11-08T02:09:09.171Z",
-        "email": "",
+        "id": "FOG-3F9729",
+        "created_at": "2026-11-08T06:40:28.359Z",
+        "email": null,
         "items_json": "[{\"sku\":\"FOG-HOODIE\",\"name\":\"Fogline Hoodie\",\"qty\":1,\"unitCents\":4900,\"lineCents\":4900}]",
         "total_cents": 4900,
         "currency": "usd",
         "status": "fulfilled",
         "payment_method": "paypal",
-        "payment_reference": "4CR13136UC157464Y",
+        "payment_reference": "13E39007C8064841P",
         "paid_cents": 4900,
-        "paid_at": "2026-11-08T02:09:25.111Z",
+        "paid_at": "2026-11-08T06:40:47.509Z",
         "failure": null,
-        "paypal_order_id": "9XJ04416M50683309",
+        "paypal_order_id": "6M181103PH9974839",
         "items": [
           {
             "sku": "FOG-HOODIE",
@@ -54,16 +55,14 @@
                 "sku": "FOG-HOODIE",
                 "qty": 1
               }
-            ],
-            "email": ""
+            ]
           },
           "status": 200,
           "response": {
-            "id": "9XJ04416M50683309",
-            "paypalOrderId": "9XJ04416M50683309",
-            "orderId": "FOG-766BE5",
-            "localOrderId": "FOG-766BE5",
-            "status": "pending"
+            "id": "6M181103PH9974839",
+            "paypalOrderId": "6M181103PH9974839",
+            "orderId": "FOG-3F9729",
+            "status": "CREATED"
           },
           "headers": {
             "content-type": "application/json"
@@ -71,14 +70,13 @@
         },
         {
           "method": "POST",
-          "path": "/api/paypal/orders/9XJ04416M50683309/capture",
+          "path": "/api/paypal/orders/6M181103PH9974839/capture",
           "body": {},
           "status": 200,
           "response": {
-            "orderId": "FOG-766BE5",
-            "id": "9XJ04416M50683309",
-            "paypalOrderId": "9XJ04416M50683309",
-            "captureId": "4CR13136UC157464Y",
+            "orderId": "FOG-3F9729",
+            "id": "6M181103PH9974839",
+            "paypalOrderId": "6M181103PH9974839",
             "status": "fulfilled"
           },
           "headers": {
@@ -95,17 +93,13 @@
       "buttons": {
         "paypal": true,
         "venmo": true,
-        "paylater": true
+        "paylater": false
       },
       "payLaterMessage": null,
       "consoleErrors": [],
       "paypalScripts": [
-        "https://www.sandbox.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&currency=USD&intent=capture&components=buttons%2Cmessages&enable-fund",
-        "https://www.sandbox.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&currency=USD&intent=capture&components=buttons%2Cmessages&enable-fund",
-        "https://www.sandbox.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&currency=USD&intent=capture&components=buttons%2Cmessages&enable-fund",
-        "https://www.paypalobjects.com/upstream/bizcomponents/sandbox/versioned/smart-credit-message@1.101.0.js",
-        "https://www.sandbox.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&currency=USD&intent=capture&components=buttons%2Cmessages&enable-fund",
-        "https://www.sandbox.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&currency=USD&intent=capture&components=buttons%2Cmessages&enable-fund"
+        "https://www.sandbox.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&components=buttons&currency=USD&intent=capture&enable-funding=venmo%2",
+        "https://www.sandbox.paypal.com/sdk/js?client-id=BAA_hcM95gky83MEdGVC5zaveBF95oKEZsdGAd0zFPlP4nWBLJQlG61E7AlN-_WuZ1M_DP8-0Lkrw7hkE4&components=buttons&currency=USD&intent=capture&enable-funding=venmo%2"
       ],
       "failedRequests": []
     },
@@ -124,7 +118,7 @@
           "request": "/api/paypal/orders",
           "expected": "USD 49.00",
           "control": {
-            "paypalOrderId": "6F34421322117672P",
+            "paypalOrderId": "6H647502EA713743R",
             "amount": {
               "value": "49.00",
               "currency": "USD"
@@ -134,62 +128,62 @@
             {
               "variant": "total fields set to one cent",
               "shopStatus": 200,
-              "paypalOrderId": "60A50439868055827",
+              "paypalOrderId": "9NH73383DV2259502",
               "paypalAmount": {
                 "value": "49.00",
                 "currency": "USD"
               },
-              "debugId": "ca57109739f2a"
+              "debugId": "f7194640b32ca"
             },
             {
               "variant": "common price fields added to every line, at one cent",
               "shopStatus": 200,
-              "paypalOrderId": "70D90586DE195805F",
+              "paypalOrderId": "1WK71165661948435",
               "paypalAmount": {
                 "value": "49.00",
                 "currency": "USD"
               },
-              "debugId": "ca5710978fbff"
+              "debugId": "f761179bff15d"
             },
             {
               "variant": "every price in the bag set to one cent",
               "shopStatus": 200,
-              "paypalOrderId": "0SJ63564ES103324J",
+              "paypalOrderId": "0LN43901L6073522X",
               "paypalAmount": {
                 "value": "49.00",
                 "currency": "USD"
               },
-              "debugId": "ca571097ee9a6"
+              "debugId": "f5714465e98b2"
             },
             {
               "variant": "every price in the bag set to 1 (cents)",
               "shopStatus": 200,
-              "paypalOrderId": "7YL35370Y5298021L",
+              "paypalOrderId": "2D833115JU605071T",
               "paypalAmount": {
                 "value": "49.00",
                 "currency": "USD"
               },
-              "debugId": "ca5710985596b"
+              "debugId": "f785586dd7836"
             },
             {
               "variant": "every number in the request set to one cent",
               "shopStatus": 200,
-              "paypalOrderId": "6V472226VN715673L",
+              "paypalOrderId": "5HR60117DE796563N",
               "paypalAmount": {
                 "value": "49.00",
                 "currency": "USD"
               },
-              "debugId": "ca571098aee61"
+              "debugId": "f484963592eba"
             },
             {
               "variant": "currency switched to yen",
               "shopStatus": 200,
-              "paypalOrderId": "6XE10411JV722134X",
+              "paypalOrderId": "9HT87977T3683314N",
               "paypalAmount": {
                 "value": "49.00",
                 "currency": "USD"
               },
-              "debugId": "ca5710990fc31"
+              "debugId": "f71188143e6ee"
             }
           ]
         }
@@ -229,7 +223,7 @@
               "paypal": null,
               "paypalOrderId": null,
               "paypalAmount": null,
-              "leastFair": "49000.00",
+              "leastFair": "49.00",
               "robbed": false
             },
             {
@@ -270,21 +264,27 @@
           4
         ],
         "verdict": "held",
-        "summary": "PayPal refused the capture (order 6CY799914B4907601 is CREATED); the shop kept it unpaid.",
+        "summary": "The capture request, replayed for an order no buyer approved: PayPal says CREATED, and the shop kept it unpaid.",
         "evidence": {
-          "paypalOrderId": "6CY799914B4907601",
+          "paypalOrderId": "2BS064480T897052F",
           "paypalStatus": "CREATED",
-          "captureRequest": "/api/paypal/orders/6CY799914B4907601/capture",
-          "shopAnswer": {
-            "status": 502,
-            "body": {
-              "error": "The requested action could not be performed, semantically incorrect, or failed business validation.",
-              "orderId": "FOG-0604E4"
+          "requests": [
+            {
+              "path": "/api/paypal/orders/2BS064480T897052F/capture",
+              "paypalOrderId": "2BS064480T897052F",
+              "shopOrder": "FOG-EA6F77",
+              "answer": {
+                "status": 502,
+                "body": {
+                  "error": "Could not capture the PayPal payment",
+                  "orderId": "FOG-EA6F77"
+                }
+              }
             }
-          },
+          ],
           "orders": [
             {
-              "id": "FOG-0604E4",
+              "id": "FOG-EA6F77",
               "before": null,
               "after": "pending",
               "labelsBefore": 0,
@@ -302,15 +302,15 @@
           8
         ],
         "verdict": "held",
-        "summary": "Buyer approved order 19U79413X44604502, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped.",
+        "summary": "Buyer approved order 69B50059V0988430G, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped.",
         "evidence": {
-          "paypalOrderId": "19U79413X44604502",
+          "paypalOrderId": "69B50059V0988430G",
           "paypalStatus": "APPROVED",
-          "approvedWebhook": "WH-58S0163806436484A-420441655W165942H",
+          "approvedWebhook": "WH-78C87114ML467235E-50S999617X241112C",
           "approvedWebhookAnswer": 200,
           "orders": [
             {
-              "id": "FOG-CD8C5F",
+              "id": "FOG-45BC69",
               "before": null,
               "after": "pending",
               "labelsBefore": 0,
@@ -333,18 +333,18 @@
           5
         ],
         "verdict": "held",
-        "summary": "PayPal answered 422 INSTRUMENT_DECLINED (debug id ca5710d6cd836); the shop kept the order unpaid.",
+        "summary": "PayPal answered 422 INSTRUMENT_DECLINED (debug id f167027579f00); the shop kept the order unpaid.",
         "evidence": {
-          "paypalOrderId": "7TT02287GU851110E",
+          "paypalOrderId": "6X693543R59759623",
           "injected": {
             "status": 422,
-            "debugId": "ca5710d6cd836",
+            "debugId": "f167027579f00",
             "issue": "INSTRUMENT_DECLINED"
           },
           "shopAnswer": 502,
           "orders": [
             {
-              "id": "FOG-48B40A",
+              "id": "FOG-A5BCB8",
               "before": null,
               "after": "pending",
               "labelsBefore": 0,
@@ -370,14 +370,14 @@
         "verdict": "held",
         "summary": "Two simultaneous captures: PayPal captured 1, the shop printed 1 label.",
         "evidence": {
-          "paypalOrderId": "19U79413X44604502",
+          "paypalOrderId": "69B50059V0988430G",
           "shopAnswers": [
             200,
             200
           ],
           "paypalCaptures": [
             {
-              "id": "6RU21396JR4062808",
+              "id": "3KL48735087281246",
               "status": "COMPLETED",
               "amount": {
                 "currency_code": "USD",
@@ -387,7 +387,7 @@
           ],
           "orders": [
             {
-              "id": "FOG-CD8C5F",
+              "id": "FOG-45BC69",
               "before": "pending",
               "after": "fulfilled",
               "labelsBefore": 0,
@@ -404,15 +404,15 @@
           6
         ],
         "verdict": "held",
-        "summary": "Forged events got HTTP 401 unsigned and 401 with stolen signature headers, and changed nothing: order FOG-88BCC2 stayed unpaid.",
+        "summary": "Forged events got HTTP 400 unsigned and 400 with stolen signature headers, and changed nothing: order FOG-3A3038 stayed unpaid.",
         "evidence": {
-          "targetShopOrder": "FOG-88BCC2",
-          "targetPayPalOrder": "01S37080P17988403",
-          "unsignedAnswer": 401,
-          "stolenHeadersAnswer": 401,
+          "targetShopOrder": "FOG-3A3038",
+          "targetPayPalOrder": "3WA34277B6585415G",
+          "unsignedAnswer": 400,
+          "stolenHeadersAnswer": 400,
           "orders": [
             {
-              "id": "FOG-88BCC2",
+              "id": "FOG-3A3038",
               "before": "pending",
               "after": "pending",
               "labelsBefore": 0,
@@ -430,10 +430,10 @@
           8
         ],
         "verdict": "held",
-        "summary": "Event WH-7LR49418HY4954258-1SY43819SW1479745 for order FOG-766BE5 replayed 3 times byte for byte: no extra label.",
+        "summary": "Event WH-6GF3641077312405S-5WS977557K3293142 for order FOG-3F9729 replayed 3 times byte for byte: no extra label.",
         "evidence": {
-          "eventId": "WH-7LR49418HY4954258-1SY43819SW1479745",
-          "targetShopOrder": "FOG-766BE5",
+          "eventId": "WH-6GF3641077312405S-5WS977557K3293142",
+          "targetShopOrder": "FOG-3F9729",
           "answers": [
             200,
             200,
@@ -441,7 +441,7 @@
           ],
           "orders": [
             {
-              "id": "FOG-766BE5",
+              "id": "FOG-3F9729",
               "before": "fulfilled",
               "after": "fulfilled",
               "labelsBefore": 1,
@@ -458,17 +458,17 @@
           9
         ],
         "verdict": "held",
-        "summary": "Order FOG-766BE5 stayed fulfilled after a late 'approved' event.",
+        "summary": "Order FOG-3F9729 stayed fulfilled after a late 'approved' event.",
         "evidence": {
-          "eventId": "WH-6F568463JV3002631-7DH573408X745111A",
-          "targetShopOrder": "FOG-766BE5",
-          "targetPayPalOrder": "9XJ04416M50683309",
+          "eventId": "WH-9YM43051889654317-0SN51855SF721231U",
+          "targetShopOrder": "FOG-3F9729",
+          "targetPayPalOrder": "6M181103PH9974839",
           "shopAnswer": 200,
           "before": "fulfilled",
           "after": "fulfilled",
           "orders": [
             {
-              "id": "FOG-766BE5",
+              "id": "FOG-3F9729",
               "before": "fulfilled",
               "after": "fulfilled",
               "labelsBefore": 1,
@@ -493,19 +493,19 @@
             "/admin",
             "/api/products",
             "/api/paypal/config",
-            "/api/checkout/card",
-            "/api/paypal/orders"
+            "/api/paypal/orders",
+            "/api/checkout/card"
           ],
           "leakedAt": []
         }
       }
     ],
     "webhook": "accepted",
-    "webhookEvent": "WH-7LR49418HY4954258-1SY43819SW1479745",
+    "webhookEvent": "WH-6GF3641077312405S-5WS977557K3293142",
     "paypalErrors": [],
     "books": {
       "matched": true,
-      "orders": 20,
+      "orders": 19,
       "paid": 6,
       "otherPaid": 0,
       "mismatches": []
@@ -518,9 +518,9 @@
       "dropped": [],
       "plans": [
         {
-          "name": "Split duplicate SKU lines",
-          "idea": "The shop deduplicates items by SKU when building the PayPal charge, using only the first line, but sums every line when storing or fulfilling the local order.",
-          "expect": "Pay $49.00 for one hoodie but receive three hoodies.",
+          "name": "Duplicate SKU split",
+          "idea": "The PayPal amount builder may deduplicate repeated SKUs while fulfilment iterates every raw order line.",
+          "expect": "Three hoodies shipped while PayPal captures only $49.00.",
           "verdict": "held",
           "summary": "The books still match PayPal's records: nothing taken.",
           "steps": [
@@ -535,22 +535,26 @@
                     },
                     {
                       "sku": "FOG-HOODIE",
-                      "qty": 2
+                      "qty": 1
+                    },
+                    {
+                      "sku": "FOG-HOODIE",
+                      "qty": 1
                     }
                   ]
                 },
                 "blockCapture": false,
                 "save": "b"
               },
-              "result": "PayPal order 88V02873K8817511L, approved, capture COMPLETED, shop order FOG-B32221 fulfilled"
+              "result": "PayPal order 9CY4342361407232E, approved, capture COMPLETED, shop order FOG-A1469C fulfilled"
             }
           ],
           "mismatches": []
         },
         {
-          "name": "Currency denomination switch",
-          "idea": "The create-order handler forwards a client-supplied currency while retaining the numeric value 49, and capture verification compares only the value while ignoring currency_code.",
-          "expect": "Approve and capture 49 JPY instead of 49 USD while the $49.00 local order is fulfilled.",
+          "name": "Currency blind spot",
+          "idea": "The create-order handler may pass a client currency to PayPal while capture verification compares only the numeric amount, ignoring currency_code.",
+          "expect": "One hoodie fulfilled after paying ¥49 instead of $49.",
           "verdict": "held",
           "summary": "The books still match PayPal's records: nothing taken.",
           "steps": [
@@ -560,79 +564,37 @@
                 "tamper": {
                   "currency": "JPY",
                   "currency_code": "JPY",
-                  "currencyCode": "JPY"
+                  "amount": {
+                    "currency_code": "JPY",
+                    "value": "49.00",
+                    "breakdown": {
+                      "item_total": {
+                        "currency_code": "JPY",
+                        "value": "49.00"
+                      }
+                    }
+                  },
+                  "purchase_units": [
+                    {
+                      "amount": {
+                        "currency_code": "JPY",
+                        "value": "49.00"
+                      }
+                    }
+                  ]
                 },
                 "blockCapture": false,
                 "save": "b"
               },
-              "result": "PayPal order 9KN06965G93801145, approved, capture COMPLETED, shop order FOG-697EC2 fulfilled"
+              "result": "PayPal order 2BG12318TL3427916, approved, capture COMPLETED, shop order FOG-329F7B fulfilled"
             }
           ],
           "mismatches": []
         },
         {
-          "name": "Capture pointed at larger order",
-          "idea": "The capture handler trusts a local order identifier supplied in the capture request body instead of the immutable mapping for the PayPal order in the path, and does not compare the captured amount with the target order total.",
-          "expect": "A $49.00 capture fulfills a separate three-hoodie order instead of only the approved one-hoodie order.",
-          "verdict": "held",
-          "summary": "The books still match PayPal's records: nothing taken.",
-          "steps": [
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/paypal/orders",
-                "body": {
-                  "items": [
-                    {
-                      "sku": "FOG-HOODIE",
-                      "qty": 3
-                    }
-                  ],
-                  "email": "cross@example.com"
-                },
-                "times": 1,
-                "together": false,
-                "save": "a"
-              },
-              "result": "HTTP 200 {\"id\":\"2RW524077F1283107\",\"paypalOrderId\":\"2RW524077F1283107\",\"orderId\":\"FOG-D1EAC7\",\"localOrderId\":\"FOG-D1EAC7\",\"status\":\"pending\"}"
-            },
-            {
-              "step": {
-                "do": "buy",
-                "tamper": {
-                  "email": "cross@example.com"
-                },
-                "blockCapture": true,
-                "save": "b"
-              },
-              "result": "PayPal order 33J834783U957441Y, approved, capture APPROVED, shop order FOG-242192 pending"
-            },
-            {
-              "step": {
-                "do": "request",
-                "method": "POST",
-                "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
-                "body": {
-                  "orderId": "{{a.body.orderId}}",
-                  "localOrderId": "{{a.body.orderId}}",
-                  "shopOrderId": "{{a.body.orderId}}",
-                  "custom_id": "{{a.body.orderId}}",
-                  "invoice_id": "{{a.body.orderId}}"
-                },
-                "times": 1,
-                "together": false,
-                "save": "c"
-              },
-              "result": "HTTP 200 {\"orderId\":\"FOG-242192\",\"id\":\"33J834783U957441Y\",\"paypalOrderId\":\"33J834783U957441Y\",\"captureId\":\"0MD753525R879415V\",\"status\":\"fulfilled\"}"
-            }
-          ],
-          "mismatches": []
-        },
-        {
-          "name": "Legit capture webhook remapped",
-          "idea": "The webhook handler retrieves the genuinely COMPLETED capture by its ID but trusts edited custom_id and invoice_id routing fields, without binding that capture to the target order's PayPal order or detecting that it already paid the legit order.",
-          "expect": "An approved-but-never-captured order is fulfilled from the legit $49.00 capture, yielding a second hoodie for the same payment.",
+          "name": "Approve small, swap latest order",
+          "idea": "After approval, creating another shop order may replace a session or latest-order pointer; capturing the first PayPal order might then fulfil the newest local order instead of the order bound to that PayPal ID.",
+          "expect": "Five hoodies shipped for the $49 captured from the first approved order.",
           "verdict": "held",
           "summary": "The books still match PayPal's records: nothing taken.",
           "steps": [
@@ -643,43 +605,7 @@
                 "blockCapture": true,
                 "save": "b"
               },
-              "result": "PayPal order 9P298978M7168324M, approved, capture APPROVED, shop order FOG-B8D877 pending"
-            },
-            {
-              "step": {
-                "do": "webhook",
-                "event": "PAYMENT.CAPTURE.COMPLETED",
-                "edit": {
-                  "resource.id": "{{legit.captureId}}",
-                  "resource.custom_id": "{{b.shopOrderId}}",
-                  "resource.invoice_id": "{{b.shopOrderId}}",
-                  "resource.supplementary_data.related_ids.order_id": "{{b.paypalOrderId}}"
-                },
-                "signed": true,
-                "times": 1
-              },
-              "result": "resent PAYMENT.CAPTURE.COMPLETED WH-7LR49418HY4954258-1SY43819SW1479745 (edited, with PayPal's headers): shop answered 401"
-            }
-          ],
-          "mismatches": []
-        },
-        {
-          "name": "Latest-order capture mix-up",
-          "idea": "Capture resolution uses the shopper session or email's most recently created pending order rather than the local order originally associated with the PayPal order being captured.",
-          "expect": "Capturing the approved $49.00 PayPal order fulfills the newer three-hoodie order created afterward.",
-          "verdict": "held",
-          "summary": "The books still match PayPal's records: nothing taken.",
-          "steps": [
-            {
-              "step": {
-                "do": "buy",
-                "tamper": {
-                  "email": "shared@example.com"
-                },
-                "blockCapture": true,
-                "save": "b"
-              },
-              "result": "PayPal order 8RM05874YY723104S, approved, capture APPROVED, shop order FOG-5A9B18 pending"
+              "result": "PayPal order 09T52168D1195304G, approved, capture APPROVED, shop order FOG-177DB9 pending"
             },
             {
               "step": {
@@ -690,36 +616,75 @@
                   "items": [
                     {
                       "sku": "FOG-HOODIE",
-                      "qty": 3
+                      "qty": 5
                     }
-                  ],
-                  "email": "shared@example.com"
+                  ]
                 },
                 "times": 1,
                 "together": false,
-                "save": "a"
+                "save": "c"
               },
-              "result": "HTTP 200 {\"id\":\"63T29565G8522104V\",\"paypalOrderId\":\"63T29565G8522104V\",\"orderId\":\"FOG-65D8A3\",\"localOrderId\":\"FOG-65D8A3\",\"status\":\"pending\"}"
+              "result": "HTTP 200 {\"id\":\"4M8583737T000000F\",\"paypalOrderId\":\"4M8583737T000000F\",\"orderId\":\"FOG-2C674B\",\"status\":\"CREATED\"}"
             },
             {
               "step": {
                 "do": "request",
                 "method": "POST",
                 "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
-                "body": {},
+                "body": {
+                  "orderId": "{{c.body.orderId}}",
+                  "shopOrderId": "{{c.body.orderId}}"
+                },
                 "times": 1,
                 "together": false,
-                "save": "c"
+                "save": "a"
               },
-              "result": "HTTP 200 {\"orderId\":\"FOG-5A9B18\",\"id\":\"8RM05874YY723104S\",\"paypalOrderId\":\"8RM05874YY723104S\",\"captureId\":\"6X42701584041140X\",\"status\":\"fulfilled\"}"
+              "result": "HTTP 200 {\"orderId\":\"FOG-177DB9\",\"id\":\"09T52168D1195304G\",\"paypalOrderId\":\"09T52168D1195304G\",\"status\":\"fulfilled\"}"
             }
           ],
           "mismatches": []
         },
         {
-          "name": "Card order with borrowed proof",
-          "idea": "The card checkout or its shared order builder accepts client-supplied fulfillment and payment-proof fields after, or instead of, the card processor result, and does not check that the supplied PayPal capture is unused or belongs to this order.",
-          "expect": "Two hoodies are fulfilled despite the card being declined and no new payment being captured.",
+          "name": "Capture body supplies old capture",
+          "idea": "The capture endpoint may trust captureId and status supplied in its request body instead of obtaining and binding a capture from the PayPal order in the path.",
+          "expect": "The newly approved order is fulfilled although its own PayPal order is never captured; the earlier $49 capture is reused.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "buy",
+                "tamper": {},
+                "blockCapture": true,
+                "save": "b"
+              },
+              "result": "PayPal order 3G6048674Y141861C, approved, capture APPROVED, shop order FOG-BBC303 pending"
+            },
+            {
+              "step": {
+                "do": "request",
+                "method": "POST",
+                "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+                "body": {
+                  "captureId": "{{legit.captureId}}",
+                  "paypalCaptureId": "{{legit.captureId}}",
+                  "capture_id": "{{legit.captureId}}",
+                  "status": "COMPLETED",
+                  "state": "COMPLETED"
+                },
+                "times": 1,
+                "together": false,
+                "save": "a"
+              },
+              "result": "HTTP 200 {\"orderId\":\"FOG-BBC303\",\"id\":\"3G6048674Y141861C\",\"paypalOrderId\":\"3G6048674Y141861C\",\"status\":\"fulfilled\"}"
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Born-fulfilled order",
+          "idea": "Order creation may mass-assign status, payment, or capture fields from the client, allowing an order to be created already treated as paid and reusing an earlier capture identifier.",
+          "expect": "Two hoodies shipped with no approval or capture for the new order.",
           "verdict": "held",
           "summary": "The books still match PayPal's records: nothing taken.",
           "steps": [
@@ -727,7 +692,7 @@
               "step": {
                 "do": "request",
                 "method": "POST",
-                "path": "/api/checkout/card",
+                "path": "/api/paypal/orders",
                 "body": {
                   "items": [
                     {
@@ -735,27 +700,52 @@
                       "qty": 2
                     }
                   ],
-                  "email": "cardproof@example.com",
-                  "card": {
-                    "number": "4000000000000002",
-                    "exp": "12/34",
-                    "cvc": "123"
-                  },
                   "status": "fulfilled",
-                  "paymentStatus": "paid",
                   "paid": true,
+                  "paymentStatus": "COMPLETED",
+                  "captureStatus": "COMPLETED",
                   "captureId": "{{legit.captureId}}",
-                  "paypalOrderId": "{{legit.paypalOrderId}}",
-                  "payment": {
-                    "status": "COMPLETED",
-                    "captureId": "{{legit.captureId}}"
-                  }
+                  "paypalCaptureId": "{{legit.captureId}}",
+                  "paypalOrderId": "{{legit.paypalOrderId}}"
                 },
                 "times": 1,
                 "together": false,
                 "save": "a"
               },
-              "result": "HTTP 402 {\"error\":\"Your card was declined.\",\"orderId\":\"FOG-711CEE\"}"
+              "result": "HTTP 200 {\"id\":\"6HC40760RV4846217\",\"paypalOrderId\":\"6HC40760RV4846217\",\"orderId\":\"FOG-A06C11\",\"status\":\"CREATED\"}"
+            }
+          ],
+          "mismatches": []
+        },
+        {
+          "name": "Cross-order webhook retarget",
+          "idea": "The webhook handler may route by the edited resource.custom_id and merely check that resource.id is a real completed $49 capture, without requiring that capture's original shop order or PayPal order to match the routed order.",
+          "expect": "The newly approved but uncaptured order is fulfilled using the earlier order's completed capture.",
+          "verdict": "held",
+          "summary": "The books still match PayPal's records: nothing taken.",
+          "steps": [
+            {
+              "step": {
+                "do": "buy",
+                "tamper": {},
+                "blockCapture": true,
+                "save": "b"
+              },
+              "result": "PayPal order 4BT11287T8561993U, approved, capture APPROVED, shop order FOG-E6792B pending"
+            },
+            {
+              "step": {
+                "do": "webhook",
+                "event": "PAYMENT.CAPTURE.COMPLETED",
+                "edit": {
+                  "resource.id": "{{legit.captureId}}",
+                  "resource.custom_id": "{{b.shopOrderId}}",
+                  "resource.supplementary_data.related_ids.order_id": "{{b.paypalOrderId}}"
+                },
+                "signed": true,
+                "times": 1
+              },
+              "result": "resent PAYMENT.CAPTURE.COMPLETED WH-6GF3641077312405S-5WS977557K3293142 (edited, with PayPal's headers): shop answered 400"
             }
           ],
           "mismatches": []

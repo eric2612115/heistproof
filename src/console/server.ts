@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ROOT, PORTS } from "../config.ts";
 import { events } from "../events.ts";
-import { summarize, brokenShots } from "./summary.ts";
+import { summarize, shotInfo } from "./summary.ts";
 
 const STATIC = path.join(ROOT, "console");
 const RUN_DIRS = [path.join(ROOT, "runs"), path.join(ROOT, ".heistproof", "runs")];
@@ -44,11 +44,12 @@ const server = http.createServer((req, res) => {
     const dir = findRun(parts[2]);
     if (!dir) return send(res, 404, JSON.stringify({ error: "no such run" }));
     if (parts.length === 3) {
-      // Back-office screenshots that caught an error page instead of the back office are listed, so the console skips them.
-      const all = fs.readdirSync(dir);
-      const broken = brokenShots(dir, all);
-      const files = all.filter((f) => !broken.includes(f));
-      return send(res, 200, JSON.stringify({ id: parts[2], events: events(dir), files, brokenShots: broken }));
+      // Back-office screenshots that caught an error page instead of the back office are listed, so the console skips them;
+      // byte-for-byte copies and the outlined order on each back-office page are listed too (see shotInfo).
+      const all = fs.readdirSync(dir).filter((f) => !f.endsWith(".db"));
+      const info = shotInfo(dir, all);
+      const files = all.filter((f) => !info.brokenShots.includes(f));
+      return send(res, 200, JSON.stringify({ id: parts[2], events: events(dir), files, ...info }));
     }
     if (parts[3] === "file" && parts[4]) {
       const name = path.basename(decodeURIComponent(parts[4]));

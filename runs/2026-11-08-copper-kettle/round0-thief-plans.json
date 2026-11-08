@@ -1,45 +1,80 @@
 {
   "plans": [
     {
-      "name": "Partial capture amount",
-      "idea": "The create-order price is checked, but the capture endpoint forwards a client-supplied capture amount to PayPal or fails to compare the captured amount with the $64 order total.",
-      "expect": "Only $0.01 is captured, yet the kettle order is marked shipped.",
+      "name": "Old PayPal order, new shop order",
+      "idea": "The capture endpoint may validate only that the PayPal order in the URL is completed for $64, without checking that its purchase-unit reference was not already consumed by KC-F29139 or that it belongs to the newest shop order in the session.",
+      "expect": "A second kettle shipped under the fresh shop order although the only completed PayPal capture already paid for the original order.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal",
+          "body": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              }
+            ],
+            "paypalOrderId": "{{legit.paypalOrderId}}",
+            "custom_id": "{{legit.shopOrderId}}"
+          },
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{legit.paypalOrderId}}/capture",
+          "body": {},
+          "save": "c"
+        }
+      ]
+    },
+    {
+      "name": "Swap basket after approval",
+      "idea": "Capture may resolve the shipment from the latest shop order or cart in the session instead of the shop order permanently bound to the approved PayPal order.",
+      "expect": "Pay $64 for the approved one-kettle PayPal order, but ship the later ten-kettle shop order.",
       "steps": [
         {
           "do": "buy",
-          "tamper": {},
+          "tamper": {
+            "lines": [
+              {
+                "product": "KC-KETTLE",
+                "count": 1
+              }
+            ]
+          },
           "blockCapture": true,
           "save": "b"
         },
         {
           "do": "request",
           "method": "POST",
-          "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
+          "path": "/api/checkout/paypal",
           "body": {
-            "amount": {
-              "currency_code": "USD",
-              "value": "0.01"
-            },
-            "purchase_units": [
+            "lines": [
               {
-                "amount": {
-                  "currency_code": "USD",
-                  "value": "0.01"
-                }
+                "product": "KC-KETTLE",
+                "count": 10
               }
-            ],
-            "final_capture": true
+            ]
           },
-          "times": 1,
-          "together": false,
           "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
+          "body": {},
+          "save": "c"
         }
       ]
     },
     {
-      "name": "Duplicate-line split",
-      "idea": "Pricing deduplicates repeated SKUs, as the browser cart does, while fulfilment sums the raw order lines.",
-      "expect": "Pay $64 once but receive two Copper Kettles.",
+      "name": "Duplicate lines split pricing and fulfilment",
+      "idea": "The browser cart is a Map, so it never sends duplicate SKUs. The server may collapse duplicate lines by product when pricing, while fulfilment may sum the raw lines, or vice versa.",
+      "expect": "Be charged for one kettle but receive ten kettles.",
       "steps": [
         {
           "do": "buy",
@@ -51,7 +86,7 @@
               },
               {
                 "product": "KC-KETTLE",
-                "count": 1
+                "count": 9
               }
             ]
           },
@@ -61,9 +96,9 @@
       ]
     },
     {
-      "name": "Cross-order webhook credit",
-      "idea": "The webhook handler confirms that the supplied capture ID is a real completed PayPal capture, but credits the shop order named by editable body fields without binding that capture to its original order or checking that it was already used.",
-      "expect": "A newly created, unpaid order is shipped using the legitimate order's capture.",
+      "name": "Capture proof supplied in capture body",
+      "idea": "The capture handler may trust a client-supplied capture ID or status, or may verify the legitimate capture globally without binding its related order, custom_id, and payee to this shop order.",
+      "expect": "The fresh unpaid shop order is marked shipped by reusing the legitimate capture as proof for a different PayPal order.",
       "steps": [
         {
           "do": "request",
@@ -77,26 +112,31 @@
               }
             ]
           },
-          "times": 1,
-          "together": false,
           "save": "a"
         },
         {
-          "do": "webhook",
-          "event": "PAYMENT.CAPTURE.COMPLETED",
-          "edit": {
-            "resource.custom_id": "{{a.body.ref}}",
-            "resource.supplementary_data.related_ids.order_id": "{{a.body.paypalOrderId}}"
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{a.body.paypalOrderId}}/capture",
+          "body": {
+            "captureId": "{{legit.captureId}}",
+            "capture_id": "{{legit.captureId}}",
+            "status": "COMPLETED",
+            "state": "shipped",
+            "amount": {
+              "currency_code": "USD",
+              "value": "{{legit.bagTotal}}"
+            },
+            "final_capture": true
           },
-          "signed": true,
-          "times": 1
+          "save": "c"
         }
       ]
     },
     {
-      "name": "Planted payment identity",
-      "idea": "Order creation accepts client-supplied shop-reference, PayPal-order, invoice, or capture identifiers, allowing a new order to share the legitimate paid order's identity; a completely unedited signed webhook then credits the newest matching order.",
-      "expect": "A second kettle is shipped without any new PayPal capture.",
+      "name": "Duplicate reference plus genuine webhook",
+      "idea": "Order creation may mass-assign reference or PayPal-order fields, creating a distinct unpaid record sharing the legitimate order identity. An unedited, correctly signed capture webhook may then be deduplicated against the original record but transition this duplicate record.",
+      "expect": "An extra shipment under a duplicate order record without a new payment, using the genuine signed webhook rather than a forged or merely replayed one.",
       "steps": [
         {
           "do": "request",
@@ -110,17 +150,10 @@
               }
             ],
             "ref": "{{legit.shopOrderId}}",
-            "shopOrderId": "{{legit.shopOrderId}}",
             "custom_id": "{{legit.shopOrderId}}",
-            "reference_id": "{{legit.shopOrderId}}",
-            "invoice_id": "KC-CAEDD9-05c2",
-            "paypalOrderId": "{{legit.paypalOrderId}}",
-            "orderId": "{{legit.paypalOrderId}}",
-            "captureId": "{{legit.captureId}}",
-            "paypalCaptureId": "{{legit.captureId}}"
+            "shopOrderId": "{{legit.shopOrderId}}",
+            "paypalOrderId": "{{legit.paypalOrderId}}"
           },
-          "times": 1,
-          "together": false,
           "save": "a"
         },
         {
@@ -133,61 +166,13 @@
       ]
     },
     {
-      "name": "Currency denomination swap",
-      "idea": "The shop forwards a client-selected currency or validates only the numeric amount 64.00 without requiring USD, so 64 JPY is treated as payment of a $64 basket.",
-      "expect": "Pay ¥64 instead of $64 and receive the kettle.",
+      "name": "Partial amount at capture stage",
+      "idea": "The order may be created and approved for the correct $64, while the separate capture endpoint may forward a client-supplied amount to PayPal or ship on any successful capture without comparing the captured amount with the order total.",
+      "expect": "The kettle ships after capturing only $0.01 of the approved $64 order.",
       "steps": [
         {
           "do": "buy",
           "tamper": {
-            "currency_code": "JPY",
-            "currency": "JPY",
-            "currencyCode": "JPY",
-            "amount": {
-              "currency_code": "JPY",
-              "value": "64.00"
-            },
-            "purchase_units": [
-              {
-                "amount": {
-                  "currency_code": "JPY",
-                  "value": "64.00"
-                },
-                "items": [
-                  {
-                    "name": "Copper Kettle",
-                    "sku": "KC-KETTLE",
-                    "quantity": "1",
-                    "unit_amount": {
-                      "currency_code": "JPY",
-                      "value": "64.00"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "blockCapture": false,
-          "save": "b"
-        }
-      ]
-    },
-    {
-      "name": "Interleaved capture binding",
-      "idea": "The capture handler inconsistently resolves the shop order from session/latest-order state instead of strictly from the PayPal order in the path, and a later sequential capture attempt trusts the already-completed capture to ship the remaining order.",
-      "expect": "Two shop orders are shipped from one $64 PayPal capture.",
-      "steps": [
-        {
-          "do": "buy",
-          "tamper": {},
-          "blockCapture": true,
-          "save": "b"
-        },
-        {
-          "do": "request",
-          "method": "POST",
-          "path": "/api/checkout/paypal",
-          "body": {
             "lines": [
               {
                 "product": "KC-KETTLE",
@@ -195,27 +180,21 @@
               }
             ]
           },
-          "times": 1,
-          "together": false,
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
+          "body": {
+            "amount": {
+              "currency_code": "USD",
+              "value": "0.01"
+            },
+            "final_capture": true
+          },
           "save": "a"
-        },
-        {
-          "do": "request",
-          "method": "POST",
-          "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
-          "body": {},
-          "times": 1,
-          "together": false,
-          "save": "c"
-        },
-        {
-          "do": "request",
-          "method": "POST",
-          "path": "/api/checkout/paypal/{{b.paypalOrderId}}/capture",
-          "body": {},
-          "times": 1,
-          "together": false,
-          "save": "d"
         }
       ]
     }

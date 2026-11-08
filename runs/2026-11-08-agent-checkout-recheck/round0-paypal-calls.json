@@ -1,24 +1,24 @@
 [
   {
-    "at": "2026-11-08T02:50:01.138Z",
+    "at": "2026-11-08T07:18:21.458Z",
     "method": "POST",
     "path": "/v1/oauth2/token",
     "status": 200,
-    "debugId": "f716571e32eb8",
+    "debugId": "f12626063eff5",
     "requestContentType": "application/x-www-form-urlencoded;charset=UTF-8"
   },
   {
-    "at": "2026-11-08T02:50:02.290Z",
+    "at": "2026-11-08T07:18:22.573Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f790333afc837",
+    "debugId": "f546644cc5947",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-DB6380",
+          "reference_id": "FOG-E2BA4B",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -29,8 +29,8 @@
               }
             }
           },
-          "custom_id": "FOG-DB6380",
-          "invoice_id": "FOG-DB6380",
+          "custom_id": "FOG-E2BA4B",
+          "invoice_id": "FOG-E2BA4B",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -46,26 +46,26 @@
       ]
     },
     "responseBody": {
-      "id": "50C40975HT3933002",
+      "id": "66N927835D354941Y",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=50C40975HT3933002",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=66N927835D354941Y",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -73,15 +73,15 @@
     }
   },
   {
-    "at": "2026-11-08T02:50:18.597Z",
+    "at": "2026-11-08T07:18:38.536Z",
     "method": "POST",
-    "path": "/v2/checkout/orders/50C40975HT3933002/capture",
+    "path": "/v2/checkout/orders/66N927835D354941Y/capture",
     "status": 201,
-    "debugId": "f5910591a822d",
+    "debugId": "f426434233a76",
     "requestContentType": "application/json",
     "requestBody": {},
     "responseBody": {
-      "id": "50C40975HT3933002",
+      "id": "66N927835D354941Y",
       "intent": "CAPTURE",
       "status": "COMPLETED",
       "payment_source": {
@@ -100,7 +100,7 @@
       },
       "purchase_units": [
         {
-          "reference_id": "FOG-DB6380",
+          "reference_id": "FOG-E2BA4B",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -132,8 +132,8 @@
             "merchant_id": "DD3R9KG8TPPH2"
           },
           "description": "Fogline Hoodie",
-          "custom_id": "FOG-DB6380",
-          "invoice_id": "FOG-DB6380",
+          "custom_id": "FOG-E2BA4B",
+          "invoice_id": "FOG-E2BA4B",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -164,7 +164,7 @@
           "payments": {
             "captures": [
               {
-                "id": "6FL13610NE362454F",
+                "id": "4UE23465BJ204744J",
                 "status": "COMPLETED",
                 "amount": {
                   "currency_code": "USD",
@@ -192,27 +192,27 @@
                     "value": "46.80"
                   }
                 },
-                "invoice_id": "FOG-DB6380",
-                "custom_id": "FOG-DB6380",
+                "invoice_id": "FOG-E2BA4B",
+                "custom_id": "FOG-E2BA4B",
                 "links": [
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F",
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J",
                     "rel": "self",
                     "method": "GET"
                   },
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F/refund",
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J/refund",
                     "rel": "refund",
                     "method": "POST"
                   },
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
                     "rel": "up",
                     "method": "GET"
                   }
                 ],
-                "create_time": "2026-11-08T02:50:17Z",
-                "update_time": "2026-11-08T02:50:17Z"
+                "create_time": "2026-11-08T07:18:37Z",
+                "update_time": "2026-11-08T07:18:37Z"
               }
             ]
           }
@@ -229,11 +229,11 @@
           "country_code": "US"
         }
       },
-      "create_time": "2026-11-08T02:50:02Z",
-      "update_time": "2026-11-08T02:50:18Z",
+      "create_time": "2026-11-08T07:18:22Z",
+      "update_time": "2026-11-08T07:18:38Z",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
           "rel": "self",
           "method": "GET"
         }
@@ -241,37 +241,297 @@
     }
   },
   {
-    "at": "2026-11-08T02:50:42.617Z",
+    "at": "2026-11-08T07:19:45.250Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f81713759a870",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "FOG-FE5080",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "49.00"
+              }
+            }
+          },
+          "custom_id": "FOG-FE5080",
+          "invoice_id": "FOG-FE5080",
+          "items": [
+            {
+              "name": "Fogline Hoodie",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "49.00"
+              },
+              "quantity": "1",
+              "sku": "FOG-HOODIE"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "3PA15004KW183134U",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3PA15004KW183134U",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=3PA15004KW183134U",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3PA15004KW183134U",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/3PA15004KW183134U/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T07:19:47.556Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f2896428cbd3e",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "FOG-D5007D",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "49.00"
+              }
+            }
+          },
+          "custom_id": "FOG-D5007D",
+          "invoice_id": "FOG-D5007D",
+          "items": [
+            {
+              "name": "Fogline Hoodie",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "49.00"
+              },
+              "quantity": "1",
+              "sku": "FOG-HOODIE"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "6YB01640HX609435M",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6YB01640HX609435M",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=6YB01640HX609435M",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6YB01640HX609435M",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6YB01640HX609435M/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T07:19:49.062Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f1426178c732a",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "FOG-ECF5E7",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "49.00"
+              }
+            }
+          },
+          "custom_id": "FOG-ECF5E7",
+          "invoice_id": "FOG-ECF5E7",
+          "items": [
+            {
+              "name": "Fogline Hoodie",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "49.00"
+              },
+              "quantity": "1",
+              "sku": "FOG-HOODIE"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "70021022SS0280339",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/70021022SS0280339",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=70021022SS0280339",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/70021022SS0280339",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/70021022SS0280339/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T07:19:50.564Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f42851446629d",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "FOG-A71669",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "49.00"
+              }
+            }
+          },
+          "custom_id": "FOG-A71669",
+          "invoice_id": "FOG-A71669",
+          "items": [
+            {
+              "name": "Fogline Hoodie",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "49.00"
+              },
+              "quantity": "1",
+              "sku": "FOG-HOODIE"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "8BT532675S640734U",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8BT532675S640734U",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=8BT532675S640734U",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8BT532675S640734U",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8BT532675S640734U/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T07:19:52.217Z",
     "method": "POST",
     "path": "/v1/oauth2/token",
     "status": 200,
-    "debugId": "f790859374818",
+    "debugId": "f1448726ec265",
     "requestContentType": "application/x-www-form-urlencoded"
   },
   {
-    "at": "2026-11-08T02:50:42.981Z",
+    "at": "2026-11-08T07:19:52.636Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f3620440d3bc7",
+    "debugId": "f1448729d9b8f",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "2afe8bcd-db1f-11f1-ae6a-476339eaa22b",
-      "transmission_sig": "2aSg9HIdb8BlARuN4dAoScoVrZQrNjnhruQ/0fFuxaannWX1cR5lGOjTTzuRqbzxaaPQnO0ZtRfSMngpFDDg3vjGaoBPVHSH4iWecbVvicvNvgUtE3iClHFrDIqmYxniptX3VC5jWMJUTB7nQWoitrwJaL/+FsQnYx+jlUOqpTWjP5krfdQSJaJY2jlcWsJEx+9Fjj4mEDlc5t9Fw2fRFGiIMjXp10YoBv92uBOK4ouaxHocDWYtHUqtmTJcljabtShynJn9zu5uFLKXolR9w1CspQvARGFnZDWT16oHbtO0x58f9H/5WUuE4Pqj/TW781fianD9jQnqkgjC99spEQ==",
-      "transmission_time": "2026-11-08T02:50:33Z",
+      "transmission_id": "b3572e2a-db44-11f1-9e97-a504816fa971",
+      "transmission_sig": "6aW3B8K3a1WMJI0y6ADwkVmY4gQ6720EDK0mQShLwhcqUhX02N7lBufxvpnsW5mHkRZujmm6VD/pSfz0vUcBkDs2IjESezHONqXB9BlS/6Be+Y6MjtpN3jgrDqKVJm8ZjdFuRIFRkcW2HPdUdkSil3tU1qBtEZsepbMlcxlNGgu8kFnkMlTqXS3X8JVFIQ90NDxUU7KSGcFjN7ZPevTD586n2cOAkp8owteZK+Hg0BbEMcs38LE5P2JFzv3ZEvBd+AkaPNh5BvU7XFlV252EI6qZ+MLv/mSwazNwoVZhhISayGzvCs/wFHWi2H/YXhtd8a42aqu8I5mts1EWOoS2pw==",
+      "transmission_time": "2026-11-08T07:19:13Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-4CJ36458KN3422115-8VA91836JC6883627",
+        "id": "WH-50A81783PU575494Y-1XF5799884837322W",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:50:21.557Z",
+        "create_time": "2026-11-08T07:18:41.700Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "6FL13610NE362454F",
+          "id": "4UE23465BJ204744J",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -298,33 +558,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-DB6380",
-          "custom_id": "FOG-DB6380",
+          "invoice_id": "FOG-E2BA4B",
+          "custom_id": "FOG-E2BA4B",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "50C40975HT3933002"
+              "order_id": "66N927835D354941Y"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:50:17Z",
-          "update_time": "2026-11-08T02:50:17Z",
+          "create_time": "2026-11-08T07:18:37Z",
+          "update_time": "2026-11-08T07:18:37Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
               "rel": "up",
               "method": "GET"
             }
@@ -332,12 +592,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -349,17 +609,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:50:45.249Z",
+    "at": "2026-11-08T07:19:52.654Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f817229c362a7",
+    "debugId": "f144872f7e0bf",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-04236D",
+          "reference_id": "FOG-D525D7",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -370,8 +630,8 @@
               }
             }
           },
-          "custom_id": "FOG-04236D",
-          "invoice_id": "FOG-04236D",
+          "custom_id": "FOG-D525D7",
+          "invoice_id": "FOG-D525D7",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -387,26 +647,26 @@
       ]
     },
     "responseBody": {
-      "id": "2RA25889VU715242H",
+      "id": "9LM73526F1308662N",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2RA25889VU715242H",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9LM73526F1308662N",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=2RA25889VU715242H",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=9LM73526F1308662N",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2RA25889VU715242H",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9LM73526F1308662N",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2RA25889VU715242H/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/9LM73526F1308662N/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -414,17 +674,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:50:47.713Z",
+    "at": "2026-11-08T07:19:53.863Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f932923789181",
+    "debugId": "f4904595082a0",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-0752E8",
+          "reference_id": "FOG-101F6F",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -435,8 +695,8 @@
               }
             }
           },
-          "custom_id": "FOG-0752E8",
-          "invoice_id": "FOG-0752E8",
+          "custom_id": "FOG-101F6F",
+          "invoice_id": "FOG-101F6F",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -452,26 +712,26 @@
       ]
     },
     "responseBody": {
-      "id": "85D00868161568800",
+      "id": "56N31912AH9999824",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/85D00868161568800",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/56N31912AH9999824",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=85D00868161568800",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=56N31912AH9999824",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/85D00868161568800",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/56N31912AH9999824",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/85D00868161568800/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/56N31912AH9999824/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -479,17 +739,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:50:48.888Z",
+    "at": "2026-11-08T07:19:55.354Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f444715cbc6cc",
+    "debugId": "f57209254e5a3",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-3F617C",
+          "reference_id": "FOG-C88C54",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -500,8 +760,8 @@
               }
             }
           },
-          "custom_id": "FOG-3F617C",
-          "invoice_id": "FOG-3F617C",
+          "custom_id": "FOG-C88C54",
+          "invoice_id": "FOG-C88C54",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -517,26 +777,26 @@
       ]
     },
     "responseBody": {
-      "id": "8EG38957UR760893F",
+      "id": "83469298DP868814L",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EG38957UR760893F",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/83469298DP868814L",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=8EG38957UR760893F",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=83469298DP868814L",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EG38957UR760893F",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/83469298DP868814L",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EG38957UR760893F/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/83469298DP868814L/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -544,17 +804,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:50:50.515Z",
+    "at": "2026-11-08T07:20:05.744Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f192345668904",
+    "debugId": "f939593cc1b18",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-45E3F7",
+          "reference_id": "FOG-429858",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -565,8 +825,8 @@
               }
             }
           },
-          "custom_id": "FOG-45E3F7",
-          "invoice_id": "FOG-45E3F7",
+          "custom_id": "FOG-429858",
+          "invoice_id": "FOG-429858",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -582,26 +842,26 @@
       ]
     },
     "responseBody": {
-      "id": "2GT711420T770463L",
+      "id": "7TH29502NL927215E",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2GT711420T770463L",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7TH29502NL927215E",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=2GT711420T770463L",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=7TH29502NL927215E",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2GT711420T770463L",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7TH29502NL927215E",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2GT711420T770463L/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7TH29502NL927215E/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -609,271 +869,11 @@
     }
   },
   {
-    "at": "2026-11-08T02:50:52.680Z",
+    "at": "2026-11-08T07:20:07.979Z",
     "method": "POST",
-    "path": "/v2/checkout/orders",
-    "status": 201,
-    "debugId": "f224263edc59a",
-    "requestContentType": "application/json",
-    "requestBody": {
-      "intent": "CAPTURE",
-      "purchase_units": [
-        {
-          "reference_id": "FOG-C93F0B",
-          "amount": {
-            "currency_code": "USD",
-            "value": "49.00",
-            "breakdown": {
-              "item_total": {
-                "currency_code": "USD",
-                "value": "49.00"
-              }
-            }
-          },
-          "custom_id": "FOG-C93F0B",
-          "invoice_id": "FOG-C93F0B",
-          "items": [
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            }
-          ]
-        }
-      ]
-    },
-    "responseBody": {
-      "id": "87S751808R0264025",
-      "status": "CREATED",
-      "links": [
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/87S751808R0264025",
-          "rel": "self",
-          "method": "GET"
-        },
-        {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=87S751808R0264025",
-          "rel": "approve",
-          "method": "GET"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/87S751808R0264025",
-          "rel": "update",
-          "method": "PATCH"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/87S751808R0264025/capture",
-          "rel": "capture",
-          "method": "POST"
-        }
-      ]
-    }
-  },
-  {
-    "at": "2026-11-08T02:50:53.860Z",
-    "method": "POST",
-    "path": "/v2/checkout/orders",
-    "status": 201,
-    "debugId": "f2675921e0c98",
-    "requestContentType": "application/json",
-    "requestBody": {
-      "intent": "CAPTURE",
-      "purchase_units": [
-        {
-          "reference_id": "FOG-66F595",
-          "amount": {
-            "currency_code": "USD",
-            "value": "49.00",
-            "breakdown": {
-              "item_total": {
-                "currency_code": "USD",
-                "value": "49.00"
-              }
-            }
-          },
-          "custom_id": "FOG-66F595",
-          "invoice_id": "FOG-66F595",
-          "items": [
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            }
-          ]
-        }
-      ]
-    },
-    "responseBody": {
-      "id": "7NF99659K8977743H",
-      "status": "CREATED",
-      "links": [
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7NF99659K8977743H",
-          "rel": "self",
-          "method": "GET"
-        },
-        {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=7NF99659K8977743H",
-          "rel": "approve",
-          "method": "GET"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7NF99659K8977743H",
-          "rel": "update",
-          "method": "PATCH"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7NF99659K8977743H/capture",
-          "rel": "capture",
-          "method": "POST"
-        }
-      ]
-    }
-  },
-  {
-    "at": "2026-11-08T02:50:55.018Z",
-    "method": "POST",
-    "path": "/v2/checkout/orders",
-    "status": 201,
-    "debugId": "f128875c56e49",
-    "requestContentType": "application/json",
-    "requestBody": {
-      "intent": "CAPTURE",
-      "purchase_units": [
-        {
-          "reference_id": "FOG-3900CD",
-          "amount": {
-            "currency_code": "USD",
-            "value": "49.00",
-            "breakdown": {
-              "item_total": {
-                "currency_code": "USD",
-                "value": "49.00"
-              }
-            }
-          },
-          "custom_id": "FOG-3900CD",
-          "invoice_id": "FOG-3900CD",
-          "items": [
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            }
-          ]
-        }
-      ]
-    },
-    "responseBody": {
-      "id": "02808489RG455890M",
-      "status": "CREATED",
-      "links": [
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/02808489RG455890M",
-          "rel": "self",
-          "method": "GET"
-        },
-        {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=02808489RG455890M",
-          "rel": "approve",
-          "method": "GET"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/02808489RG455890M",
-          "rel": "update",
-          "method": "PATCH"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/02808489RG455890M/capture",
-          "rel": "capture",
-          "method": "POST"
-        }
-      ]
-    }
-  },
-  {
-    "at": "2026-11-08T02:51:03.712Z",
-    "method": "POST",
-    "path": "/v2/checkout/orders",
-    "status": 201,
-    "debugId": "f838185902f77",
-    "requestContentType": "application/json",
-    "requestBody": {
-      "intent": "CAPTURE",
-      "purchase_units": [
-        {
-          "reference_id": "FOG-55BD01",
-          "amount": {
-            "currency_code": "USD",
-            "value": "49.00",
-            "breakdown": {
-              "item_total": {
-                "currency_code": "USD",
-                "value": "49.00"
-              }
-            }
-          },
-          "custom_id": "FOG-55BD01",
-          "invoice_id": "FOG-55BD01",
-          "items": [
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            }
-          ]
-        }
-      ]
-    },
-    "responseBody": {
-      "id": "5NN28378VE324701U",
-      "status": "CREATED",
-      "links": [
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5NN28378VE324701U",
-          "rel": "self",
-          "method": "GET"
-        },
-        {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=5NN28378VE324701U",
-          "rel": "approve",
-          "method": "GET"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5NN28378VE324701U",
-          "rel": "update",
-          "method": "PATCH"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5NN28378VE324701U/capture",
-          "rel": "capture",
-          "method": "POST"
-        }
-      ]
-    }
-  },
-  {
-    "at": "2026-11-08T02:51:05.085Z",
-    "method": "POST",
-    "path": "/v2/checkout/orders/5NN28378VE324701U/capture",
+    "path": "/v2/checkout/orders/7TH29502NL927215E/capture",
     "status": 422,
-    "debugId": "f469432982429",
+    "debugId": "f310919fd3122",
     "requestContentType": "application/json",
     "requestBody": {},
     "responseBody": {
@@ -885,7 +885,7 @@
         }
       ],
       "message": "The requested action could not be performed, semantically incorrect, or failed business validation.",
-      "debug_id": "f469432982429",
+      "debug_id": "f310919fd3122",
       "links": [
         {
           "href": "https://developer.paypal.com/api/rest/reference/orders/v2/errors/#ORDER_NOT_APPROVED",
@@ -896,17 +896,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:51:18.739Z",
+    "at": "2026-11-08T07:20:19.852Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f87134159f7df",
+    "debugId": "f3809122aa55d",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-D62549",
+          "reference_id": "FOG-C3FEB1",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -917,8 +917,8 @@
               }
             }
           },
-          "custom_id": "FOG-D62549",
-          "invoice_id": "FOG-D62549",
+          "custom_id": "FOG-C3FEB1",
+          "invoice_id": "FOG-C3FEB1",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -934,26 +934,26 @@
       ]
     },
     "responseBody": {
-      "id": "8EV95563ME171724V",
+      "id": "1CU74512949303923",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=8EV95563ME171724V",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=1CU74512949303923",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -961,32 +961,32 @@
     }
   },
   {
-    "at": "2026-11-08T02:51:43.030Z",
+    "at": "2026-11-08T07:20:43.738Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f783274a73beb",
+    "debugId": "f8067827aa62f",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "50b8c02a-db1f-11f1-8118-7bb0380f5607",
-      "transmission_sig": "jQUa/+WA5+8n+qIs6sJ8JQ7jUdWm7kIRKlEEESphqzzP0nLUM6MAtKaWCwIdEDVzcuTVj4hmWWSU5nhlhNB/4we1ZiKWj0pugGzy5R/85U1DrJ+LEw2F5uXid+qgAtupUaPGZhF/bornhRh+q1U8gf/bWcosju0PJkva5+IuCNAJZz84aPp5qcBzbcpQYd7WKmsxtTXsO/w8VvDM9UBMch9lsVxaPufBAX1lgwH4MiCuyc1fseWzEka+F+s+awZLn/g4Kvs59MFpbbkPbKDi7mN+/rH9uJMcsC0vdjTc+igtxOrlz6Vodcw7lGt7lZJG7q/dzgivgo/gVR27eHkkjQ==",
-      "transmission_time": "2026-11-08T02:51:36Z",
+      "transmission_id": "e8289a48-db44-11f1-ae6a-9d88fce911b7",
+      "transmission_sig": "Em5E7DuFtd1NQ76QlPMIdtXq/v7Vlhl7z2ELDuTu5nzN8edIckp/3muhJjNEg68vl53uZJS2rlhPmL1tp3fiCPdi4iKtS51brBoU7HFeSQOJRbgcnLTZ3dijliEpxsJrOxy8BJjxbxIs9tuC0IU4H8IouylU11QWCwqqYRRBtRi58yT6SbIDY2/7bUa/ne71OKIaCT2jtjhZYceI/GfLNjo21ntVfuGh1RoG0mPWEqIij2bJaAjqVI00YiizKNZRrUeKN/B0HQIwobCw6EX0hB8G04bmv3cJXBAqyaZLwipVhNA+Ukx42uF56B7n5ulP2Klu8xb800sOI50HR1kB8w==",
+      "transmission_time": "2026-11-08T07:20:42Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-9TB46812TG807384P-084209447N5802925",
+        "id": "WH-5PU89906MX759024Y-9SB67486D2922902P",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:51:36.635Z",
+        "create_time": "2026-11-08T07:20:42.123Z",
         "resource_type": "checkout-order",
         "resource_version": "2.0",
         "event_type": "CHECKOUT.ORDER.APPROVED",
         "summary": "An order has been approved by buyer",
         "resource": {
-          "create_time": "2026-11-08T02:51:18Z",
+          "create_time": "2026-11-08T07:20:19Z",
           "purchase_units": [
             {
-              "reference_id": "FOG-D62549",
+              "reference_id": "FOG-C3FEB1",
               "amount": {
                 "currency_code": "USD",
                 "value": "49.00",
@@ -1001,8 +1001,8 @@
                 "email_address": "sandbox-merchant@business.example.com",
                 "merchant_id": "DD3R9KG8TPPH2"
               },
-              "custom_id": "FOG-D62549",
-              "invoice_id": "FOG-D62549",
+              "custom_id": "FOG-C3FEB1",
+              "invoice_id": "FOG-C3FEB1",
               "items": [
                 {
                   "name": "Fogline Hoodie",
@@ -1030,22 +1030,22 @@
           ],
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
               "rel": "update",
               "method": "PATCH"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V/capture",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923/capture",
               "rel": "capture",
               "method": "POST"
             }
           ],
-          "id": "8EV95563ME171724V",
+          "id": "1CU74512949303923",
           "payment_source": {
             "paypal": {
               "email_address": "sandbox-buyer@personal.example.com",
@@ -1076,12 +1076,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9TB46812TG807384P-084209447N5802925",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-5PU89906MX759024Y-9SB67486D2922902P",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9TB46812TG807384P-084209447N5802925/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-5PU89906MX759024Y-9SB67486D2922902P/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -1093,17 +1093,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:51:53.360Z",
+    "at": "2026-11-08T07:20:52.878Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f7018343cd006",
+    "debugId": "f827753d7fcbe",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-869434",
+          "reference_id": "FOG-D5417D",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -1114,8 +1114,8 @@
               }
             }
           },
-          "custom_id": "FOG-869434",
-          "invoice_id": "FOG-869434",
+          "custom_id": "FOG-D5417D",
+          "invoice_id": "FOG-D5417D",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -1131,26 +1131,26 @@
       ]
     },
     "responseBody": {
-      "id": "6BR97818NP382605J",
+      "id": "0AP640430R1195602",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6BR97818NP382605J",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=6BR97818NP382605J",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=0AP640430R1195602",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6BR97818NP382605J",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6BR97818NP382605J/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -1158,11 +1158,11 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:10.267Z",
+    "at": "2026-11-08T07:21:10.649Z",
     "method": "POST",
-    "path": "/v2/checkout/orders/6BR97818NP382605J/capture",
+    "path": "/v2/checkout/orders/0AP640430R1195602/capture",
     "status": 422,
-    "debugId": "f6953123b9705",
+    "debugId": "f9677814354af",
     "injected": "{\"mock_application_codes\":\"INSTRUMENT_DECLINED\"}",
     "requestContentType": "application/json",
     "requestBody": {},
@@ -1186,14 +1186,146 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:28.490Z",
-    "method": "GET",
-    "path": "/v2/checkout/orders/8EV95563ME171724V",
+    "at": "2026-11-08T07:21:13.356Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f685017500aa0",
+    "debugId": "f673486b0bee2",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "f9d17a6e-db44-11f1-98c7-2dc37b85fc70",
+      "transmission_sig": "UWYZPUxD4w6cixR/WhkYdkv+XFd/QwKDbia8GSPdKo+XIfGrcxJJGlXLn19O8tccAF6Hb/KCRQ2ScxSIRKAgTCbDBeP844/OfM+DCJlJDYB7OLdxqyCLJ+cbKo4T25UycABDhYwyBZCY0PvJ8eSI1N1AIld4Dxl7RqxImbYG1N3fOevtmHzQ5AUxj49PrdUlz/UXCjSiYtA6K5OIxN7YYFJ0XUm4nUXg7mvfYwb9sBoX3oBByOktGhSHAUmVhLoeL6D6JTeyoyKEdWNL9XfCTmByfuPt3udFz2kXL/yTo0hnN/Frn35FQvw6TOlIED5zhWyacvLyrLaBIBRlEbm8tA==",
+      "transmission_time": "2026-11-08T07:21:12Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-2ND92286DE7130033-3CR53334VU054074R",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T07:21:11.805Z",
+        "resource_type": "checkout-order",
+        "resource_version": "2.0",
+        "event_type": "CHECKOUT.ORDER.APPROVED",
+        "summary": "An order has been approved by buyer",
+        "resource": {
+          "create_time": "2026-11-08T07:20:52Z",
+          "purchase_units": [
+            {
+              "reference_id": "FOG-D5417D",
+              "amount": {
+                "currency_code": "USD",
+                "value": "49.00",
+                "breakdown": {
+                  "item_total": {
+                    "currency_code": "USD",
+                    "value": "49.00"
+                  }
+                }
+              },
+              "payee": {
+                "email_address": "sandbox-merchant@business.example.com",
+                "merchant_id": "DD3R9KG8TPPH2"
+              },
+              "custom_id": "FOG-D5417D",
+              "invoice_id": "FOG-D5417D",
+              "items": [
+                {
+                  "name": "Fogline Hoodie",
+                  "unit_amount": {
+                    "currency_code": "USD",
+                    "value": "49.00"
+                  },
+                  "quantity": "1",
+                  "sku": "FOG-HOODIE"
+                }
+              ],
+              "shipping": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "2211 N First St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602",
+              "rel": "update",
+              "method": "PATCH"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602/capture",
+              "rel": "capture",
+              "method": "POST"
+            }
+          ],
+          "id": "0AP640430R1195602",
+          "payment_source": {
+            "paypal": {
+              "email_address": "sandbox-buyer@personal.example.com",
+              "account_id": "V7ERP7YJL2X38",
+              "account_status": "VERIFIED",
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "address": {
+                "country_code": "US"
+              }
+            }
+          },
+          "intent": "CAPTURE",
+          "payer": {
+            "name": {
+              "given_name": "John",
+              "surname": "Doe"
+            },
+            "email_address": "sandbox-buyer@personal.example.com",
+            "payer_id": "V7ERP7YJL2X38",
+            "address": {
+              "country_code": "US"
+            }
+          },
+          "status": "APPROVED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2ND92286DE7130033-3CR53334VU054074R",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2ND92286DE7130033-3CR53334VU054074R/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T07:21:29.814Z",
+    "method": "GET",
+    "path": "/v2/checkout/orders/1CU74512949303923",
+    "status": 200,
+    "debugId": "f535088729b7c",
     "requestContentType": null,
     "responseBody": {
-      "id": "8EV95563ME171724V",
+      "id": "1CU74512949303923",
       "intent": "CAPTURE",
       "status": "APPROVED",
       "payment_source": {
@@ -1212,7 +1344,7 @@
       },
       "purchase_units": [
         {
-          "reference_id": "FOG-D62549",
+          "reference_id": "FOG-C3FEB1",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -1227,8 +1359,8 @@
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "custom_id": "FOG-D62549",
-          "invoice_id": "FOG-D62549",
+          "custom_id": "FOG-C3FEB1",
+          "invoice_id": "FOG-C3FEB1",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -1265,20 +1397,20 @@
           "country_code": "US"
         }
       },
-      "create_time": "2026-11-08T02:51:18Z",
+      "create_time": "2026-11-08T07:20:19Z",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -1286,15 +1418,15 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:29.048Z",
+    "at": "2026-11-08T07:21:30.765Z",
     "method": "POST",
-    "path": "/v2/checkout/orders/8EV95563ME171724V/capture",
+    "path": "/v2/checkout/orders/1CU74512949303923/capture",
     "status": 201,
-    "debugId": "f5088614059b8",
+    "debugId": "f535088678e56",
     "requestContentType": "application/json",
     "requestBody": {},
     "responseBody": {
-      "id": "8EV95563ME171724V",
+      "id": "1CU74512949303923",
       "intent": "CAPTURE",
       "status": "COMPLETED",
       "payment_source": {
@@ -1313,7 +1445,7 @@
       },
       "purchase_units": [
         {
-          "reference_id": "FOG-D62549",
+          "reference_id": "FOG-C3FEB1",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -1345,8 +1477,8 @@
             "merchant_id": "DD3R9KG8TPPH2"
           },
           "description": "Fogline Hoodie",
-          "custom_id": "FOG-D62549",
-          "invoice_id": "FOG-D62549",
+          "custom_id": "FOG-C3FEB1",
+          "invoice_id": "FOG-C3FEB1",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -1377,7 +1509,7 @@
           "payments": {
             "captures": [
               {
-                "id": "0VX776626G614152B",
+                "id": "9UY86112949513411",
                 "status": "COMPLETED",
                 "amount": {
                   "currency_code": "USD",
@@ -1405,27 +1537,27 @@
                     "value": "46.80"
                   }
                 },
-                "invoice_id": "FOG-D62549",
-                "custom_id": "FOG-D62549",
+                "invoice_id": "FOG-C3FEB1",
+                "custom_id": "FOG-C3FEB1",
                 "links": [
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/0VX776626G614152B",
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/9UY86112949513411",
                     "rel": "self",
                     "method": "GET"
                   },
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/0VX776626G614152B/refund",
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/9UY86112949513411/refund",
                     "rel": "refund",
                     "method": "POST"
                   },
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
                     "rel": "up",
                     "method": "GET"
                   }
                 ],
-                "create_time": "2026-11-08T02:52:28Z",
-                "update_time": "2026-11-08T02:52:28Z"
+                "create_time": "2026-11-08T07:21:29Z",
+                "update_time": "2026-11-08T07:21:29Z"
               }
             ]
           }
@@ -1442,11 +1574,11 @@
           "country_code": "US"
         }
       },
-      "create_time": "2026-11-08T02:51:18Z",
-      "update_time": "2026-11-08T02:52:28Z",
+      "create_time": "2026-11-08T07:20:19Z",
+      "update_time": "2026-11-08T07:21:30Z",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
           "rel": "self",
           "method": "GET"
         }
@@ -1454,17 +1586,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:36.637Z",
+    "at": "2026-11-08T07:21:39.010Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f56636015833a",
+    "debugId": "f312996aee94d",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-F9F761",
+          "reference_id": "FOG-BEA816",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -1475,8 +1607,8 @@
               }
             }
           },
-          "custom_id": "FOG-F9F761",
-          "invoice_id": "FOG-F9F761",
+          "custom_id": "FOG-BEA816",
+          "invoice_id": "FOG-BEA816",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -1492,26 +1624,26 @@
       ]
     },
     "responseBody": {
-      "id": "37U479556H694393W",
+      "id": "8S352817CL3807212",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/37U479556H694393W",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8S352817CL3807212",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=37U479556H694393W",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=8S352817CL3807212",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/37U479556H694393W",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8S352817CL3807212",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/37U479556H694393W/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8S352817CL3807212/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -1519,24 +1651,24 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:39.108Z",
+    "at": "2026-11-08T07:21:41.360Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 400,
-    "debugId": "f89041911ccb9",
+    "debugId": "f68999770e111",
     "requestContentType": "application/json",
     "requestBody": {
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-FORGED-1794106358159",
+        "id": "WH-FORGED-1794122500542",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:50:21.557Z",
+        "create_time": "2026-11-08T07:18:41.700Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "FORGED1794106358159",
+          "id": "FORGED1794122500542",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -1563,33 +1695,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-F9F761",
-          "custom_id": "FOG-F9F761",
+          "invoice_id": "FOG-BEA816",
+          "custom_id": "FOG-BEA816",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "37U479556H694393W"
+              "order_id": "8S352817CL3807212"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:50:17Z",
-          "update_time": "2026-11-08T02:50:17Z",
+          "create_time": "2026-11-08T07:18:37Z",
+          "update_time": "2026-11-08T07:18:37Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
               "rel": "up",
               "method": "GET"
             }
@@ -1597,12 +1729,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -1612,7 +1744,7 @@
     "responseBody": {
       "name": "VALIDATION_ERROR",
       "message": "Invalid data provided",
-      "debug_id": "f89041911ccb9",
+      "debug_id": "f68999770e111",
       "information_link": "https://developer.paypal.com/docs/api/webhooks/#errors",
       "details": [
         {
@@ -1645,29 +1777,29 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:40.046Z",
+    "at": "2026-11-08T07:21:41.739Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f5483117c6501",
+    "debugId": "f68999760b842",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "2afe8bcd-db1f-11f1-ae6a-476339eaa22b",
-      "transmission_sig": "2aSg9HIdb8BlARuN4dAoScoVrZQrNjnhruQ/0fFuxaannWX1cR5lGOjTTzuRqbzxaaPQnO0ZtRfSMngpFDDg3vjGaoBPVHSH4iWecbVvicvNvgUtE3iClHFrDIqmYxniptX3VC5jWMJUTB7nQWoitrwJaL/+FsQnYx+jlUOqpTWjP5krfdQSJaJY2jlcWsJEx+9Fjj4mEDlc5t9Fw2fRFGiIMjXp10YoBv92uBOK4ouaxHocDWYtHUqtmTJcljabtShynJn9zu5uFLKXolR9w1CspQvARGFnZDWT16oHbtO0x58f9H/5WUuE4Pqj/TW781fianD9jQnqkgjC99spEQ==",
-      "transmission_time": "2026-11-08T02:50:33Z",
+      "transmission_id": "09315453-db45-11f1-ae6a-551bf301e7d9",
+      "transmission_sig": "ACeUqRK4kzOoAA1aTir7QO8IdlyeTZLR6OA8XMEIsyEj2w0Q9I+FOLWEOmKPOsafED9u0YSphcUMzSbc1P90FB5J6TEehGQZqG0u1TE+75hQN+52iMwrn+rcIgxSX5m2rPpxiPexVUzskvlvu+4PvEuSqEoCG7+GQ3JcjOqUMBDu8+XqGeY2aFen9J04DgiJtNH/NAU2g7DJZ4/evfwMZGfLJGNkRFTL3kVntqUl4Yt9/mAa5Ns8h1k1kkxPvUHbt64BhECP+jI9ntsLtOWKje2tVKQw1nitMQQ0kkU1PGTYHtH7VU+0pMEVIsps2vWX8DaguWyrPLM9V+eo3s8Kwg==",
+      "transmission_time": "2026-11-08T07:21:37Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-FORGED-1794106359109",
+        "id": "WH-41J65093AX4617112-5XF97098P2552730T",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:50:21.557Z",
+        "create_time": "2026-11-08T07:21:34.123Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "FORGED1794106359109",
+          "id": "9UY86112949513411",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -1694,33 +1826,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-F9F761",
-          "custom_id": "FOG-F9F761",
+          "invoice_id": "FOG-C3FEB1",
+          "custom_id": "FOG-C3FEB1",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "37U479556H694393W"
+              "order_id": "1CU74512949303923"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:50:17Z",
-          "update_time": "2026-11-08T02:50:17Z",
+          "create_time": "2026-11-08T07:21:29Z",
+          "update_time": "2026-11-08T07:21:29Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/9UY86112949513411",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/9UY86112949513411/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
               "rel": "up",
               "method": "GET"
             }
@@ -1728,12 +1860,112 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41J65093AX4617112-5XF97098P2552730T",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-41J65093AX4617112-5XF97098P2552730T/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T07:21:42.190Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "f6899976349a9",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "b3572e2a-db44-11f1-9e97-a504816fa971",
+      "transmission_sig": "6aW3B8K3a1WMJI0y6ADwkVmY4gQ6720EDK0mQShLwhcqUhX02N7lBufxvpnsW5mHkRZujmm6VD/pSfz0vUcBkDs2IjESezHONqXB9BlS/6Be+Y6MjtpN3jgrDqKVJm8ZjdFuRIFRkcW2HPdUdkSil3tU1qBtEZsepbMlcxlNGgu8kFnkMlTqXS3X8JVFIQ90NDxUU7KSGcFjN7ZPevTD586n2cOAkp8owteZK+Hg0BbEMcs38LE5P2JFzv3ZEvBd+AkaPNh5BvU7XFlV252EI6qZ+MLv/mSwazNwoVZhhISayGzvCs/wFHWi2H/YXhtd8a42aqu8I5mts1EWOoS2pw==",
+      "transmission_time": "2026-11-08T07:19:13Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-FORGED-1794122501363",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T07:18:41.700Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 49.0 USD",
+        "resource": {
+          "id": "FORGED1794122501363",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "49.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.20"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "46.80"
+            }
+          },
+          "invoice_id": "FOG-BEA816",
+          "custom_id": "FOG-BEA816",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "8S352817CL3807212"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T07:18:37Z",
+          "update_time": "2026-11-08T07:18:37Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -1745,29 +1977,29 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:46.892Z",
+    "at": "2026-11-08T07:21:49.050Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f496549e7d443",
+    "debugId": "f6734201ea94d",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "2afe8bcd-db1f-11f1-ae6a-476339eaa22b",
-      "transmission_sig": "2aSg9HIdb8BlARuN4dAoScoVrZQrNjnhruQ/0fFuxaannWX1cR5lGOjTTzuRqbzxaaPQnO0ZtRfSMngpFDDg3vjGaoBPVHSH4iWecbVvicvNvgUtE3iClHFrDIqmYxniptX3VC5jWMJUTB7nQWoitrwJaL/+FsQnYx+jlUOqpTWjP5krfdQSJaJY2jlcWsJEx+9Fjj4mEDlc5t9Fw2fRFGiIMjXp10YoBv92uBOK4ouaxHocDWYtHUqtmTJcljabtShynJn9zu5uFLKXolR9w1CspQvARGFnZDWT16oHbtO0x58f9H/5WUuE4Pqj/TW781fianD9jQnqkgjC99spEQ==",
-      "transmission_time": "2026-11-08T02:50:33Z",
+      "transmission_id": "b3572e2a-db44-11f1-9e97-a504816fa971",
+      "transmission_sig": "6aW3B8K3a1WMJI0y6ADwkVmY4gQ6720EDK0mQShLwhcqUhX02N7lBufxvpnsW5mHkRZujmm6VD/pSfz0vUcBkDs2IjESezHONqXB9BlS/6Be+Y6MjtpN3jgrDqKVJm8ZjdFuRIFRkcW2HPdUdkSil3tU1qBtEZsepbMlcxlNGgu8kFnkMlTqXS3X8JVFIQ90NDxUU7KSGcFjN7ZPevTD586n2cOAkp8owteZK+Hg0BbEMcs38LE5P2JFzv3ZEvBd+AkaPNh5BvU7XFlV252EI6qZ+MLv/mSwazNwoVZhhISayGzvCs/wFHWi2H/YXhtd8a42aqu8I5mts1EWOoS2pw==",
+      "transmission_time": "2026-11-08T07:19:13Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-4CJ36458KN3422115-8VA91836JC6883627",
+        "id": "WH-50A81783PU575494Y-1XF5799884837322W",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:50:21.557Z",
+        "create_time": "2026-11-08T07:18:41.700Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "6FL13610NE362454F",
+          "id": "4UE23465BJ204744J",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -1794,33 +2026,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-DB6380",
-          "custom_id": "FOG-DB6380",
+          "invoice_id": "FOG-E2BA4B",
+          "custom_id": "FOG-E2BA4B",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "50C40975HT3933002"
+              "order_id": "66N927835D354941Y"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:50:17Z",
-          "update_time": "2026-11-08T02:50:17Z",
+          "create_time": "2026-11-08T07:18:37Z",
+          "update_time": "2026-11-08T07:18:37Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
               "rel": "up",
               "method": "GET"
             }
@@ -1828,12 +2060,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -1845,29 +2077,29 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:47.855Z",
+    "at": "2026-11-08T07:21:49.400Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f36068189c6f9",
+    "debugId": "f353714f2ebbc",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "2afe8bcd-db1f-11f1-ae6a-476339eaa22b",
-      "transmission_sig": "2aSg9HIdb8BlARuN4dAoScoVrZQrNjnhruQ/0fFuxaannWX1cR5lGOjTTzuRqbzxaaPQnO0ZtRfSMngpFDDg3vjGaoBPVHSH4iWecbVvicvNvgUtE3iClHFrDIqmYxniptX3VC5jWMJUTB7nQWoitrwJaL/+FsQnYx+jlUOqpTWjP5krfdQSJaJY2jlcWsJEx+9Fjj4mEDlc5t9Fw2fRFGiIMjXp10YoBv92uBOK4ouaxHocDWYtHUqtmTJcljabtShynJn9zu5uFLKXolR9w1CspQvARGFnZDWT16oHbtO0x58f9H/5WUuE4Pqj/TW781fianD9jQnqkgjC99spEQ==",
-      "transmission_time": "2026-11-08T02:50:33Z",
+      "transmission_id": "b3572e2a-db44-11f1-9e97-a504816fa971",
+      "transmission_sig": "6aW3B8K3a1WMJI0y6ADwkVmY4gQ6720EDK0mQShLwhcqUhX02N7lBufxvpnsW5mHkRZujmm6VD/pSfz0vUcBkDs2IjESezHONqXB9BlS/6Be+Y6MjtpN3jgrDqKVJm8ZjdFuRIFRkcW2HPdUdkSil3tU1qBtEZsepbMlcxlNGgu8kFnkMlTqXS3X8JVFIQ90NDxUU7KSGcFjN7ZPevTD586n2cOAkp8owteZK+Hg0BbEMcs38LE5P2JFzv3ZEvBd+AkaPNh5BvU7XFlV252EI6qZ+MLv/mSwazNwoVZhhISayGzvCs/wFHWi2H/YXhtd8a42aqu8I5mts1EWOoS2pw==",
+      "transmission_time": "2026-11-08T07:19:13Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-4CJ36458KN3422115-8VA91836JC6883627",
+        "id": "WH-50A81783PU575494Y-1XF5799884837322W",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:50:21.557Z",
+        "create_time": "2026-11-08T07:18:41.700Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "6FL13610NE362454F",
+          "id": "4UE23465BJ204744J",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -1894,33 +2126,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-DB6380",
-          "custom_id": "FOG-DB6380",
+          "invoice_id": "FOG-E2BA4B",
+          "custom_id": "FOG-E2BA4B",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "50C40975HT3933002"
+              "order_id": "66N927835D354941Y"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:50:17Z",
-          "update_time": "2026-11-08T02:50:17Z",
+          "create_time": "2026-11-08T07:18:37Z",
+          "update_time": "2026-11-08T07:18:37Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
               "rel": "up",
               "method": "GET"
             }
@@ -1928,12 +2160,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -1945,29 +2177,29 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:48.799Z",
+    "at": "2026-11-08T07:21:49.768Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f2516734ca915",
+    "debugId": "f18399134efa3",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "2afe8bcd-db1f-11f1-ae6a-476339eaa22b",
-      "transmission_sig": "2aSg9HIdb8BlARuN4dAoScoVrZQrNjnhruQ/0fFuxaannWX1cR5lGOjTTzuRqbzxaaPQnO0ZtRfSMngpFDDg3vjGaoBPVHSH4iWecbVvicvNvgUtE3iClHFrDIqmYxniptX3VC5jWMJUTB7nQWoitrwJaL/+FsQnYx+jlUOqpTWjP5krfdQSJaJY2jlcWsJEx+9Fjj4mEDlc5t9Fw2fRFGiIMjXp10YoBv92uBOK4ouaxHocDWYtHUqtmTJcljabtShynJn9zu5uFLKXolR9w1CspQvARGFnZDWT16oHbtO0x58f9H/5WUuE4Pqj/TW781fianD9jQnqkgjC99spEQ==",
-      "transmission_time": "2026-11-08T02:50:33Z",
+      "transmission_id": "b3572e2a-db44-11f1-9e97-a504816fa971",
+      "transmission_sig": "6aW3B8K3a1WMJI0y6ADwkVmY4gQ6720EDK0mQShLwhcqUhX02N7lBufxvpnsW5mHkRZujmm6VD/pSfz0vUcBkDs2IjESezHONqXB9BlS/6Be+Y6MjtpN3jgrDqKVJm8ZjdFuRIFRkcW2HPdUdkSil3tU1qBtEZsepbMlcxlNGgu8kFnkMlTqXS3X8JVFIQ90NDxUU7KSGcFjN7ZPevTD586n2cOAkp8owteZK+Hg0BbEMcs38LE5P2JFzv3ZEvBd+AkaPNh5BvU7XFlV252EI6qZ+MLv/mSwazNwoVZhhISayGzvCs/wFHWi2H/YXhtd8a42aqu8I5mts1EWOoS2pw==",
+      "transmission_time": "2026-11-08T07:19:13Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-4CJ36458KN3422115-8VA91836JC6883627",
+        "id": "WH-50A81783PU575494Y-1XF5799884837322W",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:50:21.557Z",
+        "create_time": "2026-11-08T07:18:41.700Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "6FL13610NE362454F",
+          "id": "4UE23465BJ204744J",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -1994,33 +2226,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-DB6380",
-          "custom_id": "FOG-DB6380",
+          "invoice_id": "FOG-E2BA4B",
+          "custom_id": "FOG-E2BA4B",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "50C40975HT3933002"
+              "order_id": "66N927835D354941Y"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:50:17Z",
-          "update_time": "2026-11-08T02:50:17Z",
+          "create_time": "2026-11-08T07:18:37Z",
+          "update_time": "2026-11-08T07:18:37Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
               "rel": "up",
               "method": "GET"
             }
@@ -2028,12 +2260,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -2045,32 +2277,32 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:56.666Z",
+    "at": "2026-11-08T07:21:58.078Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f305106c73bc2",
+    "debugId": "f495466ba1d65",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "50b8c02a-db1f-11f1-8118-7bb0380f5607",
-      "transmission_sig": "jQUa/+WA5+8n+qIs6sJ8JQ7jUdWm7kIRKlEEESphqzzP0nLUM6MAtKaWCwIdEDVzcuTVj4hmWWSU5nhlhNB/4we1ZiKWj0pugGzy5R/85U1DrJ+LEw2F5uXid+qgAtupUaPGZhF/bornhRh+q1U8gf/bWcosju0PJkva5+IuCNAJZz84aPp5qcBzbcpQYd7WKmsxtTXsO/w8VvDM9UBMch9lsVxaPufBAX1lgwH4MiCuyc1fseWzEka+F+s+awZLn/g4Kvs59MFpbbkPbKDi7mN+/rH9uJMcsC0vdjTc+igtxOrlz6Vodcw7lGt7lZJG7q/dzgivgo/gVR27eHkkjQ==",
-      "transmission_time": "2026-11-08T02:51:36Z",
+      "transmission_id": "e8289a48-db44-11f1-ae6a-9d88fce911b7",
+      "transmission_sig": "Em5E7DuFtd1NQ76QlPMIdtXq/v7Vlhl7z2ELDuTu5nzN8edIckp/3muhJjNEg68vl53uZJS2rlhPmL1tp3fiCPdi4iKtS51brBoU7HFeSQOJRbgcnLTZ3dijliEpxsJrOxy8BJjxbxIs9tuC0IU4H8IouylU11QWCwqqYRRBtRi58yT6SbIDY2/7bUa/ne71OKIaCT2jtjhZYceI/GfLNjo21ntVfuGh1RoG0mPWEqIij2bJaAjqVI00YiizKNZRrUeKN/B0HQIwobCw6EX0hB8G04bmv3cJXBAqyaZLwipVhNA+Ukx42uF56B7n5ulP2Klu8xb800sOI50HR1kB8w==",
+      "transmission_time": "2026-11-08T07:20:42Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-9TB46812TG807384P-084209447N5802925",
+        "id": "WH-5PU89906MX759024Y-9SB67486D2922902P",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:51:36.635Z",
+        "create_time": "2026-11-08T07:20:42.123Z",
         "resource_type": "checkout-order",
         "resource_version": "2.0",
         "event_type": "CHECKOUT.ORDER.APPROVED",
         "summary": "An order has been approved by buyer",
         "resource": {
-          "create_time": "2026-11-08T02:51:18Z",
+          "create_time": "2026-11-08T07:20:19Z",
           "purchase_units": [
             {
-              "reference_id": "FOG-D62549",
+              "reference_id": "FOG-C3FEB1",
               "amount": {
                 "currency_code": "USD",
                 "value": "49.00",
@@ -2085,8 +2317,8 @@
                 "email_address": "sandbox-merchant@business.example.com",
                 "merchant_id": "DD3R9KG8TPPH2"
               },
-              "custom_id": "FOG-D62549",
-              "invoice_id": "FOG-D62549",
+              "custom_id": "FOG-C3FEB1",
+              "invoice_id": "FOG-C3FEB1",
               "items": [
                 {
                   "name": "Fogline Hoodie",
@@ -2114,22 +2346,22 @@
           ],
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923",
               "rel": "update",
               "method": "PATCH"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V/capture",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1CU74512949303923/capture",
               "rel": "capture",
               "method": "POST"
             }
           ],
-          "id": "8EV95563ME171724V",
+          "id": "1CU74512949303923",
           "payment_source": {
             "paypal": {
               "email_address": "sandbox-buyer@personal.example.com",
@@ -2160,12 +2392,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9TB46812TG807384P-084209447N5802925",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-5PU89906MX759024Y-9SB67486D2922902P",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9TB46812TG807384P-084209447N5802925/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-5PU89906MX759024Y-9SB67486D2922902P/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -2177,129 +2409,29 @@
     }
   },
   {
-    "at": "2026-11-08T02:52:57.797Z",
-    "method": "POST",
-    "path": "/v1/notifications/verify-webhook-signature",
-    "status": 200,
-    "debugId": "f143379eb15b6",
-    "requestContentType": "application/json",
-    "requestBody": {
-      "auth_algo": "SHA256withRSA",
-      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "7e51b876-db1f-11f1-8118-6fec7d7e2874",
-      "transmission_sig": "zjVncsxZ2EiqvEPelOt+jdbj/GeUZm/T5rhECApw2isi5/MHaMDu/YPahlKiu9tZ8HxYoJI1+VJl/74OECwzKk1k0Wz833ZUowNFD7m15/zMykRpEUz7Q7wD7e0LsX0cHl0jQKiBt1LXLjIotRpcTHzNg9bTg47wI5i6AYVu1hLzu0Z4auScIXfi2L1tRlp2os66n6am8sVKLwaoC9r1GrfDdIOatblCI7DjjhKpC1fWZGXNCTXWAIgz/jOnWT6MgZ/7th8D20fnALChiSOXFScPaTpR6qQ6CgIzRaMrwbOfZytGfihxYCvJvvcUvE2THRHjO7niaTR3t6Brxuulyw==",
-      "transmission_time": "2026-11-08T02:52:53Z",
-      "webhook_id": "4H2036921H838203E",
-      "webhook_event": {
-        "id": "WH-6UU51442M23800512-7GH35616G3617305P",
-        "event_version": "1.0",
-        "create_time": "2026-11-08T02:52:40.060Z",
-        "resource_type": "capture",
-        "resource_version": "2.0",
-        "event_type": "PAYMENT.CAPTURE.COMPLETED",
-        "summary": "Payment completed for $ 49.0 USD",
-        "resource": {
-          "id": "0VX776626G614152B",
-          "amount": {
-            "currency_code": "USD",
-            "value": "49.00"
-          },
-          "final_capture": true,
-          "seller_protection": {
-            "status": "ELIGIBLE",
-            "dispute_categories": [
-              "ITEM_NOT_RECEIVED",
-              "UNAUTHORIZED_TRANSACTION"
-            ]
-          },
-          "seller_receivable_breakdown": {
-            "gross_amount": {
-              "currency_code": "USD",
-              "value": "49.00"
-            },
-            "paypal_fee": {
-              "currency_code": "USD",
-              "value": "2.20"
-            },
-            "net_amount": {
-              "currency_code": "USD",
-              "value": "46.80"
-            }
-          },
-          "invoice_id": "FOG-D62549",
-          "custom_id": "FOG-D62549",
-          "status": "COMPLETED",
-          "supplementary_data": {
-            "related_ids": {
-              "order_id": "8EV95563ME171724V"
-            }
-          },
-          "payee": {
-            "email_address": "sandbox-merchant@business.example.com",
-            "merchant_id": "DD3R9KG8TPPH2"
-          },
-          "create_time": "2026-11-08T02:52:28Z",
-          "update_time": "2026-11-08T02:52:28Z",
-          "links": [
-            {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/0VX776626G614152B",
-              "rel": "self",
-              "method": "GET"
-            },
-            {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/0VX776626G614152B/refund",
-              "rel": "refund",
-              "method": "POST"
-            },
-            {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8EV95563ME171724V",
-              "rel": "up",
-              "method": "GET"
-            }
-          ]
-        },
-        "links": [
-          {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-6UU51442M23800512-7GH35616G3617305P",
-            "rel": "self",
-            "method": "GET"
-          },
-          {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-6UU51442M23800512-7GH35616G3617305P/resend",
-            "rel": "resend",
-            "method": "POST"
-          }
-        ]
-      }
-    },
-    "responseBody": {
-      "verification_status": "SUCCESS"
-    }
-  },
-  {
-    "at": "2026-11-08T02:54:35.979Z",
+    "at": "2026-11-08T07:23:37.704Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f964081c760ec",
+    "debugId": "f7045699f1693",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-3F1306",
+          "reference_id": "FOG-E9D50D",
           "amount": {
             "currency_code": "USD",
-            "value": "147.00",
+            "value": "245.00",
             "breakdown": {
               "item_total": {
                 "currency_code": "USD",
-                "value": "147.00"
+                "value": "245.00"
               }
             }
           },
-          "custom_id": "FOG-3F1306",
-          "invoice_id": "FOG-3F1306",
+          "custom_id": "FOG-E9D50D",
+          "invoice_id": "FOG-E9D50D",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -2307,7 +2439,7 @@
                 "currency_code": "USD",
                 "value": "49.00"
               },
-              "quantity": "3",
+              "quantity": "5",
               "sku": "FOG-HOODIE"
             }
           ]
@@ -2315,26 +2447,26 @@
       ]
     },
     "responseBody": {
-      "id": "7X373353J7256510H",
+      "id": "0U76626193973341G",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7X373353J7256510H",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0U76626193973341G",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=7X373353J7256510H",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=0U76626193973341G",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7X373353J7256510H",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0U76626193973341G",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/7X373353J7256510H/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0U76626193973341G/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -2342,29 +2474,29 @@
     }
   },
   {
-    "at": "2026-11-08T02:54:36.876Z",
+    "at": "2026-11-08T07:23:39.152Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f228579e9ee0a",
+    "debugId": "f708367f358c0",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "2afe8bcd-db1f-11f1-ae6a-476339eaa22b",
-      "transmission_sig": "2aSg9HIdb8BlARuN4dAoScoVrZQrNjnhruQ/0fFuxaannWX1cR5lGOjTTzuRqbzxaaPQnO0ZtRfSMngpFDDg3vjGaoBPVHSH4iWecbVvicvNvgUtE3iClHFrDIqmYxniptX3VC5jWMJUTB7nQWoitrwJaL/+FsQnYx+jlUOqpTWjP5krfdQSJaJY2jlcWsJEx+9Fjj4mEDlc5t9Fw2fRFGiIMjXp10YoBv92uBOK4ouaxHocDWYtHUqtmTJcljabtShynJn9zu5uFLKXolR9w1CspQvARGFnZDWT16oHbtO0x58f9H/5WUuE4Pqj/TW781fianD9jQnqkgjC99spEQ==",
-      "transmission_time": "2026-11-08T02:50:33Z",
+      "transmission_id": "b3572e2a-db44-11f1-9e97-a504816fa971",
+      "transmission_sig": "6aW3B8K3a1WMJI0y6ADwkVmY4gQ6720EDK0mQShLwhcqUhX02N7lBufxvpnsW5mHkRZujmm6VD/pSfz0vUcBkDs2IjESezHONqXB9BlS/6Be+Y6MjtpN3jgrDqKVJm8ZjdFuRIFRkcW2HPdUdkSil3tU1qBtEZsepbMlcxlNGgu8kFnkMlTqXS3X8JVFIQ90NDxUU7KSGcFjN7ZPevTD586n2cOAkp8owteZK+Hg0BbEMcs38LE5P2JFzv3ZEvBd+AkaPNh5BvU7XFlV252EI6qZ+MLv/mSwazNwoVZhhISayGzvCs/wFHWi2H/YXhtd8a42aqu8I5mts1EWOoS2pw==",
+      "transmission_time": "2026-11-08T07:19:13Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-4CJ36458KN3422115-8VA91836JC6883627",
+        "id": "WH-50A81783PU575494Y-1XF5799884837322W",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:50:21.557Z",
+        "create_time": "2026-11-08T07:18:41.700Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "6FL13610NE362454F",
+          "id": "4UE23465BJ204744J",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -2391,33 +2523,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-3F1306",
-          "custom_id": "FOG-3F1306",
+          "invoice_id": "FOG-E9D50D",
+          "custom_id": "FOG-E9D50D",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "7X373353J7256510H"
+              "order_id": "0U76626193973341G"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:50:17Z",
-          "update_time": "2026-11-08T02:50:17Z",
+          "create_time": "2026-11-08T07:18:37Z",
+          "update_time": "2026-11-08T07:18:37Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/6FL13610NE362454F/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4UE23465BJ204744J/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/50C40975HT3933002",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/66N927835D354941Y",
               "rel": "up",
               "method": "GET"
             }
@@ -2425,12 +2557,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4CJ36458KN3422115-8VA91836JC6883627/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-50A81783PU575494Y-1XF5799884837322W/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -2442,17 +2574,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:54:46.569Z",
+    "at": "2026-11-08T07:23:48.885Z",
     "method": "POST",
     "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f48158873480b",
+    "debugId": "f5763168e7de6",
     "requestContentType": "application/json",
     "requestBody": {
       "intent": "CAPTURE",
       "purchase_units": [
         {
-          "reference_id": "FOG-933362",
+          "reference_id": "FOG-C0398C",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -2463,8 +2595,8 @@
               }
             }
           },
-          "custom_id": "FOG-933362",
-          "invoice_id": "FOG-933362",
+          "custom_id": "FOG-C0398C",
+          "invoice_id": "FOG-C0398C",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -2480,26 +2612,26 @@
       ]
     },
     "responseBody": {
-      "id": "71F21844XB7580056",
+      "id": "8HG0800507350974G",
       "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G",
           "rel": "self",
           "method": "GET"
         },
         {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=71F21844XB7580056",
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=8HG0800507350974G",
           "rel": "approve",
           "method": "GET"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G",
           "rel": "update",
           "method": "PATCH"
         },
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056/capture",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G/capture",
           "rel": "capture",
           "method": "POST"
         }
@@ -2507,200 +2639,32 @@
     }
   },
   {
-    "at": "2026-11-08T02:55:12.429Z",
-    "method": "POST",
-    "path": "/v2/checkout/orders/71F21844XB7580056/capture",
-    "status": 201,
-    "debugId": "f928049bef254",
-    "requestContentType": "application/json",
-    "requestBody": {},
-    "responseBody": {
-      "id": "71F21844XB7580056",
-      "intent": "CAPTURE",
-      "status": "COMPLETED",
-      "payment_source": {
-        "paypal": {
-          "email_address": "sandbox-buyer@personal.example.com",
-          "account_id": "V7ERP7YJL2X38",
-          "account_status": "VERIFIED",
-          "name": {
-            "given_name": "John",
-            "surname": "Doe"
-          },
-          "address": {
-            "country_code": "US"
-          }
-        }
-      },
-      "purchase_units": [
-        {
-          "reference_id": "FOG-933362",
-          "amount": {
-            "currency_code": "USD",
-            "value": "49.00",
-            "breakdown": {
-              "item_total": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "shipping": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
-              "handling": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
-              "insurance": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
-              "shipping_discount": {
-                "currency_code": "USD",
-                "value": "0.00"
-              }
-            }
-          },
-          "payee": {
-            "email_address": "sandbox-merchant@business.example.com",
-            "merchant_id": "DD3R9KG8TPPH2"
-          },
-          "description": "Fogline Hoodie",
-          "custom_id": "FOG-933362",
-          "invoice_id": "FOG-933362",
-          "items": [
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "tax": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            }
-          ],
-          "shipping": {
-            "name": {
-              "full_name": "John Doe"
-            },
-            "address": {
-              "address_line_1": "2211 N First St",
-              "admin_area_2": "San Jose",
-              "admin_area_1": "CA",
-              "postal_code": "95131",
-              "country_code": "US"
-            }
-          },
-          "payments": {
-            "captures": [
-              {
-                "id": "96S75295VU000984A",
-                "status": "COMPLETED",
-                "amount": {
-                  "currency_code": "USD",
-                  "value": "49.00"
-                },
-                "final_capture": true,
-                "seller_protection": {
-                  "status": "ELIGIBLE",
-                  "dispute_categories": [
-                    "ITEM_NOT_RECEIVED",
-                    "UNAUTHORIZED_TRANSACTION"
-                  ]
-                },
-                "seller_receivable_breakdown": {
-                  "gross_amount": {
-                    "currency_code": "USD",
-                    "value": "49.00"
-                  },
-                  "paypal_fee": {
-                    "currency_code": "USD",
-                    "value": "2.20"
-                  },
-                  "net_amount": {
-                    "currency_code": "USD",
-                    "value": "46.80"
-                  }
-                },
-                "invoice_id": "FOG-933362",
-                "custom_id": "FOG-933362",
-                "links": [
-                  {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/96S75295VU000984A",
-                    "rel": "self",
-                    "method": "GET"
-                  },
-                  {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/96S75295VU000984A/refund",
-                    "rel": "refund",
-                    "method": "POST"
-                  },
-                  {
-                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056",
-                    "rel": "up",
-                    "method": "GET"
-                  }
-                ],
-                "create_time": "2026-11-08T02:55:11Z",
-                "update_time": "2026-11-08T02:55:11Z"
-              }
-            ]
-          }
-        }
-      ],
-      "payer": {
-        "name": {
-          "given_name": "John",
-          "surname": "Doe"
-        },
-        "email_address": "sandbox-buyer@personal.example.com",
-        "payer_id": "V7ERP7YJL2X38",
-        "address": {
-          "country_code": "US"
-        }
-      },
-      "create_time": "2026-11-08T02:54:46Z",
-      "update_time": "2026-11-08T02:55:12Z",
-      "links": [
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056",
-          "rel": "self",
-          "method": "GET"
-        }
-      ]
-    }
-  },
-  {
-    "at": "2026-11-08T02:55:13.896Z",
+    "at": "2026-11-08T07:24:13.660Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f697661dd8772",
+    "debugId": "f85876823b43d",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "d12c5b3f-db1f-11f1-9e97-3b481f34eb37",
-      "transmission_sig": "2LgthwUtjrs60+RwMqT3e9kwYbK/y0zoi6T15EWAVOEYRYbK4WICalg1F2vm68j0EbykZYpSGwEXJlFHNy6HwekDsfpTB3en363zFd+5ENauY98M2uWGFIncKbd8dJwrtqMtac9KTnh99yS7cCjLttlS2o6irIA07qKs2BnNulwL8Jmbt2A4fqaOcUgYo1tK2sJfB89b2fdpfjbCaIdfRVoqDxQQ+rQ2atkAMMjyQnWjgJMx9w6zrfZ41sTg21XPBaIa5/+463HQfDDrqT/FxevFO+wWK1HCwBs5G0mcWrjsNVankHh7rWXqUYUn0F5h+7m1F/zQssEKGnkfH7Eyhw==",
-      "transmission_time": "2026-11-08T02:55:12Z",
+      "transmission_id": "65582d90-db45-11f1-98c7-352a96d75b8d",
+      "transmission_sig": "ePNzx338+ZNSrdWxSuT60lO+fg/RWw3IKH96CSdJqr//XdM5h3lxc33lpJW8NeVSH+VnIpOmdNjLs0uMzxeqJpDE9GN63tvAtpHbUoeTaBrj/v/veQip3QUXQ5FSRtXs9/XaHzFwLKZRiOtSLstKIFSC52+Evcy4M7fWbUwYEFXG946EfPLcc+D1zqqiaqYbgtMSdXaHwVtmeNP7ag40gg1gD9oaXmdXk5L3NDiMXgNvSQx3qgWnJUHcwTzPqW6w3hH1Fn1D/MOiZ6bnTLaHqPjWYYRvcaRemj30Dfijjmv0DuX6s9HvhA4A+ih63KqjKEhP45Amu30u5Wk0Fg96Vg==",
+      "transmission_time": "2026-11-08T07:24:12Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-4LR26354JE210410D-28M415705U267433J",
+        "id": "WH-9JN96662AF096541Y-0S019690CG487973B",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:55:12.205Z",
+        "create_time": "2026-11-08T07:24:12.161Z",
         "resource_type": "checkout-order",
         "resource_version": "2.0",
         "event_type": "CHECKOUT.ORDER.APPROVED",
         "summary": "An order has been approved by buyer",
         "resource": {
-          "create_time": "2026-11-08T02:54:46Z",
+          "create_time": "2026-11-08T07:23:48Z",
           "purchase_units": [
             {
-              "reference_id": "FOG-933362",
+              "reference_id": "FOG-C0398C",
               "amount": {
                 "currency_code": "USD",
                 "value": "49.00",
@@ -2715,8 +2679,8 @@
                 "email_address": "sandbox-merchant@business.example.com",
                 "merchant_id": "DD3R9KG8TPPH2"
               },
-              "custom_id": "FOG-933362",
-              "invoice_id": "FOG-933362",
+              "custom_id": "FOG-C0398C",
+              "invoice_id": "FOG-C0398C",
               "items": [
                 {
                   "name": "Fogline Hoodie",
@@ -2744,22 +2708,22 @@
           ],
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G",
               "rel": "update",
               "method": "PATCH"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056/capture",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G/capture",
               "rel": "capture",
               "method": "POST"
             }
           ],
-          "id": "71F21844XB7580056",
+          "id": "8HG0800507350974G",
           "payment_source": {
             "paypal": {
               "email_address": "sandbox-buyer@personal.example.com",
@@ -2790,12 +2754,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4LR26354JE210410D-28M415705U267433J",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9JN96662AF096541Y-0S019690CG487973B",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4LR26354JE210410D-28M415705U267433J/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9JN96662AF096541Y-0S019690CG487973B/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -2807,17 +2771,34 @@
     }
   },
   {
-    "at": "2026-11-08T02:55:22.916Z",
+    "at": "2026-11-08T07:24:14.375Z",
     "method": "POST",
-    "path": "/v2/checkout/orders",
+    "path": "/v2/checkout/orders/8HG0800507350974G/capture",
     "status": 201,
-    "debugId": "f9701782d2fc0",
+    "debugId": "f85876855d1f5",
     "requestContentType": "application/json",
-    "requestBody": {
+    "requestBody": {},
+    "responseBody": {
+      "id": "8HG0800507350974G",
       "intent": "CAPTURE",
+      "status": "COMPLETED",
+      "payment_source": {
+        "paypal": {
+          "email_address": "sandbox-buyer@personal.example.com",
+          "account_id": "V7ERP7YJL2X38",
+          "account_status": "VERIFIED",
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "address": {
+            "country_code": "US"
+          }
+        }
+      },
       "purchase_units": [
         {
-          "reference_id": "FOG-A721FD",
+          "reference_id": "FOG-C0398C",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -2825,11 +2806,32 @@
               "item_total": {
                 "currency_code": "USD",
                 "value": "49.00"
+              },
+              "shipping": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "handling": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "insurance": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "shipping_discount": {
+                "currency_code": "USD",
+                "value": "0.00"
               }
             }
           },
-          "custom_id": "FOG-A721FD",
-          "invoice_id": "FOG-A721FD",
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "description": "Fogline Hoodie",
+          "custom_id": "FOG-C0398C",
+          "invoice_id": "FOG-C0398C",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -2837,64 +2839,129 @@
                 "currency_code": "USD",
                 "value": "49.00"
               },
+              "tax": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
               "quantity": "1",
               "sku": "FOG-HOODIE"
             }
-          ]
+          ],
+          "shipping": {
+            "name": {
+              "full_name": "John Doe"
+            },
+            "address": {
+              "address_line_1": "2211 N First St",
+              "admin_area_2": "San Jose",
+              "admin_area_1": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            }
+          },
+          "payments": {
+            "captures": [
+              {
+                "id": "92V55034TV5715204",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "49.00"
+                },
+                "final_capture": true,
+                "seller_protection": {
+                  "status": "ELIGIBLE",
+                  "dispute_categories": [
+                    "ITEM_NOT_RECEIVED",
+                    "UNAUTHORIZED_TRANSACTION"
+                  ]
+                },
+                "seller_receivable_breakdown": {
+                  "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "49.00"
+                  },
+                  "paypal_fee": {
+                    "currency_code": "USD",
+                    "value": "2.20"
+                  },
+                  "net_amount": {
+                    "currency_code": "USD",
+                    "value": "46.80"
+                  }
+                },
+                "invoice_id": "FOG-C0398C",
+                "custom_id": "FOG-C0398C",
+                "links": [
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/92V55034TV5715204",
+                    "rel": "self",
+                    "method": "GET"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/92V55034TV5715204/refund",
+                    "rel": "refund",
+                    "method": "POST"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ],
+                "create_time": "2026-11-08T07:24:13Z",
+                "update_time": "2026-11-08T07:24:13Z"
+              }
+            ]
+          }
         }
-      ]
-    },
-    "responseBody": {
-      "id": "5R188819UY381421J",
-      "status": "CREATED",
+      ],
+      "payer": {
+        "name": {
+          "given_name": "John",
+          "surname": "Doe"
+        },
+        "email_address": "sandbox-buyer@personal.example.com",
+        "payer_id": "V7ERP7YJL2X38",
+        "address": {
+          "country_code": "US"
+        }
+      },
+      "create_time": "2026-11-08T07:23:48Z",
+      "update_time": "2026-11-08T07:24:13Z",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G",
           "rel": "self",
           "method": "GET"
-        },
-        {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=5R188819UY381421J",
-          "rel": "approve",
-          "method": "GET"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J",
-          "rel": "update",
-          "method": "PATCH"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J/capture",
-          "rel": "capture",
-          "method": "POST"
         }
       ]
     }
   },
   {
-    "at": "2026-11-08T02:55:27.438Z",
+    "at": "2026-11-08T07:24:26.925Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f768517b58e24",
+    "debugId": "f1074204332f5",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "d80cc266-db1f-11f1-9e97-ff38a89c6915",
-      "transmission_sig": "d7XIMU0H/dUeC5TnI60q6Xbf7tYw8O+hKA3Y+4imYrJZCzBFTIrUvLFx+3TbgqWQT+wHzd+3xl0F/lz2gc5w6W7611jPd6J4fh95bTIZ0rd5eKeSzvV6KKltOwq7EHAKAOooua/56/I4MpftKsP3Svtv+/VFmNmS3pcsF+ujt+klQzSzC8/AvOgibVlSrfDLAeFUeu9rRXijgWFkL8j5JPg3nOzzesElz1DwCrsv9nBLsCJsnt8YvHEnLtAG0Ef7afnTCZUJW8s5bLsRatvqYSbD6UA0XRF7MyyEd3f4QaRHj2yLF/s1qkdCvmHva4SGYDVOLGuleqgimVySowQfOQ==",
-      "transmission_time": "2026-11-08T02:55:24Z",
+      "transmission_id": "6bda7022-db45-11f1-98c7-e7ed74f4ec45",
+      "transmission_sig": "GDogUJe9PXgkIYfEfioFvBYeg9KHKbRfWZitxjSHLQ8AN7DLgmUkisk6dDKxso3P8ndonUOMT2fpwzGFuUy7jIRnt2v9kRSZj70QHmchSXtoy/t4t0fQGZs2s/jiIB1x4uBDSOPJP8QLYwrcQF+CsgZzC9W8EGNMlKiKiBovACtdDyl8brgOtdjzm/6z89gxnG+uqyurfHoJ/F0pa0xJ0k0lclWUaQ9CCqnPRihmWBlWRYNXQ253RfsEfSxEXvP/Rcx9I+UWlLOWaqAxkjp3/JzhV/gpjegRsuUR4boPmoMZpsBeoxyjTtdslc8q+JolEgzwGXCfeURD4fHgOQb6Kw==",
+      "transmission_time": "2026-11-08T07:24:23Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-9ND69295TC292843X-73470614R3776834M",
+        "id": "WH-85C525458C9564743-2JJ02422SU519604S",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:55:16.196Z",
+        "create_time": "2026-11-08T07:24:18.045Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "96S75295VU000984A",
+          "id": "92V55034TV5715204",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -2921,33 +2988,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-933362",
-          "custom_id": "FOG-933362",
+          "invoice_id": "FOG-C0398C",
+          "custom_id": "FOG-C0398C",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "71F21844XB7580056"
+              "order_id": "8HG0800507350974G"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:55:11Z",
-          "update_time": "2026-11-08T02:55:11Z",
+          "create_time": "2026-11-08T07:24:13Z",
+          "update_time": "2026-11-08T07:24:13Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/96S75295VU000984A",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/92V55034TV5715204",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/96S75295VU000984A/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/92V55034TV5715204/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/71F21844XB7580056",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8HG0800507350974G",
               "rel": "up",
               "method": "GET"
             }
@@ -2955,12 +3022,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9ND69295TC292843X-73470614R3776834M",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-85C525458C9564743-2JJ02422SU519604S",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9ND69295TC292843X-73470614R3776834M/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-85C525458C9564743-2JJ02422SU519604S/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -2972,32 +3039,162 @@
     }
   },
   {
-    "at": "2026-11-08T02:55:41.928Z",
+    "at": "2026-11-08T07:24:38.415Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f47222436aff1",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "FOG-D02966",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "49.00"
+              }
+            }
+          },
+          "custom_id": "FOG-D02966",
+          "invoice_id": "FOG-D02966",
+          "items": [
+            {
+              "name": "Fogline Hoodie",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "49.00"
+              },
+              "quantity": "1",
+              "sku": "FOG-HOODIE"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "23J54303LS478451W",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/23J54303LS478451W",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=23J54303LS478451W",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/23J54303LS478451W",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/23J54303LS478451W/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T07:26:24.837Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "status": 201,
+    "debugId": "f20612529eeb8",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "reference_id": "FOG-00E57B",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "49.00"
+              }
+            }
+          },
+          "custom_id": "FOG-00E57B",
+          "invoice_id": "FOG-00E57B",
+          "items": [
+            {
+              "name": "Fogline Hoodie",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "49.00"
+              },
+              "quantity": "1",
+              "sku": "FOG-HOODIE"
+            }
+          ]
+        }
+      ]
+    },
+    "responseBody": {
+      "id": "1WY63231GM857521V",
+      "status": "CREATED",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=1WY63231GM857521V",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V/capture",
+          "rel": "capture",
+          "method": "POST"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T07:26:45.227Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f76759756ffe0",
+    "debugId": "f5109708ab49d",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "e2516504-db1f-11f1-ae6a-17d6008db235",
-      "transmission_sig": "uH1Af926ycC2xHm4bDgPNuvk8qA38qv09vWu1p56sCls+QtkFDY4hON/WBHhbpExu29YAZO6PgdJ7vFGMm8q6ue7Ha42KwwS2dadfyBP/xBNgclYL2Fj9K5ZZv4Sv40+D7g8ns8yAN4i8f/FG3hYDMZBf8njvWq8hkosWrZ07SK6HXNi7/baQe1FeRcTlrSHiZ2Rh7Xn7b8pVCmYcwbRHoYfOJzTF5W0MCuL4fwey2HkFAN5JXqxRPiZ1RxxralFoKcvNkNPMPE/Avu0ZXB4xIdc4m7T4cJe7Q9eftaDn8c+5R6AWUkdUpIzShpOFMJ43d8hVWyuI197QI4XyYTgeA==",
-      "transmission_time": "2026-11-08T02:55:41Z",
+      "transmission_id": "bf6b699a-db45-11f1-ae6a-45f4aafe2d59",
+      "transmission_sig": "Prl0X7AVJ8NfVbRm4i+7hzWlTRrd/nvTcV99+64upPU7yPU2m5MSUr+NvVy10iXKXMt9G669o25vUgZbIg5cmRn4Si+wtr+ka8ALTMuKmmMPaKNv5t2Cg7aUOzFau2YxF1/HpqggqEqrwQWeto5BbyTqzre1r7BJklMBk6ett5lgXHMNlvZ/VlmFLmZOY6SK+kTLCnlTIanGWBLuk12MQS1YkTHYzcAZlreVNAFbi4rb8HGmfCgxBRaX8lHSB/YkAqJbOBZ8sC21cQeigCSfyd+Pk+VbgcyNyPltb4Uo0I9kj41nnNQi6KZCxtIhQfkSuwSFgZ2ycouAkWEf4yVNyQ==",
+      "transmission_time": "2026-11-08T07:26:43Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-2R245430EK946001H-8507468699537501N",
+        "id": "WH-51P874559F261653E-9YU36058F77066513",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:55:40.984Z",
+        "create_time": "2026-11-08T07:26:43.276Z",
         "resource_type": "checkout-order",
         "resource_version": "2.0",
         "event_type": "CHECKOUT.ORDER.APPROVED",
         "summary": "An order has been approved by buyer",
         "resource": {
-          "create_time": "2026-11-08T02:55:22Z",
+          "create_time": "2026-11-08T07:26:24Z",
           "purchase_units": [
             {
-              "reference_id": "FOG-A721FD",
+              "reference_id": "FOG-00E57B",
               "amount": {
                 "currency_code": "USD",
                 "value": "49.00",
@@ -3012,8 +3209,8 @@
                 "email_address": "sandbox-merchant@business.example.com",
                 "merchant_id": "DD3R9KG8TPPH2"
               },
-              "custom_id": "FOG-A721FD",
-              "invoice_id": "FOG-A721FD",
+              "custom_id": "FOG-00E57B",
+              "invoice_id": "FOG-00E57B",
               "items": [
                 {
                   "name": "Fogline Hoodie",
@@ -3041,22 +3238,22 @@
           ],
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V",
               "rel": "update",
               "method": "PATCH"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J/capture",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V/capture",
               "rel": "capture",
               "method": "POST"
             }
           ],
-          "id": "5R188819UY381421J",
+          "id": "1WY63231GM857521V",
           "payment_source": {
             "paypal": {
               "email_address": "sandbox-buyer@personal.example.com",
@@ -3087,12 +3284,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2R245430EK946001H-8507468699537501N",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-51P874559F261653E-9YU36058F77066513",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2R245430EK946001H-8507468699537501N/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-51P874559F261653E-9YU36058F77066513/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -3104,15 +3301,15 @@
     }
   },
   {
-    "at": "2026-11-08T02:55:47.664Z",
+    "at": "2026-11-08T07:26:52.061Z",
     "method": "POST",
-    "path": "/v2/checkout/orders/5R188819UY381421J/capture",
+    "path": "/v2/checkout/orders/1WY63231GM857521V/capture",
     "status": 201,
-    "debugId": "f282541760f3f",
+    "debugId": "f344292f47584",
     "requestContentType": "application/json",
     "requestBody": {},
     "responseBody": {
-      "id": "5R188819UY381421J",
+      "id": "1WY63231GM857521V",
       "intent": "CAPTURE",
       "status": "COMPLETED",
       "payment_source": {
@@ -3131,7 +3328,7 @@
       },
       "purchase_units": [
         {
-          "reference_id": "FOG-A721FD",
+          "reference_id": "FOG-00E57B",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -3163,8 +3360,8 @@
             "merchant_id": "DD3R9KG8TPPH2"
           },
           "description": "Fogline Hoodie",
-          "custom_id": "FOG-A721FD",
-          "invoice_id": "FOG-A721FD",
+          "custom_id": "FOG-00E57B",
+          "invoice_id": "FOG-00E57B",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -3195,7 +3392,7 @@
           "payments": {
             "captures": [
               {
-                "id": "76J065812B755211B",
+                "id": "3RJ76500B5569645N",
                 "status": "COMPLETED",
                 "amount": {
                   "currency_code": "USD",
@@ -3223,27 +3420,27 @@
                     "value": "46.80"
                   }
                 },
-                "invoice_id": "FOG-A721FD",
-                "custom_id": "FOG-A721FD",
+                "invoice_id": "FOG-00E57B",
+                "custom_id": "FOG-00E57B",
                 "links": [
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/76J065812B755211B",
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/3RJ76500B5569645N",
                     "rel": "self",
                     "method": "GET"
                   },
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/76J065812B755211B/refund",
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/3RJ76500B5569645N/refund",
                     "rel": "refund",
                     "method": "POST"
                   },
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J",
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V",
                     "rel": "up",
                     "method": "GET"
                   }
                 ],
-                "create_time": "2026-11-08T02:55:46Z",
-                "update_time": "2026-11-08T02:55:46Z"
+                "create_time": "2026-11-08T07:26:51Z",
+                "update_time": "2026-11-08T07:26:51Z"
               }
             ]
           }
@@ -3260,11 +3457,11 @@
           "country_code": "US"
         }
       },
-      "create_time": "2026-11-08T02:55:22Z",
-      "update_time": "2026-11-08T02:55:47Z",
+      "create_time": "2026-11-08T07:26:24Z",
+      "update_time": "2026-11-08T07:26:51Z",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V",
           "rel": "self",
           "method": "GET"
         }
@@ -3272,94 +3469,29 @@
     }
   },
   {
-    "at": "2026-11-08T02:55:58.253Z",
-    "method": "POST",
-    "path": "/v2/checkout/orders",
-    "status": 201,
-    "debugId": "f883430bd2cc9",
-    "requestContentType": "application/json",
-    "requestBody": {
-      "intent": "CAPTURE",
-      "purchase_units": [
-        {
-          "reference_id": "FOG-D41134",
-          "amount": {
-            "currency_code": "USD",
-            "value": "49.00",
-            "breakdown": {
-              "item_total": {
-                "currency_code": "USD",
-                "value": "49.00"
-              }
-            }
-          },
-          "custom_id": "FOG-D41134",
-          "invoice_id": "FOG-D41134",
-          "items": [
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            }
-          ]
-        }
-      ]
-    },
-    "responseBody": {
-      "id": "12S28156F1351302U",
-      "status": "CREATED",
-      "links": [
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/12S28156F1351302U",
-          "rel": "self",
-          "method": "GET"
-        },
-        {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=12S28156F1351302U",
-          "rel": "approve",
-          "method": "GET"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/12S28156F1351302U",
-          "rel": "update",
-          "method": "PATCH"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/12S28156F1351302U/capture",
-          "rel": "capture",
-          "method": "POST"
-        }
-      ]
-    }
-  },
-  {
-    "at": "2026-11-08T02:56:07.452Z",
+    "at": "2026-11-08T07:27:06.929Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f293554647121",
+    "debugId": "f541701245b59",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "efa0879f-db1f-11f1-bdb3-0d40eaa788c5",
-      "transmission_sig": "EhGIHOZXziDHHp76PqP7wuPC6FUPXXyEeItCtPuysRS7fQYt7zC46G4O/ivA0NjK5HEmbfJKvKxjlXlntxSi0sZvH7skcpzOV+dZomnhysNvLX7t/XuJB+UKBFP/MpGp/7sXK0zgYEj1baaGzieCIuEUYLpdVl2xou+NcfnMoqZ7S9KGB5HfcbQFtKyAbJIBwy72CqT+BaUTzh+oMXqMkuTEKfenM150ixP3x7E2zxPFe1B6uR4ui97lWArHlN7gWuT7ygCqhJMvrZi/srJTaqgyexqKbteEXf3cHl2J36MKqOAH78m0BkJzi1z8fc+5NbYkFZMRWmDf+I0+kdrXVA==",
-      "transmission_time": "2026-11-08T02:56:03Z",
+      "transmission_id": "cb049eb5-db45-11f1-9e97-cddafb480e7c",
+      "transmission_sig": "XR/5M27PaTFOqHFZGZARY0TWNn9Ao1d2D0vlUypOyytKZDlPs/ioIgoxTohkVBH/wEiX0Ox/4aCzhAhEnJsy3rkuVCa8eifbv+5OeLuo8gY5Epjt8Xgye++gzkMHNbcH7KLitPjJrZI3Zh9enlz7L9d8vSttDRgMrcZKmhfFvPoPxuO68xf2+UCPt7G8+rzvOUiMf0r4+GmPQStqAFFhGkReEFnpBxcz2+Ftqo2ZY8BGUsaLQLxzDM8Pam8B4dNbVXo2FVXtqBgINzRjEaweuNwIS+FG74t3VH1GlMDfgfJErXQ0QsMxYL+Lw8vFA5sdx6mhTzhdUKFuStwoNgMhuQ==",
+      "transmission_time": "2026-11-08T07:27:03Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-9BS232737B592634N-1BT19834VT1584843",
+        "id": "WH-1EC60372WL578250S-4DM82882PW9225732",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:55:50.987Z",
+        "create_time": "2026-11-08T07:26:59.600Z",
         "resource_type": "capture",
         "resource_version": "2.0",
         "event_type": "PAYMENT.CAPTURE.COMPLETED",
         "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "id": "76J065812B755211B",
+          "id": "3RJ76500B5569645N",
           "amount": {
             "currency_code": "USD",
             "value": "49.00"
@@ -3386,33 +3518,33 @@
               "value": "46.80"
             }
           },
-          "invoice_id": "FOG-A721FD",
-          "custom_id": "FOG-A721FD",
+          "invoice_id": "FOG-00E57B",
+          "custom_id": "FOG-00E57B",
           "status": "COMPLETED",
           "supplementary_data": {
             "related_ids": {
-              "order_id": "5R188819UY381421J"
+              "order_id": "1WY63231GM857521V"
             }
           },
           "payee": {
             "email_address": "sandbox-merchant@business.example.com",
             "merchant_id": "DD3R9KG8TPPH2"
           },
-          "create_time": "2026-11-08T02:55:46Z",
-          "update_time": "2026-11-08T02:55:46Z",
+          "create_time": "2026-11-08T07:26:51Z",
+          "update_time": "2026-11-08T07:26:51Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/76J065812B755211B",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/3RJ76500B5569645N",
               "rel": "self",
               "method": "GET"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/76J065812B755211B/refund",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/3RJ76500B5569645N/refund",
               "rel": "refund",
               "method": "POST"
             },
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/5R188819UY381421J",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1WY63231GM857521V",
               "rel": "up",
               "method": "GET"
             }
@@ -3420,12 +3552,12 @@
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9BS232737B592634N-1BT19834VT1584843",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1EC60372WL578250S-4DM82882PW9225732",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-9BS232737B592634N-1BT19834VT1584843/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1EC60372WL578250S-4DM82882PW9225732/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -3437,34 +3569,17 @@
     }
   },
   {
-    "at": "2026-11-08T02:56:15.796Z",
+    "at": "2026-11-08T07:27:20.338Z",
     "method": "POST",
-    "path": "/v2/checkout/orders/12S28156F1351302U/capture",
+    "path": "/v2/checkout/orders",
     "status": 201,
-    "debugId": "f9026490a10bc",
+    "debugId": "f755597312a29",
     "requestContentType": "application/json",
-    "requestBody": {},
-    "responseBody": {
-      "id": "12S28156F1351302U",
+    "requestBody": {
       "intent": "CAPTURE",
-      "status": "COMPLETED",
-      "payment_source": {
-        "paypal": {
-          "email_address": "sandbox-buyer@personal.example.com",
-          "account_id": "V7ERP7YJL2X38",
-          "account_status": "VERIFIED",
-          "name": {
-            "given_name": "John",
-            "surname": "Doe"
-          },
-          "address": {
-            "country_code": "US"
-          }
-        }
-      },
       "purchase_units": [
         {
-          "reference_id": "FOG-D41134",
+          "reference_id": "FOG-6160F7",
           "amount": {
             "currency_code": "USD",
             "value": "49.00",
@@ -3472,32 +3587,11 @@
               "item_total": {
                 "currency_code": "USD",
                 "value": "49.00"
-              },
-              "shipping": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
-              "handling": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
-              "insurance": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
-              "shipping_discount": {
-                "currency_code": "USD",
-                "value": "0.00"
               }
             }
           },
-          "payee": {
-            "email_address": "sandbox-merchant@business.example.com",
-            "merchant_id": "DD3R9KG8TPPH2"
-          },
-          "description": "Fogline Hoodie",
-          "custom_id": "FOG-D41134",
-          "invoice_id": "FOG-D41134",
+          "custom_id": "FOG-6160F7",
+          "invoice_id": "FOG-6160F7",
           "items": [
             {
               "name": "Fogline Hoodie",
@@ -3505,133 +3599,67 @@
                 "currency_code": "USD",
                 "value": "49.00"
               },
-              "tax": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
               "quantity": "1",
               "sku": "FOG-HOODIE"
             }
-          ],
-          "shipping": {
-            "name": {
-              "full_name": "John Doe"
-            },
-            "address": {
-              "address_line_1": "2211 N First St",
-              "admin_area_2": "San Jose",
-              "admin_area_1": "CA",
-              "postal_code": "95131",
-              "country_code": "US"
-            }
-          },
-          "payments": {
-            "captures": [
-              {
-                "id": "1RK22552FD295064S",
-                "status": "COMPLETED",
-                "amount": {
-                  "currency_code": "USD",
-                  "value": "49.00"
-                },
-                "final_capture": true,
-                "seller_protection": {
-                  "status": "ELIGIBLE",
-                  "dispute_categories": [
-                    "ITEM_NOT_RECEIVED",
-                    "UNAUTHORIZED_TRANSACTION"
-                  ]
-                },
-                "seller_receivable_breakdown": {
-                  "gross_amount": {
-                    "currency_code": "USD",
-                    "value": "49.00"
-                  },
-                  "paypal_fee": {
-                    "currency_code": "USD",
-                    "value": "2.20"
-                  },
-                  "net_amount": {
-                    "currency_code": "USD",
-                    "value": "46.80"
-                  }
-                },
-                "invoice_id": "FOG-D41134",
-                "custom_id": "FOG-D41134",
-                "links": [
-                  {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/1RK22552FD295064S",
-                    "rel": "self",
-                    "method": "GET"
-                  },
-                  {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/1RK22552FD295064S/refund",
-                    "rel": "refund",
-                    "method": "POST"
-                  },
-                  {
-                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/12S28156F1351302U",
-                    "rel": "up",
-                    "method": "GET"
-                  }
-                ],
-                "create_time": "2026-11-08T02:56:15Z",
-                "update_time": "2026-11-08T02:56:15Z"
-              }
-            ]
-          }
+          ]
         }
-      ],
-      "payer": {
-        "name": {
-          "given_name": "John",
-          "surname": "Doe"
-        },
-        "email_address": "sandbox-buyer@personal.example.com",
-        "payer_id": "V7ERP7YJL2X38",
-        "address": {
-          "country_code": "US"
-        }
-      },
-      "create_time": "2026-11-08T02:55:58Z",
-      "update_time": "2026-11-08T02:56:15Z",
+      ]
+    },
+    "responseBody": {
+      "id": "4G3703976L8861604",
+      "status": "CREATED",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/12S28156F1351302U",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604",
           "rel": "self",
           "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=4G3703976L8861604",
+          "rel": "approve",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604",
+          "rel": "update",
+          "method": "PATCH"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604/capture",
+          "rel": "capture",
+          "method": "POST"
         }
       ]
     }
   },
   {
-    "at": "2026-11-08T02:56:23.847Z",
+    "at": "2026-11-08T07:27:39.083Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f934280ca2834",
+    "debugId": "ca572db3bfa12",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "faf16835-db1f-11f1-bdb3-afd60fce918c",
-      "transmission_sig": "P0Wzb0zyOVpMplU4ViTVGK5xYAtlyckxLgIf6k/ZBk/vqSvtHVe3uK92WTkUOSFliyrENNY6RYeYNwTHA7Hu8EeZ0ujYIhyPa6G7ydHfKnpcrEE2fPEzYyYxVljkUvHIobhIFy2y+/qYwTtg66azaQwux+TcN/8i5p9/+SlSYwFD3Gr+RuildaIRF/dmfthe2pIk0PHQyzqOPI/zThP0QJRigpJOEbZUucJrYCMMG7EMzCpDjRnvua2MuxhuCxNmItuSVFRhTOwNDZZ31aTUvYKOxvVuxXEABq1gbxzJMqU8xMUYhtf5bFuZFIx03jvcoKAw52aqE181dnFb8Dcpxg==",
-      "transmission_time": "2026-11-08T02:56:22Z",
+      "transmission_id": "e02037b2-db45-11f1-bdb3-3749714d03b7",
+      "transmission_sig": "OxuTL77SOasI5xa0g8zF8kNrm47ehLVRUNg/XhpOSXVC3N/P7NBolsSWpd2OfKSt4srvGq7nz3WqVcdNe2JlaP1a2I3ZLdhPFaAQzOubWfCvi81k8mtMJkyWYz51TwnDIlzNzdOfTqv0G3KBbIM+8JM5qJ6bnpibndD6aBBkanTQ6413jaZauoHemsr/4HTzFNls57jRIGjVzHEJ9PUUhu5kmdF07/T1IkbQvui+5SuAF7PP7/BbAJuJ0VEwulod7PCUT59/L09DObkkH30TAfGuE1Vn+A737iYk89hErHdead/LDFcbPxzpq4Rj4q9W/gbNLOdtCX+ihYpUs3mxvQ==",
+      "transmission_time": "2026-11-08T07:27:38Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-6NP01714MP3728136-10490253YP911913Y",
+        "id": "WH-3KV38395G2915741R-4AG19558XA043503V",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:56:22.305Z",
+        "create_time": "2026-11-08T07:27:38.152Z",
         "resource_type": "checkout-order",
         "resource_version": "2.0",
         "event_type": "CHECKOUT.ORDER.APPROVED",
         "summary": "An order has been approved by buyer",
         "resource": {
-          "update_time": "2026-11-08T02:56:15Z",
-          "create_time": "2026-11-08T02:56:15Z",
+          "create_time": "2026-11-08T07:27:20Z",
           "purchase_units": [
             {
-              "reference_id": "FOG-D41134",
+              "reference_id": "FOG-6160F7",
               "amount": {
                 "currency_code": "USD",
                 "value": "49.00",
@@ -3646,8 +3674,8 @@
                 "email_address": "sandbox-merchant@business.example.com",
                 "merchant_id": "DD3R9KG8TPPH2"
               },
-              "custom_id": "FOG-D41134",
-              "invoice_id": "FOG-D41134",
+              "custom_id": "FOG-6160F7",
+              "invoice_id": "FOG-6160F7",
               "items": [
                 {
                   "name": "Fogline Hoodie",
@@ -3670,72 +3698,27 @@
                   "postal_code": "95131",
                   "country_code": "US"
                 }
-              },
-              "payments": {
-                "captures": [
-                  {
-                    "id": "1RK22552FD295064S",
-                    "status": "COMPLETED",
-                    "amount": {
-                      "currency_code": "USD",
-                      "value": "49.00"
-                    },
-                    "final_capture": true,
-                    "seller_protection": {
-                      "status": "ELIGIBLE",
-                      "dispute_categories": [
-                        "ITEM_NOT_RECEIVED",
-                        "UNAUTHORIZED_TRANSACTION"
-                      ]
-                    },
-                    "seller_receivable_breakdown": {
-                      "gross_amount": {
-                        "currency_code": "USD",
-                        "value": "49.00"
-                      },
-                      "paypal_fee": {
-                        "currency_code": "USD",
-                        "value": "2.20"
-                      },
-                      "net_amount": {
-                        "currency_code": "USD",
-                        "value": "46.80"
-                      }
-                    },
-                    "invoice_id": "FOG-D41134",
-                    "custom_id": "FOG-D41134",
-                    "links": [
-                      {
-                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/1RK22552FD295064S",
-                        "rel": "self",
-                        "method": "GET"
-                      },
-                      {
-                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/1RK22552FD295064S/refund",
-                        "rel": "refund",
-                        "method": "POST"
-                      },
-                      {
-                        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/12S28156F1351302U",
-                        "rel": "up",
-                        "method": "GET"
-                      }
-                    ],
-                    "create_time": "2026-11-08T02:56:15Z",
-                    "update_time": "2026-11-08T02:56:15Z"
-                  }
-                ]
               }
             }
           ],
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/12S28156F1351302U",
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604",
               "rel": "self",
               "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604",
+              "rel": "update",
+              "method": "PATCH"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604/capture",
+              "rel": "capture",
+              "method": "POST"
             }
           ],
-          "id": "12S28156F1351302U",
+          "id": "4G3703976L8861604",
           "payment_source": {
             "paypal": {
               "email_address": "sandbox-buyer@personal.example.com",
@@ -3762,16 +3745,16 @@
               "country_code": "US"
             }
           },
-          "status": "COMPLETED"
+          "status": "APPROVED"
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-6NP01714MP3728136-10490253YP911913Y",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3KV38395G2915741R-4AG19558XA043503V",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-6NP01714MP3728136-10490253YP911913Y/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3KV38395G2915741R-4AG19558XA043503V/resend",
             "rel": "resend",
             "method": "POST"
           }
@@ -3783,189 +3766,15 @@
     }
   },
   {
-    "at": "2026-11-08T02:56:26.459Z",
+    "at": "2026-11-08T07:27:39.359Z",
     "method": "POST",
-    "path": "/v1/notifications/verify-webhook-signature",
-    "status": 200,
-    "debugId": "f702899f10ce8",
-    "requestContentType": "application/json",
-    "requestBody": {
-      "auth_algo": "SHA256withRSA",
-      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "fb932680-db1f-11f1-bdb3-b79eb5d1be9d",
-      "transmission_sig": "llhpFGseWWQF9RDw41s2Hg+ymKGYVKGBDjbSyM71Q4M1BUxMbmMgG8GY52iUKk46rZvy5RtA6yaDklgdNoYlpryWDeRW7OLdqzdC8UaIlMcgWr7cYvSlfYZ9jjdBMzdAQF/71gUNiJDUVVD065WFgvMkUxLISG6NFxxSq4lA/dK8yqBIYvHcGpO8WyzgOQjq5/CCSiyOM/htb/KuvQCgfgBgUJG3XgY2YRk33aV0WaRKvnW9oc+nrUJ1x3DEyJIlUBo1VByWwMUmpdgAxrUVCpB1y3SXWcWTf+8/XgKzJmu8pVtscNO1E6AOTrHbwV8TdeL5rCMn/A+2gMsgfGTPAQ==",
-      "transmission_time": "2026-11-08T02:56:23Z",
-      "webhook_id": "4H2036921H838203E",
-      "webhook_event": {
-        "id": "WH-26M40718VT334850A-1PR26064G9926514H",
-        "event_version": "1.0",
-        "create_time": "2026-11-08T02:56:18.912Z",
-        "resource_type": "capture",
-        "resource_version": "2.0",
-        "event_type": "PAYMENT.CAPTURE.COMPLETED",
-        "summary": "Payment completed for $ 49.0 USD",
-        "resource": {
-          "id": "1RK22552FD295064S",
-          "amount": {
-            "currency_code": "USD",
-            "value": "49.00"
-          },
-          "final_capture": true,
-          "seller_protection": {
-            "status": "ELIGIBLE",
-            "dispute_categories": [
-              "ITEM_NOT_RECEIVED",
-              "UNAUTHORIZED_TRANSACTION"
-            ]
-          },
-          "seller_receivable_breakdown": {
-            "gross_amount": {
-              "currency_code": "USD",
-              "value": "49.00"
-            },
-            "paypal_fee": {
-              "currency_code": "USD",
-              "value": "2.20"
-            },
-            "net_amount": {
-              "currency_code": "USD",
-              "value": "46.80"
-            }
-          },
-          "invoice_id": "FOG-D41134",
-          "custom_id": "FOG-D41134",
-          "status": "COMPLETED",
-          "supplementary_data": {
-            "related_ids": {
-              "order_id": "12S28156F1351302U"
-            }
-          },
-          "payee": {
-            "email_address": "sandbox-merchant@business.example.com",
-            "merchant_id": "DD3R9KG8TPPH2"
-          },
-          "create_time": "2026-11-08T02:56:15Z",
-          "update_time": "2026-11-08T02:56:15Z",
-          "links": [
-            {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/1RK22552FD295064S",
-              "rel": "self",
-              "method": "GET"
-            },
-            {
-              "href": "https://api.sandbox.paypal.com/v2/payments/captures/1RK22552FD295064S/refund",
-              "rel": "refund",
-              "method": "POST"
-            },
-            {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/12S28156F1351302U",
-              "rel": "up",
-              "method": "GET"
-            }
-          ]
-        },
-        "links": [
-          {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-26M40718VT334850A-1PR26064G9926514H",
-            "rel": "self",
-            "method": "GET"
-          },
-          {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-26M40718VT334850A-1PR26064G9926514H/resend",
-            "rel": "resend",
-            "method": "POST"
-          }
-        ]
-      }
-    },
-    "responseBody": {
-      "verification_status": "SUCCESS"
-    }
-  },
-  {
-    "at": "2026-11-08T02:56:29.978Z",
-    "method": "POST",
-    "path": "/v2/checkout/orders",
+    "path": "/v2/checkout/orders/4G3703976L8861604/capture",
     "status": 201,
-    "debugId": "f372743d690fb",
-    "requestContentType": "application/json",
-    "requestBody": {
-      "intent": "CAPTURE",
-      "purchase_units": [
-        {
-          "reference_id": "FOG-4F6201",
-          "amount": {
-            "currency_code": "USD",
-            "value": "98.00",
-            "breakdown": {
-              "item_total": {
-                "currency_code": "USD",
-                "value": "98.00"
-              }
-            }
-          },
-          "custom_id": "FOG-4F6201",
-          "invoice_id": "FOG-4F6201",
-          "items": [
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            },
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            }
-          ]
-        }
-      ]
-    },
-    "responseBody": {
-      "id": "62708722U3392282S",
-      "status": "CREATED",
-      "links": [
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/62708722U3392282S",
-          "rel": "self",
-          "method": "GET"
-        },
-        {
-          "href": "https://www.sandbox.paypal.com/checkoutnow?token=62708722U3392282S",
-          "rel": "approve",
-          "method": "GET"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/62708722U3392282S",
-          "rel": "update",
-          "method": "PATCH"
-        },
-        {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/62708722U3392282S/capture",
-          "rel": "capture",
-          "method": "POST"
-        }
-      ]
-    }
-  },
-  {
-    "at": "2026-11-08T02:56:48.326Z",
-    "method": "POST",
-    "path": "/v2/checkout/orders/62708722U3392282S/capture",
-    "status": 201,
-    "debugId": "f464688fdc262",
+    "debugId": "ca572db35fe00",
     "requestContentType": "application/json",
     "requestBody": {},
     "responseBody": {
-      "id": "62708722U3392282S",
+      "id": "4G3703976L8861604",
       "intent": "CAPTURE",
       "status": "COMPLETED",
       "payment_source": {
@@ -3984,14 +3793,14 @@
       },
       "purchase_units": [
         {
-          "reference_id": "FOG-4F6201",
+          "reference_id": "FOG-6160F7",
           "amount": {
             "currency_code": "USD",
-            "value": "98.00",
+            "value": "49.00",
             "breakdown": {
               "item_total": {
                 "currency_code": "USD",
-                "value": "98.00"
+                "value": "49.00"
               },
               "shipping": {
                 "currency_code": "USD",
@@ -4016,22 +3825,9 @@
             "merchant_id": "DD3R9KG8TPPH2"
           },
           "description": "Fogline Hoodie",
-          "custom_id": "FOG-4F6201",
-          "invoice_id": "FOG-4F6201",
+          "custom_id": "FOG-6160F7",
+          "invoice_id": "FOG-6160F7",
           "items": [
-            {
-              "name": "Fogline Hoodie",
-              "unit_amount": {
-                "currency_code": "USD",
-                "value": "49.00"
-              },
-              "tax": {
-                "currency_code": "USD",
-                "value": "0.00"
-              },
-              "quantity": "1",
-              "sku": "FOG-HOODIE"
-            },
             {
               "name": "Fogline Hoodie",
               "unit_amount": {
@@ -4061,11 +3857,11 @@
           "payments": {
             "captures": [
               {
-                "id": "05S27040NA304035V",
+                "id": "68T01063BJ7413118",
                 "status": "COMPLETED",
                 "amount": {
                   "currency_code": "USD",
-                  "value": "98.00"
+                  "value": "49.00"
                 },
                 "final_capture": true,
                 "seller_protection": {
@@ -4078,38 +3874,38 @@
                 "seller_receivable_breakdown": {
                   "gross_amount": {
                     "currency_code": "USD",
-                    "value": "98.00"
+                    "value": "49.00"
                   },
                   "paypal_fee": {
                     "currency_code": "USD",
-                    "value": "3.91"
+                    "value": "2.20"
                   },
                   "net_amount": {
                     "currency_code": "USD",
-                    "value": "94.09"
+                    "value": "46.80"
                   }
                 },
-                "invoice_id": "FOG-4F6201",
-                "custom_id": "FOG-4F6201",
+                "invoice_id": "FOG-6160F7",
+                "custom_id": "FOG-6160F7",
                 "links": [
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/05S27040NA304035V",
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/68T01063BJ7413118",
                     "rel": "self",
                     "method": "GET"
                   },
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/05S27040NA304035V/refund",
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/68T01063BJ7413118/refund",
                     "rel": "refund",
                     "method": "POST"
                   },
                   {
-                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/62708722U3392282S",
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604",
                     "rel": "up",
                     "method": "GET"
                   }
                 ],
-                "create_time": "2026-11-08T02:56:47Z",
-                "update_time": "2026-11-08T02:56:47Z"
+                "create_time": "2026-11-08T07:27:38Z",
+                "update_time": "2026-11-08T07:27:38Z"
               }
             ]
           }
@@ -4126,11 +3922,11 @@
           "country_code": "US"
         }
       },
-      "create_time": "2026-11-08T02:56:29Z",
-      "update_time": "2026-11-08T02:56:47Z",
+      "create_time": "2026-11-08T07:27:20Z",
+      "update_time": "2026-11-08T07:27:39Z",
       "links": [
         {
-          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/62708722U3392282S",
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604",
           "rel": "self",
           "method": "GET"
         }
@@ -4138,182 +3934,363 @@
     }
   },
   {
-    "at": "2026-11-08T02:56:53.365Z",
+    "at": "2026-11-08T07:27:49.502Z",
     "method": "POST",
     "path": "/v1/notifications/verify-webhook-signature",
     "status": 200,
-    "debugId": "f677747e58040",
+    "debugId": "ca572db7d4829",
     "requestContentType": "application/json",
     "requestBody": {
       "auth_algo": "SHA256withRSA",
       "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
-      "transmission_id": "0ced982d-db20-11f1-bdb3-67d8599c67f4",
-      "transmission_sig": "DnhxD+YUfRz985TKS9wXG5Jztdyhj7Dj7qmtGWwPTZzSHgKa/sqJf3Q4rfmcq0hroMJwo/V1ltqXWtTli+a9LcP2gt2HcWwSkcsVoDoNl8SpjYhP7HTYHKLwqXWsUlvRK7oRQEN6pLsTdTq7WVKOrj/ATXKV5bLrEaiHM2qvyzg/qYJoUuvn0avfBgml6WYtt90tG1+kcneYt2njis9cZL110SSOBOeIklX3NMOBGZfXo7yjcss9UaGmmSSGR8BVUDZNjdRYGNr2+5mZm/aRuB6+O71drH0EgGyyhM9hXZbw9NwsHrMLe2hznfl7c4CFSdfE6Y3JDYgZgXZiGPM9PA==",
-      "transmission_time": "2026-11-08T02:56:52Z",
+      "transmission_id": "e4fd5524-db45-11f1-84a3-9bd36f9f54c6",
+      "transmission_sig": "v7B6KZKWQqKXvkOWdFyrYdmJ62TpI8kOfcx6b4wG35lNu46ENUC6h/9XfDJUqGQC61Jt/K/lYOL1vrHXQxbDpZt311sYGHSU2dTlZGaQIgATN7M6eR+Sa1stKNcHh1ZS+Zc72iqZ2EfG0bYLBXJnDR1s0/S6wLvaMFFHCM0yoAToPacfeqVxO7pf97O+g0/J/fh/zBGqMLoCPnc7vq4spapybtvqgoBltJx8eI1m1DLBQPUdkPpsCKJs5S4wAexQ5oYjDIiQJ40qc/FxafwRuSxX5XpspkdHjbnLqYYBHBYjf1uV5qjZUPVIbcPKg0GUPGzlZkLEpP+a44/gKnxRyg==",
+      "transmission_time": "2026-11-08T07:27:46Z",
       "webhook_id": "4H2036921H838203E",
       "webhook_event": {
-        "id": "WH-57A553379G135094X-3J398512PP2509157",
+        "id": "WH-65202213E0161633L-3EN372980L0071121",
         "event_version": "1.0",
-        "create_time": "2026-11-08T02:56:52.574Z",
-        "resource_type": "checkout-order",
+        "create_time": "2026-11-08T07:27:42.396Z",
+        "resource_type": "capture",
         "resource_version": "2.0",
-        "event_type": "CHECKOUT.ORDER.APPROVED",
-        "summary": "An order has been approved by buyer",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 49.0 USD",
         "resource": {
-          "update_time": "2026-11-08T02:56:47Z",
-          "create_time": "2026-11-08T02:56:47Z",
-          "purchase_units": [
-            {
-              "reference_id": "FOG-4F6201",
-              "amount": {
-                "currency_code": "USD",
-                "value": "98.00",
-                "breakdown": {
-                  "item_total": {
-                    "currency_code": "USD",
-                    "value": "98.00"
-                  }
-                }
-              },
-              "payee": {
-                "email_address": "sandbox-merchant@business.example.com",
-                "merchant_id": "DD3R9KG8TPPH2"
-              },
-              "custom_id": "FOG-4F6201",
-              "invoice_id": "FOG-4F6201",
-              "items": [
-                {
-                  "name": "Fogline Hoodie",
-                  "unit_amount": {
-                    "currency_code": "USD",
-                    "value": "49.00"
-                  },
-                  "quantity": "1",
-                  "sku": "FOG-HOODIE"
-                },
-                {
-                  "name": "Fogline Hoodie",
-                  "unit_amount": {
-                    "currency_code": "USD",
-                    "value": "49.00"
-                  },
-                  "quantity": "1",
-                  "sku": "FOG-HOODIE"
-                }
-              ],
-              "shipping": {
-                "name": {
-                  "full_name": "John Doe"
-                },
-                "address": {
-                  "address_line_1": "2211 N First St",
-                  "admin_area_2": "San Jose",
-                  "admin_area_1": "CA",
-                  "postal_code": "95131",
-                  "country_code": "US"
-                }
-              },
-              "payments": {
-                "captures": [
-                  {
-                    "id": "05S27040NA304035V",
-                    "status": "COMPLETED",
-                    "amount": {
-                      "currency_code": "USD",
-                      "value": "98.00"
-                    },
-                    "final_capture": true,
-                    "seller_protection": {
-                      "status": "ELIGIBLE",
-                      "dispute_categories": [
-                        "ITEM_NOT_RECEIVED",
-                        "UNAUTHORIZED_TRANSACTION"
-                      ]
-                    },
-                    "seller_receivable_breakdown": {
-                      "gross_amount": {
-                        "currency_code": "USD",
-                        "value": "98.00"
-                      },
-                      "paypal_fee": {
-                        "currency_code": "USD",
-                        "value": "3.91"
-                      },
-                      "net_amount": {
-                        "currency_code": "USD",
-                        "value": "94.09"
-                      }
-                    },
-                    "invoice_id": "FOG-4F6201",
-                    "custom_id": "FOG-4F6201",
-                    "links": [
-                      {
-                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/05S27040NA304035V",
-                        "rel": "self",
-                        "method": "GET"
-                      },
-                      {
-                        "href": "https://api.sandbox.paypal.com/v2/payments/captures/05S27040NA304035V/refund",
-                        "rel": "refund",
-                        "method": "POST"
-                      },
-                      {
-                        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/62708722U3392282S",
-                        "rel": "up",
-                        "method": "GET"
-                      }
-                    ],
-                    "create_time": "2026-11-08T02:56:47Z",
-                    "update_time": "2026-11-08T02:56:47Z"
-                  }
-                ]
-              }
+          "id": "68T01063BJ7413118",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "49.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.20"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "46.80"
             }
-          ],
+          },
+          "invoice_id": "FOG-6160F7",
+          "custom_id": "FOG-6160F7",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "4G3703976L8861604"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T07:27:38Z",
+          "update_time": "2026-11-08T07:27:38Z",
           "links": [
             {
-              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/62708722U3392282S",
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/68T01063BJ7413118",
               "rel": "self",
               "method": "GET"
-            }
-          ],
-          "id": "62708722U3392282S",
-          "payment_source": {
-            "paypal": {
-              "email_address": "sandbox-buyer@personal.example.com",
-              "account_id": "V7ERP7YJL2X38",
-              "account_status": "VERIFIED",
-              "name": {
-                "given_name": "John",
-                "surname": "Doe"
-              },
-              "address": {
-                "country_code": "US"
-              }
-            }
-          },
-          "intent": "CAPTURE",
-          "payer": {
-            "name": {
-              "given_name": "John",
-              "surname": "Doe"
             },
-            "email_address": "sandbox-buyer@personal.example.com",
-            "payer_id": "V7ERP7YJL2X38",
-            "address": {
-              "country_code": "US"
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/68T01063BJ7413118/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4G3703976L8861604",
+              "rel": "up",
+              "method": "GET"
             }
-          },
-          "status": "COMPLETED"
+          ]
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-57A553379G135094X-3J398512PP2509157",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-65202213E0161633L-3EN372980L0071121",
             "rel": "self",
             "method": "GET"
           },
           {
-            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-57A553379G135094X-3J398512PP2509157/resend",
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-65202213E0161633L-3EN372980L0071121/resend",
+            "rel": "resend",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    "responseBody": {
+      "verification_status": "SUCCESS"
+    }
+  },
+  {
+    "at": "2026-11-08T07:27:55.370Z",
+    "method": "POST",
+    "path": "/v2/checkout/orders/0AP640430R1195602/capture",
+    "status": 201,
+    "debugId": "ca572db995a47",
+    "requestContentType": "application/json",
+    "requestBody": {},
+    "responseBody": {
+      "id": "0AP640430R1195602",
+      "intent": "CAPTURE",
+      "status": "COMPLETED",
+      "payment_source": {
+        "paypal": {
+          "email_address": "sandbox-buyer@personal.example.com",
+          "account_id": "V7ERP7YJL2X38",
+          "account_status": "VERIFIED",
+          "name": {
+            "given_name": "John",
+            "surname": "Doe"
+          },
+          "address": {
+            "country_code": "US"
+          }
+        }
+      },
+      "purchase_units": [
+        {
+          "reference_id": "FOG-D5417D",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00",
+            "breakdown": {
+              "item_total": {
+                "currency_code": "USD",
+                "value": "49.00"
+              },
+              "shipping": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "handling": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "insurance": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "shipping_discount": {
+                "currency_code": "USD",
+                "value": "0.00"
+              }
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "description": "Fogline Hoodie",
+          "custom_id": "FOG-D5417D",
+          "invoice_id": "FOG-D5417D",
+          "items": [
+            {
+              "name": "Fogline Hoodie",
+              "unit_amount": {
+                "currency_code": "USD",
+                "value": "49.00"
+              },
+              "tax": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "quantity": "1",
+              "sku": "FOG-HOODIE"
+            }
+          ],
+          "shipping": {
+            "name": {
+              "full_name": "John Doe"
+            },
+            "address": {
+              "address_line_1": "2211 N First St",
+              "admin_area_2": "San Jose",
+              "admin_area_1": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            }
+          },
+          "payments": {
+            "captures": [
+              {
+                "id": "4W357277HY289220M",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "49.00"
+                },
+                "final_capture": true,
+                "seller_protection": {
+                  "status": "ELIGIBLE",
+                  "dispute_categories": [
+                    "ITEM_NOT_RECEIVED",
+                    "UNAUTHORIZED_TRANSACTION"
+                  ]
+                },
+                "seller_receivable_breakdown": {
+                  "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "49.00"
+                  },
+                  "paypal_fee": {
+                    "currency_code": "USD",
+                    "value": "2.20"
+                  },
+                  "net_amount": {
+                    "currency_code": "USD",
+                    "value": "46.80"
+                  }
+                },
+                "invoice_id": "FOG-D5417D",
+                "custom_id": "FOG-D5417D",
+                "links": [
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/4W357277HY289220M",
+                    "rel": "self",
+                    "method": "GET"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/payments/captures/4W357277HY289220M/refund",
+                    "rel": "refund",
+                    "method": "POST"
+                  },
+                  {
+                    "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ],
+                "create_time": "2026-11-08T07:27:54Z",
+                "update_time": "2026-11-08T07:27:54Z"
+              }
+            ]
+          }
+        }
+      ],
+      "payer": {
+        "name": {
+          "given_name": "John",
+          "surname": "Doe"
+        },
+        "email_address": "sandbox-buyer@personal.example.com",
+        "payer_id": "V7ERP7YJL2X38",
+        "address": {
+          "country_code": "US"
+        }
+      },
+      "create_time": "2026-11-08T07:20:52Z",
+      "update_time": "2026-11-08T07:27:55Z",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    }
+  },
+  {
+    "at": "2026-11-08T07:28:07.326Z",
+    "method": "POST",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "status": 200,
+    "debugId": "ca572dbecbfe4",
+    "requestContentType": "application/json",
+    "requestBody": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-9eaebfdf",
+      "transmission_id": "ef56df04-db45-11f1-bdb3-55056d98baf6",
+      "transmission_sig": "56FreKmD9RAXZgjDdg5u6SUMUa+pwa8ZHzzNqWU2zktyfrd1sIi8KQ3F4PVbMdE+mmRYhCNnnFBBItDqszj2bBsh17d7t6z+10T88rMMTdSiZWNtU2rh1dswVPerwsfw9OoXw7m2BTOeo1AfzEwo8tnOGTrC/0Gyq/XrqG37jGZ1V0Funv3L0IaZ1iDLxXEW6/nxfnSks3199eLqt16qbeorhP1sBAyl2zumbE9rRrS3AGIA7Dxdytl3yij/EAx7vLu1GNzd8ykutbnOBzyDiH8VbP2Klp9o4SJ+r6jIvx3+RjbEmnDX6Tqp6KgPqM7Zwxb6Uvki9I/nlUsdNZvfaA==",
+      "transmission_time": "2026-11-08T07:28:03Z",
+      "webhook_id": "4H2036921H838203E",
+      "webhook_event": {
+        "id": "WH-5C382466YH040235U-4ST495539H570140F",
+        "event_version": "1.0",
+        "create_time": "2026-11-08T07:27:59.497Z",
+        "resource_type": "capture",
+        "resource_version": "2.0",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "summary": "Payment completed for $ 49.0 USD",
+        "resource": {
+          "id": "4W357277HY289220M",
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.00"
+          },
+          "final_capture": true,
+          "seller_protection": {
+            "status": "ELIGIBLE",
+            "dispute_categories": [
+              "ITEM_NOT_RECEIVED",
+              "UNAUTHORIZED_TRANSACTION"
+            ]
+          },
+          "seller_receivable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "49.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "2.20"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "46.80"
+            }
+          },
+          "invoice_id": "FOG-D5417D",
+          "custom_id": "FOG-D5417D",
+          "status": "COMPLETED",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "0AP640430R1195602"
+            }
+          },
+          "payee": {
+            "email_address": "sandbox-merchant@business.example.com",
+            "merchant_id": "DD3R9KG8TPPH2"
+          },
+          "create_time": "2026-11-08T07:27:54Z",
+          "update_time": "2026-11-08T07:27:54Z",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4W357277HY289220M",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/4W357277HY289220M/refund",
+              "rel": "refund",
+              "method": "POST"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/checkout/orders/0AP640430R1195602",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-5C382466YH040235U-4ST495539H570140F",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-5C382466YH040235U-4ST495539H570140F/resend",
             "rel": "resend",
             "method": "POST"
           }

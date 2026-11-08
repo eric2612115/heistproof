@@ -1,6 +1,7 @@
 [
   {
     "round": 0,
+    "offline": false,
     "tests": true,
     "prove": {
       "ok": false,
@@ -8,7 +9,7 @@
       "verdict": "PayPal would charge $4900.00 for a $49.00 bag.",
       "environment": null,
       "bagTotal": "49.00",
-      "paypalOrderId": "24L79728JW7295928",
+      "paypalOrderId": "8E9366066R8084510",
       "paypalAmount": {
         "value": "4900.00",
         "currency": "USD"
@@ -33,8 +34,8 @@
           },
           "status": 200,
           "response": {
-            "id": "24L79728JW7295928",
-            "orderId": "FOG-A1D580"
+            "id": "8E9366066R8084510",
+            "orderId": "FOG-05C03A"
           },
           "headers": {
             "content-type": "application/json"
@@ -70,12 +71,12 @@
           2
         ],
         "verdict": "robbed",
-        "summary": "Shipped the $49 hoodie after PayPal captured USD 0.01 (order 51S63395UA613322H); the shop's back office says fulfilled.",
+        "summary": "Shipped the $49 hoodie after PayPal captured USD 0.01 (order 1W112585FJ068771W); the shop's back office says fulfilled.",
         "evidence": {
           "request": "/api/paypal/orders",
           "expected": "USD 4900.00",
           "control": {
-            "paypalOrderId": "1HR790847G7614054",
+            "paypalOrderId": "93A98842JY872701V",
             "amount": {
               "value": "4900.00",
               "currency": "USD"
@@ -85,88 +86,88 @@
             {
               "variant": "total fields set to one cent",
               "shopStatus": 200,
-              "paypalOrderId": "4BG936030B2097455",
+              "paypalOrderId": "3GU956538B0293028",
               "paypalAmount": {
                 "value": "0.01",
                 "currency": "USD"
               },
-              "debugId": "f54062919890c"
+              "debugId": "f7296962568a6"
             },
             {
               "variant": "common price fields added to every line, at one cent",
               "shopStatus": 200,
-              "paypalOrderId": "6FH6878475303172L",
+              "paypalOrderId": "3WA74619JD7905149",
               "paypalAmount": {
                 "value": "4900.00",
                 "currency": "USD"
               },
-              "debugId": "f7796611d246b"
+              "debugId": "f326264ec683e"
             },
             {
               "variant": "every price in the bag set to one cent",
               "shopStatus": 200,
-              "paypalOrderId": "65812843YS7122016",
+              "paypalOrderId": "2EE76372A5107583V",
               "paypalAmount": {
                 "value": "4900.00",
                 "currency": "USD"
               },
-              "debugId": "f1613941a3e75"
+              "debugId": "f425546d434e0"
             },
             {
               "variant": "every price in the bag set to 1 (cents)",
               "shopStatus": 200,
-              "paypalOrderId": "30C96347L0997481K",
+              "paypalOrderId": "7D611445KA8819102",
               "paypalAmount": {
                 "value": "4900.00",
                 "currency": "USD"
               },
-              "debugId": "f7581729be22e"
+              "debugId": "f528220b33ad1"
             },
             {
               "variant": "every number in the request set to one cent",
               "shopStatus": 200,
-              "paypalOrderId": "8T1592392B566840H",
+              "paypalOrderId": "9UD08747FE952300P",
               "paypalAmount": {
                 "value": "4900.00",
                 "currency": "USD"
               },
-              "debugId": "f134524e3a900"
+              "debugId": "f65931300d78b"
             },
             {
               "variant": "currency switched to yen",
               "shopStatus": 200,
-              "paypalOrderId": "10476466Y1525092E",
+              "paypalOrderId": "57784051P72147424",
               "paypalAmount": {
                 "value": "4900",
                 "currency": "JPY"
               },
-              "debugId": "f3306442e8808"
+              "debugId": "f2120527fce54"
             }
           ],
           "variant": "total fields set to one cent",
           "followThrough": {
-            "paypalOrderId": "51S63395UA613322H",
+            "paypalOrderId": "1W112585FJ068771W",
             "approved": true,
             "captured": {
               "currency_code": "USD",
               "value": "0.01"
             },
-            "shopOrder": "FOG-AB9EF1",
+            "shopOrder": "FOG-30BC4F",
             "shopStatus": "fulfilled",
-            "labelsAdded": 1,
+            "labelsAdded": 2,
             "paidNow": [
-              "FOG-AB9EF1"
+              "FOG-30BC4F"
             ]
           },
           "screenshots": [
-            "round0-attack-penny-1-checkout.png",
-            "round0-attack-penny-2-paypal.png",
-            "round0-attack-penny-3-review.png",
-            "round0-attack-penny-4-after.png",
+            "round0-attack-penny-try2-1-checkout.png",
+            "round0-attack-penny-try2-2-paypal.png",
+            "round0-attack-penny-try2-3-review.png",
+            "round0-attack-penny-try2-4-after.png",
             "round0-attack-penny-5-backoffice.png",
             "round0-attack-price-tamper-backoffice.png"
           ],
-          "paypalOrderId": "51S63395UA613322H"
+          "paypalOrderId": "1W112585FJ068771W"
         }
       },
       {
@@ -204,7 +205,7 @@
               "paypal": null,
               "paypalOrderId": null,
               "paypalAmount": null,
-              "leastFair": "49000.00",
+              "leastFair": "49.00",
               "robbed": false
             },
             {
@@ -248,20 +249,26 @@
           4
         ],
         "verdict": "robbed",
-        "summary": "The shop marked order 7SV96861MW662264F paid although PayPal says CREATED.",
+        "summary": "/api/paypal/orders/4NP75993BC531582U/capture, sent for order 4NP75993BC531582U, which no buyer approved, made the shop mark it paid although PayPal says CREATED.",
         "evidence": {
-          "paypalOrderId": "7SV96861MW662264F",
+          "paypalOrderId": "4NP75993BC531582U",
           "paypalStatus": "CREATED",
-          "captureRequest": "/api/paypal/orders/7SV96861MW662264F/capture",
-          "shopAnswer": {
-            "status": 200,
-            "body": {
-              "orderId": "FOG-4D4B40"
+          "requests": [
+            {
+              "path": "/api/paypal/orders/4NP75993BC531582U/capture",
+              "paypalOrderId": "4NP75993BC531582U",
+              "shopOrder": "FOG-57F2F1",
+              "answer": {
+                "status": 200,
+                "body": {
+                  "orderId": "FOG-57F2F1"
+                }
+              }
             }
-          },
+          ],
           "orders": [
             {
-              "id": "FOG-4D4B40",
+              "id": "FOG-57F2F1",
               "before": null,
               "after": "fulfilled",
               "labelsBefore": 0,
@@ -297,14 +304,19 @@
         }
       }
     ],
-    "webhook": "not-delivered",
-    "webhookEvent": null,
+    "webhook": "accepted",
+    "webhookEvent": "WH-0NJ908755P098805B-9RE90369HJ592390Y",
     "paypalErrors": [],
     "books": {
       "matched": false,
-      "orders": 10,
+      "orders": 11,
       "paid": 2,
       "mismatches": []
+    },
+    "thief": {
+      "ran": false,
+      "reason": "the real purchase never reached a buyer's approval, so there was no checkout to rob",
+      "plans": []
     }
   }
 ]
