@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ROOT, PORTS } from "../config.ts";
 import { events } from "../events.ts";
+import { summarize, brokenShots } from "./summary.ts";
 
 const STATIC = path.join(ROOT, "console");
 const RUN_DIRS = [path.join(ROOT, "runs"), path.join(ROOT, ".heistproof", "runs")];
@@ -14,61 +15,6 @@ function findRun(id: string): string | null {
   if (!/^[\w.-]+$/.test(id)) return null;
   for (const d of RUN_DIRS) if (fs.existsSync(path.join(d, id, "events.jsonl"))) return path.join(d, id);
   return null;
-}
-
-/* ---- Run summary for the index: what the console's run cards and headline need. Keep identical to summarize() in scripts/build-site.mjs. ---- */
-const EXPECTED_ATTACKS = 10;
-const SHOP_NAMES: Record<string, string> = { "fogline-express": "the Fogline shop", "fogline-naive": "a hand-written checkout", "fogline-afternoon": "a hand-written checkout", "fogline-after": "the checkout the agent wrote" };
-function summarize(id: string, ev: ReturnType<typeof events>) {
-  const start = (ev.find((e) => e.type === "run.start") ?? {}) as Record<string, unknown>;
-  const done = ev.find((e) => e.type === "run.done") as Record<string, unknown> | undefined;
-  let round = 0;
-  const results = new Map<string, { verdict: string; round: number }>(); // attack id -> its latest result and the round it ran in
-  const robbedEver = new Set<string>();
-  let fixes = 0;
-  let purchases = 0;
-  for (const e of ev) {
-    if (e.type === "attack.result") {
-      results.set(String(e.id), { verdict: String(e.verdict), round });
-      if (e.verdict === "robbed") robbedEver.add(String(e.id));
-    } else if (e.type === "round.done") round++;
-    else if (e.type === "agent.start" && String(e.label ?? "").startsWith("fix")) fixes++;
-    else if (e.type === "prove.buttons" && String(e.label ?? "").startsWith("round")) purchases++;
-  }
-  const last = Math.max(0, ...[...results.values()].map((r) => r.round));
-  const final = [...results.values()].filter((r) => r.round === last);
-  const count = (v: string) => final.filter((r) => r.verdict === v).length;
-  const mode = String(start.mode ?? "heistproof");
-  const template = String(start.template ?? String(start.shop ?? "").split("/").pop() ?? "");
-  const shop = SHOP_NAMES[template] ?? template ?? "the shop";
-  const robbed = count("robbed");
-  const title = mode === "check" ? `${shop[0].toUpperCase()}${shop.slice(1)}, checked as it is` : mode === "existing" ? `AI fixes ${shop}` : mode === "baseline" ? "AI adds PayPal without Heistproof" : `AI adds PayPal to ${shop}`;
-  return {
-    id,
-    mode,
-    template,
-    offline: Boolean(start.offline),
-    model: start.model ?? "",
-    provider: start.provider ?? "",
-    heistproofCommit: start.heistproofCommit ?? null,
-    node: start.node ?? null,
-    started: ev[0]?.t ?? null,
-    finished: done?.t ?? null,
-    verdict: done ? (done.verdict ?? (done.safe ? "safe" : "unsafe")) : null,
-    safe: done?.safe ?? null,
-    held: count("held"),
-    robbed,
-    skipped: count("skipped") + count("error"),
-    ran: final.length,
-    total: Math.max(EXPECTED_ATTACKS, results.size),
-    robbedEver: robbedEver.size,
-    rounds: done?.rounds ?? round + (results.size ? 1 : 0),
-    fixes,
-    purchases,
-    branch: done?.branch ?? (done?.branchReady ? "local" : null),
-    pr: typeof done?.pr === "string" && done.pr ? done.pr : null,
-    title,
-  };
 }
 
 function listRuns() {
@@ -98,8 +44,11 @@ const server = http.createServer((req, res) => {
     const dir = findRun(parts[2]);
     if (!dir) return send(res, 404, JSON.stringify({ error: "no such run" }));
     if (parts.length === 3) {
-      const files = fs.readdirSync(dir);
-      return send(res, 200, JSON.stringify({ id: parts[2], events: events(dir), files }));
+      // Back-office screenshots that caught an error page instead of the back office are listed, so the console skips them.
+      const all = fs.readdirSync(dir);
+      const broken = brokenShots(dir, all);
+      const files = all.filter((f) => !broken.includes(f));
+      return send(res, 200, JSON.stringify({ id: parts[2], events: events(dir), files, brokenShots: broken }));
     }
     if (parts[3] === "file" && parts[4]) {
       const name = path.basename(decodeURIComponent(parts[4]));

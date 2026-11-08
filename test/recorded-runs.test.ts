@@ -11,24 +11,26 @@ const rounds = (id: string): Round[] => JSON.parse(fs.readFileSync(path.join(RUN
 const lastRound = (id: string): Round => rounds(id).at(-1)!;
 const results = (r: Round) => Object.fromEntries(r.attacks.map((a) => [a.id, a.verdict]));
 const robbed = (r: Round) => r.attacks.filter((a) => a.verdict === "robbed").map((a) => a.id).sort();
-const calls = (id: string, round: number) => JSON.parse(fs.readFileSync(path.join(RUNS, id, `round${round}-paypal-calls.json`), "utf8")) as Array<{ path: string; status: number; debugId: string | null }>;
+const calls = (dir: string, file: string) => JSON.parse(fs.readFileSync(path.join(RUNS, dir, file), "utf8")) as Array<{ path: string; status: number; debugId: string | null }>;
+const refusedCapture = (list: Array<{ path: string; status: number }>) => list.some((c) => c.status === 415 && /\/capture$/.test(c.path));
+const nothingFromTheThief = (r: Round) => Boolean(r.thief?.ran && r.thief.plans.length > 0 && r.thief.plans.every((p) => p.verdict !== "robbed"));
 
 test("the full run: PayPal refused the agent's first capture, the agent fixed it, and every robbery was blocked", () => {
   const all = rounds("2026-11-08-full-run");
   assert.equal(verdictOf(all[0]), "unsafe", "round 1 failed");
-  assert.ok(calls("2026-11-08-full-run", 0).some((c) => c.status === 415 && /\/capture$/.test(c.path)), "PayPal answered 415 at capture");
+  assert.ok(refusedCapture(calls("2026-11-08-full-run", "round0-paypal-calls.json")), "PayPal answered 415 at capture");
   const last = all.at(-1)!;
   assert.equal(last.attacks.length, 10);
   assert.deepEqual(robbed(last), []);
-  assert.ok(last.thief?.ran && last.thief.plans.length > 0 && last.thief.plans.every((p) => p.verdict !== "robbed"), "nothing the AI thief tried got through");
+  assert.ok(nothingFromTheThief(last), "nothing the AI thief tried got through");
+  assert.equal(last.books?.matched, true);
   assert.deepEqual(last.books?.mismatches, []);
   assert.equal(verdictOf(last), "safe");
 });
 
-test("the 415 is not chance: an earlier full run hit the same refusal at capture", () => {
-  const archived = path.join(RUNS, "archive", "2026-11-07-full-run", "prove-paypal-calls.json");
-  const earlier = JSON.parse(fs.readFileSync(archived, "utf8")) as Array<{ path: string; status: number }>;
-  assert.ok(earlier.some((c) => c.status === 415 && /\/capture$/.test(c.path)));
+test("the 415 is not chance: both earlier full runs hit the same refusal at capture", () => {
+  assert.ok(refusedCapture(calls(path.join("archive", "2026-11-07-full-run"), "prove-paypal-calls.json")), "2026-11-07");
+  assert.ok(refusedCapture(calls(path.join("archive", "2026-11-08-full-run-earlier"), "round0-paypal-calls.json")), "2026-11-08, earlier");
 });
 
 test("the same model without any PayPal skills wrote a checkout that was safe at the first try", () => {
@@ -44,6 +46,8 @@ test("the hand-written afternoon checkout is robbed 8 ways out of 10, and its bo
   assert.equal(v["bad-bag"], "held");
   assert.equal(v["secret-leak"], "held");
   assert.ok((r.books?.mismatches.length ?? 0) > 0);
+  // On a shop that already leaks, the thief gets no credit for repeating a known problem.
+  assert.ok(r.thief?.plans.every((p) => p.verdict !== "robbed"), "no new way in from the thief");
   assert.equal(verdictOf(r), "unsafe");
 });
 
@@ -54,13 +58,21 @@ test("the naive checkout: PayPal would have charged $4,900, and the hoodie shipp
   assert.equal(verdictOf(r), "unsafe");
 });
 
-test("a check whose webhook robberies could not run is incomplete, never safe", () => {
+test("Copper Kettle, built differently, and the agent's checkout rechecked: all ten ran and were blocked", () => {
   for (const id of ["2026-11-08-copper-kettle", "2026-11-08-agent-checkout-recheck"]) {
     const r = lastRound(id);
-    assert.deepEqual(robbed(r), [], `${id}: nothing got through`);
-    assert.ok(r.attacks.some((a) => a.verdict === "skipped"), `${id}: a robbery could not run`);
-    assert.equal(verdictOf(r), "incomplete", id);
+    assert.equal(r.attacks.length, 10, id);
+    assert.ok(r.attacks.every((a) => a.verdict === "held"), `${id}: every robbery ran and was blocked`);
+    assert.ok(nothingFromTheThief(r), `${id}: nothing from the thief`);
+    assert.equal(verdictOf(r), "safe", id);
   }
+});
+
+test("a check whose webhook robberies could not run is incomplete, never safe (an earlier recording)", () => {
+  const r = JSON.parse(fs.readFileSync(path.join(RUNS, "archive", "2026-11-08-copper-kettle-incomplete", "rounds.json"), "utf8")).at(-1) as Round;
+  assert.deepEqual(robbed(r), []);
+  assert.ok(r.attacks.some((a) => a.verdict === "skipped"), "a robbery could not run");
+  assert.equal(verdictOf(r), "incomplete");
 });
 
 test("every agent run's report names the skills its events show", () => {
@@ -84,6 +96,6 @@ test("the agent fixed a hand-written checkout in one round: a $4,900 charge and 
   const last = all.at(-1)!;
   assert.equal(last.attacks.length, 10);
   assert.deepEqual(robbed(last), []);
+  assert.ok(nothingFromTheThief(last));
   assert.equal(verdictOf(last), "safe");
 });
-

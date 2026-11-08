@@ -1,0 +1,301 @@
+{
+  "plans": [
+    {
+      "name": "Duplicate SKU lines",
+      "idea": "The server may deduplicate SKUs when pricing the PayPal order but sum the original lines when fulfilling it.",
+      "expect": "Pay $49 once and receive two Fogline Hoodies.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              },
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{b.shopOrderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "v"
+        }
+      ]
+    },
+    {
+      "name": "Capture-body item inflation",
+      "idea": "The capture handler may build or update the shipment from items supplied in the capture request instead of the items stored when the $49 PayPal order was created.",
+      "expect": "Approve payment for one hoodie but receive five hoodies.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {
+            "orderId": "{{b.shopOrderId}}",
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 5
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{b.shopOrderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "v"
+        }
+      ]
+    },
+    {
+      "name": "Latest-order capture swap",
+      "idea": "Capture may be associated with the shopper session's most recently created shop order rather than the shop order mapped to the PayPal order in the URL.",
+      "expect": "Approve $49 for one hoodie, then have that capture fulfil a newer four-hoodie order.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 4
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body.orderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "v"
+        }
+      ]
+    },
+    {
+      "name": "Cross-order capture target",
+      "idea": "The capture handler may trust a client-supplied shop-order identifier, and a later normal capture may treat the already-captured PayPal order as proof for its original shop order without checking that the capture was already consumed.",
+      "expect": "One $49 capture fulfils both the separately created order and the purchased order, yielding two hoodies for one payment.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {
+            "orderId": "{{a.body.orderId}}",
+            "shopOrderId": "{{a.body.orderId}}",
+            "custom_id": "{{a.body.orderId}}",
+            "invoice_id": "{{a.body.orderId}}"
+          },
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "d"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body.orderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "v"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{b.shopOrderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "w"
+        }
+      ]
+    },
+    {
+      "name": "Bind new order to captured PayPal order",
+      "idea": "Order creation may accept supplied PayPal order or capture identifiers instead of always generating and binding a fresh PayPal order; a subsequent capture-status check may then treat the old completed capture as payment for the new, larger order.",
+      "expect": "After buying one hoodie, receive three additional hoodies without another payment.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": false,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 3
+              }
+            ],
+            "id": "{{b.paypalOrderId}}",
+            "paypalOrderId": "{{b.paypalOrderId}}",
+            "paypal_order_id": "{{b.paypalOrderId}}",
+            "captureId": "{{b.captureId}}",
+            "capture_id": "{{b.captureId}}"
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "c"
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body.orderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "v"
+        }
+      ]
+    },
+    {
+      "name": "Cross-order capture webhook",
+      "idea": "The webhook handler may fulfil whichever shop order is named by the edited custom_id and may not bind the capture ID to its original PayPal order or reject a capture already used for another order, even when the retained signature no longer matches the edited body.",
+      "expect": "Pay for and receive the purchased hoodie, and also have a separate unpaid hoodie order fulfilled from the same capture notification.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": false,
+          "save": "b"
+        },
+        {
+          "do": "wait",
+          "ms": 1000
+        },
+        {
+          "do": "webhook",
+          "event": "PAYMENT.CAPTURE.COMPLETED",
+          "edit": {
+            "resource.id": "{{b.captureId}}",
+            "resource.custom_id": "{{a.body.orderId}}",
+            "resource.invoice_id": "{{a.body.orderId}}",
+            "resource.supplementary_data.related_ids.order_id": "{{a.body.id}}",
+            "resource.amount.value": "49.00",
+            "resource.amount.currency_code": "USD"
+          },
+          "signed": true,
+          "times": 1
+        },
+        {
+          "do": "request",
+          "method": "GET",
+          "path": "/api/orders/{{a.body.orderId}}",
+          "body": {},
+          "times": 1,
+          "together": false,
+          "save": "v"
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { summarize, brokenShots } from "../src/console/summary.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -41,71 +42,23 @@ for (const f of ["app.js", "styles.css", "logo.svg"]) {
 }
 if (fs.existsSync(path.join(root, "assets", "logo-512.png"))) fs.copyFileSync(path.join(root, "assets", "logo-512.png"), path.join(out, "logo-512.png"));
 
-/* ---- Run summary for the index. Keep this identical to summarize() in src/console/server.ts. ---- */
-const EXPECTED_ATTACKS = 10;
-const SHOP_NAMES = { "fogline-express": "the Fogline shop", "fogline-naive": "a hand-written checkout", "fogline-afternoon": "a hand-written checkout", "fogline-after": "the checkout the agent wrote" };
-function summarize(id, events) {
-  const start = events.find((e) => e.type === "run.start") ?? {};
-  const done = events.find((e) => e.type === "run.done");
-  let round = 0;
-  const results = new Map(); // attack id -> its latest result and the round it ran in
-  const robbedEver = new Set();
-  let fixes = 0;
-  let purchases = 0;
-  for (const e of events) {
-    if (e.type === "attack.result") {
-      results.set(e.id, { verdict: e.verdict, round });
-      if (e.verdict === "robbed") robbedEver.add(e.id);
-    } else if (e.type === "round.done") round++;
-    else if (e.type === "agent.start" && String(e.label ?? "").startsWith("fix")) fixes++;
-    else if (e.type === "prove.buttons" && String(e.label ?? "").startsWith("round")) purchases++;
-  }
-  const last = Math.max(0, ...[...results.values()].map((r) => r.round));
-  const final = [...results.values()].filter((r) => r.round === last);
-  const count = (v) => final.filter((r) => r.verdict === v).length;
-  const mode = start.mode ?? "heistproof";
-  const template = start.template ?? String(start.shop ?? "").split("/").pop() ?? "";
-  const shop = SHOP_NAMES[template] ?? template ?? "the shop";
-  const robbed = count("robbed");
-  const title = mode === "check" ? `${shop[0].toUpperCase()}${shop.slice(1)}, checked as it is` : mode === "existing" ? `AI fixes ${shop}` : mode === "baseline" ? "AI adds PayPal without Heistproof" : `AI adds PayPal to ${shop}`;
-  return {
-    id,
-    mode,
-    template,
-    offline: Boolean(start.offline),
-    model: start.model ?? "",
-    provider: start.provider ?? "",
-    heistproofCommit: start.heistproofCommit ?? null,
-    node: start.node ?? null,
-    started: events[0]?.t ?? null,
-    finished: done?.t ?? null,
-    verdict: done ? (done.verdict ?? (done.safe ? "safe" : "unsafe")) : null,
-    safe: done?.safe ?? null,
-    held: count("held"),
-    robbed,
-    skipped: count("skipped") + count("error"),
-    ran: final.length,
-    total: Math.max(EXPECTED_ATTACKS, results.size),
-    robbedEver: robbedEver.size,
-    rounds: done?.rounds ?? round + (results.size ? 1 : 0),
-    fixes,
-    purchases,
-    branch: done?.branch ?? (done?.branchReady ? "local" : null),
-    pr: typeof done?.pr === "string" && done.pr ? done.pr : null,
-    title,
-  };
-}
-
 const index = [];
+const skipped = [];
 for (const id of fs.readdirSync(path.join(root, "runs")).sort().reverse()) {
   const dir = path.join(root, "runs", id);
   if (!fs.existsSync(path.join(dir, "events.jsonl"))) continue;
   fs.mkdirSync(path.join(out, "runs", id), { recursive: true });
-  const files = fs.readdirSync(dir).filter((f) => !f.endsWith(".db"));
+  // Back-office screenshots that caught a server error page instead of the back office are not proof: they are left
+  // out of the site (the run folder keeps them) and listed, so the console never shows or captions them.
+  const all = fs.readdirSync(dir).filter((f) => !f.endsWith(".db"));
+  const broken = brokenShots(dir, all);
+  const files = all.filter((f) => !broken.includes(f));
   for (const f of files) fs.copyFileSync(path.join(dir, f), path.join(out, "runs", id, f));
   const events = fs.readFileSync(path.join(dir, "events.jsonl"), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
-  fs.writeFileSync(path.join(out, "runs", id, "run.json"), JSON.stringify({ id, events, files }));
+  fs.writeFileSync(path.join(out, "runs", id, "run.json"), JSON.stringify({ id, events, files, brokenShots: broken }));
+  if (broken.length) skipped.push(`${id}: ${broken.length}`);
   index.push({ ...summarize(id, events), recorded: true });
 }
 fs.writeFileSync(path.join(out, "runs", "index.json"), JSON.stringify(index, null, 2));
 console.log(`static console with ${index.length} recorded runs in ${path.relative(root, out) || out}`);
+if (skipped.length) console.log(`left out back-office screenshots that show a server error page instead (${skipped.join(", ")})`);

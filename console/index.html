@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Heistproof: recorded PayPal sandbox robberies</title>
-    <meta name="description" content="An AI coding agent adds PayPal to a shop; Heistproof buys for real in PayPal's sandbox and runs ten robberies on it. Recorded runs: a hand-written checkout robbed 8 ways, the checkout built with Heistproof robbed 0 ways." />
+    <meta name="description" content="Heistproof robs a PayPal checkout before anyone else can: real purchases in PayPal's sandbox, ten scripted robberies and an AI thief, judged by PayPal's own records. Recorded runs: a hand-written checkout with planted mistakes robbed 8 ways; the checkout its coding agent wrote robbed 0 ways." />
     <meta property="og:title" content="Heistproof: add PayPal, then try to rob it" />
-    <meta property="og:description" content="Ten scripted robberies with real PayPal sandbox payments. Hand-written checkout: 8 robbed. Built with Heistproof: 0 robbed. Replay the recorded runs, no keys needed." />
+    <meta property="og:description" content="Real PayPal sandbox purchases, ten scripted robberies and an AI thief. A hand-written checkout with planted mistakes: 8 robbed. The coding agent's checkout: 0 robbed. Replay the recorded runs, no keys needed." />
     <meta property="og:type" content="website" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,32 +33,39 @@
     <section class="home" id="home" hidden>
       <div class="intro">
         <h1>Add PayPal. Then try to rob it.</h1>
-        <p class="why">AI agents now build shops, and soon they will shop in them. One mistake in a checkout is free money for the first agent that finds it. Heistproof lets an AI coding agent add PayPal to a shop, buys from the shop for real in PayPal's sandbox, then runs ten robberies on it. The checkout ships only when every robbery fails.</p>
+        <p class="why">AI agents now build shops, and soon they will shop in them. One mistake in a checkout is free money for the first agent that finds it. Heistproof robs a PayPal checkout first: it buys from the running shop for real in PayPal's sandbox, tries ten scripted robberies, lets an AI thief invent more, and checks the shop's books against PayPal's own records. Its AI coding agent can add PayPal and fix whatever gets through; the checkout ships only when every robbery fails.</p>
       </div>
 
+      <section class="runs yours" id="your-runs" aria-labelledby="yours-title" hidden>
+        <h2 id="yours-title">Your runs</h2>
+        <p class="runs-sub">Runs on this machine, newest first. Open one for its verdict, the robberies, the ids and the screenshots.</p>
+        <div class="cards" id="your-cards"></div>
+        <details class="older" id="more-runs" hidden><summary id="more-summary">Older runs on this machine</summary><ul class="more" id="more-list"></ul></details>
+      </section>
+
       <section class="compare" aria-labelledby="compare-title">
-        <h2 id="compare-title">Same 10 robberies, real sandbox payments</h2>
+        <h2 id="compare-title">What Heistproof caught before anything shipped</h2>
         <div class="compare-grid" id="compare"></div>
         <p class="compare-note" id="compare-note"></p>
       </section>
 
-      <section class="runs" aria-labelledby="runs-title">
+      <section class="runs" id="recorded-runs" aria-labelledby="runs-title">
         <h2 id="runs-title">Recorded runs</h2>
         <p class="runs-sub">Every number on this site is read from the run's own event log. Open a run for the verdict, the robberies, PayPal's own ids and the screenshots.</p>
         <div class="cards" id="cards"></div>
-        <div id="more-runs" hidden><h3>Local runs on this machine</h3><ul class="more" id="more-list"></ul></div>
       </section>
 
       <section class="how" id="how" aria-labelledby="how-title">
         <h2 id="how-title">How a run goes</h2>
         <ol class="how-steps">
-          <li><b>Add</b><span>An AI coding agent adds PayPal, Venmo and Pay Later to the shop, working from APIMatic's PayPal plugin. It writes a plan before any code.</span></li>
-          <li><b>Buy</b><span>A scripted browser (no AI) buys a $49 hoodie for real in PayPal's sandbox and checks that PayPal will charge exactly the bag total before it approves.</span></li>
+          <li><b>Add</b><span>An AI coding agent adds PayPal, Venmo and Pay Later to the shop, working from APIMatic's PayPal plugin. It writes a plan before any code. Or skip this step and check a checkout you already have.</span></li>
+          <li><b>Buy</b><span>A scripted browser (no AI) buys from the shop for real in PayPal's sandbox and checks that PayPal will charge exactly the bag total before it approves.</span></li>
           <li><b>Rob</b><span>Ten scripted robberies try to steal from the running shop: a $0.01 price, payment claimed for an order nobody approved, forged and replayed messages from PayPal, a declined card, a double capture, and more.</span></li>
-          <li><b>Fix</b><span>Anything that worked for the thief goes back to the coding agent with PayPal's own answer (status, issue, debug id), and the whole check runs again.</span></li>
-          <li><b>Ship</b><span>A branch with the change, its tests and the evidence report. A pull request is opened only when the shop is on GitHub and the checkout is safe.</span></li>
+          <li><b>AI thief</b><span>A model that sees only what any visitor sees invents robberies of its own; Heistproof carries them out through a few fixed moves that can reach only the shop under test.</span></li>
+          <li><b>Books</b><span>Every order the shop calls paid must be backed by a completed PayPal capture that covers it, one capture per order. PayPal's records decide every robbery, never the thief.</span></li>
+          <li><b>Fix, then ship</b><span>What got through goes back to the coding agent with PayPal's own answer (status, issue, debug id), and everything runs again. A pull request only when the checkout is safe.</span></li>
         </ol>
-        <p class="fine">All money is PayPal sandbox money; no real money moves. The shops are sample shops kept in this repository. The robberies are deterministic scripts, not an AI; the AI is the coding agent that writes and fixes the checkout. An incomplete check is never called safe.</p>
+        <p class="fine">All money is PayPal sandbox money; no real money moves. The shops are sample shops kept in this repository; the hand-written ones have planted mistakes. The ten scripted robberies are deterministic; the AI thief is a model, and PayPal's records, not the model, decide what got through. An incomplete check is never called safe.</p>
       </section>
     </section>
 
@@ -90,12 +97,13 @@
         </aside>
       </section>
 
-      <nav class="rail" id="rail" aria-label="The five steps">
-        <div data-phase="migrate"><b>1</b><div><span class="name">Add PayPal</span><small id="note-migrate">AI coding agent</small></div></div>
-        <div data-phase="prove"><b>2</b><div><span class="name">Buy it</span><small id="note-prove">real sandbox purchase</small></div></div>
-        <div data-phase="attack"><b>3</b><div><span class="name">Rob it</span><small id="note-attack">10 robberies</small></div></div>
-        <div data-phase="fix"><b>4</b><div><span class="name">Fix it</span><small id="note-fix">agent fixes, check again</small></div></div>
-        <div data-phase="ship"><b>5</b><div><span class="name">Ship it</span><small id="note-ship">branch + evidence report</small></div></div>
+      <nav class="rail" id="rail" aria-label="The six steps of a run">
+        <div data-phase="migrate"><b>1</b><div><span class="name">Add</span><small id="note-migrate">AI coding agent</small></div></div>
+        <div data-phase="prove"><b>2</b><div><span class="name">Buy</span><small id="note-prove">real sandbox purchase</small></div></div>
+        <div data-phase="attack"><b>3</b><div><span class="name">Rob</span><small id="note-attack">10 robberies</small></div></div>
+        <div data-phase="thief"><b>4</b><div><span class="name">AI thief</span><small id="note-thief">a model invents robberies</small></div></div>
+        <div data-phase="books"><b>5</b><div><span class="name">Books</span><small id="note-books">the shop against PayPal's records</small></div></div>
+        <div data-phase="ship"><b>6</b><div><span class="name">Fix, then ship</span><small id="note-ship">fix what failed, then ship</small></div></div>
       </nav>
 
       <main class="grid">
@@ -105,15 +113,15 @@
           <p class="notrun-note" id="notrun-note" hidden></p>
           <div class="thief" id="thief" hidden>
             <header><h3 id="thief-title">AI thief: its own robberies</h3><span class="chip" id="thief-chip"></span></header>
-            <p class="thief-note" id="thief-note"></p>
+            <div class="thief-note" id="thief-note"></div>
             <ol class="thief-rows" id="thief-rows" aria-labelledby="thief-title"></ol>
           </div>
-          <p class="books-line" id="books-line" hidden></p>
+          <div class="books-line" id="books-line" hidden></div>
         </section>
 
         <aside class="side">
           <section class="panel proof" aria-labelledby="proof-title">
-            <header><h2 id="proof-title">Proof from PayPal</h2><button type="button" class="info-btn" aria-label="What these PayPal terms mean" aria-expanded="false" aria-controls="tip-proof">i</button><span class="chip">sandbox, no real money</span></header>
+            <header><h2 id="proof-title">Proof from PayPal</h2><button type="button" class="info-btn" aria-label="What these PayPal terms mean" aria-expanded="false" aria-controls="tip-proof">i</button><span class="chip" id="proof-chip">sandbox, no real money</span></header>
             <div class="proof-body">
               <p class="empty" id="proof-empty">PayPal's answers appear here once the real purchase starts.</p>
               <div id="heist-box" class="amount bad" hidden></div>
@@ -144,8 +152,8 @@
     </section>
 
     <!-- Explanations behind the small "i" buttons -->
-    <div class="tip" id="tip-verdict" hidden><b>Safe to ship</b> means the real sandbox purchase went through once and all 10 robberies were blocked. <b>Do not ship</b> means at least one robbery worked, or the purchase itself failed. <b>Incomplete</b> means not every robbery could run, so there is no verdict on the rest; an incomplete check is never called safe.</div>
-    <div class="tip" id="tip-rows" hidden>Each robbery is a real attempt on the shop through PayPal's sandbox, not a simulation. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Not run</b>: it was not part of this recording. <b>Skipped</b>: it could not run on this shop. Open a row for the result, the screenshots and PayPal's own ids.</div>
+    <div class="tip" id="tip-verdict" hidden><b>Safe to ship</b> means the real sandbox purchase went through once, all 10 scripted robberies were blocked, nothing the AI thief tried got through and the shop's books match PayPal's records (when the AI thief did not run, the verdict says so). <b>Do not ship</b> means at least one robbery worked, or the purchase itself failed. <b>Incomplete</b> means not every robbery could run, or the books could not be matched, so there is no verdict on the rest; an incomplete check is never called safe.</div>
+    <div class="tip" id="tip-rows" hidden>Each robbery is a real attempt on the running shop through PayPal's sandbox, not a simulation. <b>Blocked</b>: the shop refused it. <b>Robbed</b>: it worked, and the shop would have lost money or goods. <b>Skipped</b>: it could not run on this shop, so it was not blocked either. <b>Not run</b>: it was not part of this recording. Open a row for the result, the screenshots and PayPal's own ids.</div>
     <div class="tip" id="tip-proof" hidden>Everything here comes from PayPal's sandbox, so no real money moves. <b>PayPal order</b>: PayPal's id for the purchase. <b>Capture</b>: the moment PayPal actually took the money. <b>Signed webhook</b>: PayPal's own "payment completed" message, its signature checked with PayPal. The raw answers are the recorded calls, byte for byte.</div>
 
     <dialog id="viewer" aria-label="Screenshot">

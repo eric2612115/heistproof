@@ -1,8 +1,8 @@
 /* Heistproof console. Same look as the film: the shop's off-white canvas, white cards in thin rounded frames,
    brass for Heistproof itself and for work in progress, green only for what was blocked or paid, red only for what
    was robbed or refused. Everything else is neutral, so the colour tells the story at a glance.
-   Two views: the home (why it matters, the headline comparison, one card per run) and one run (verdict, the key
-   moments, the five steps, the ten robberies with their proofs, PayPal's answers, the story round by round). */
+   Two views: the home (why it matters, what Heistproof caught, one card per run) and one run (verdict, the key
+   moments, the six steps, the ten robberies with their proofs, PayPal's answers, the story round by round). */
 :root {
   --base: #f0eee9;
   --surface: #ffffff;
@@ -104,7 +104,19 @@ a:hover { color: var(--text); }
 .tile.unsafe .ship { color: var(--red-text); }
 .tile .open { margin-top: 6px; font-size: 12.5px; color: var(--text2); }
 .tile.missing .open { color: var(--text3); }
-.compare-note { margin-top: 10px; font-size: 13px; color: var(--text3); }
+.compare-note { margin-top: 12px; max-width: 90ch; font-size: 13.5px; line-height: 1.5; color: var(--text2); }
+
+/* What Heistproof caught: one card per catch, the number big, then what it means, what happened next, the verdict. */
+.catch { display: flex; flex-direction: column; gap: 6px; padding: 18px 22px 16px; border-radius: var(--radius); border: 1px solid var(--red-frame); background: var(--red-soft); box-shadow: var(--lift); color: inherit; text-decoration: none; transition: transform 0.15s ease; }
+.catch:hover { transform: translateY(-1px); }
+.catch-num { font-size: 46px; line-height: 1.05; font-weight: 700; letter-spacing: -0.035em; color: var(--red); font-variant-numeric: tabular-nums; }
+.catch-line { font-size: 15px; line-height: 1.4; font-weight: 600; color: var(--text); }
+.catch-then { font-size: 13.5px; line-height: 1.5; color: var(--text2); }
+.catch-then:empty { display: none; }
+.catch-verdict { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--red-frame); font-size: 12.5px; color: var(--text2); }
+.catch-verdict .vdot { align-self: center; }
+.catch-verdict b { font-weight: 700; color: var(--text); }
+.catch-verdict span:last-child { color: var(--brass-text); text-decoration: underline; text-decoration-color: rgba(125, 95, 34, 0.35); text-underline-offset: 2px; }
 
 .runs { margin-top: 40px; }
 .runs-sub { margin-top: 4px; max-width: 72ch; font-size: 14px; color: var(--text2); }
@@ -116,6 +128,7 @@ a:hover { color: var(--text); }
 .card.unsafe .verdict-line { color: var(--red-text); }
 .card.incomplete .verdict-line, .card.running .verdict-line { color: var(--text2); }
 .card .verdict-line .count { margin-left: auto; font-weight: 600; color: var(--text2); font-variant-numeric: tabular-nums; }
+.card .verdict-qual { margin-top: -4px; font-size: 12px; color: var(--text2); }
 .card h3 { font-size: 17px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
 .card .desc { font-size: 13.5px; line-height: 1.5; color: var(--text2); }
 .card .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 4px; font-size: 12px; color: var(--text3); }
@@ -125,10 +138,13 @@ a:hover { color: var(--text); }
 .more a { display: inline-flex; align-items: center; min-height: 24px; color: var(--text); text-decoration: none; }
 .more a:hover { text-decoration: underline; }
 .more span { color: var(--text3); margin-left: 8px; }
-#more-runs h3 { margin-top: 24px; font-size: 14px; font-weight: 600; color: var(--text2); }
+.yours { margin-top: 32px; }
+.older { margin-top: 16px; }
+.older summary { cursor: pointer; min-height: 24px; font-size: 13.5px; font-weight: 600; color: var(--text2); }
+.older summary:hover { color: var(--text); }
 
 .how { margin-top: 44px; padding-top: 28px; border-top: 1px solid var(--line); }
-.how-steps { list-style: none; padding: 0; margin-top: 14px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; counter-reset: step; }
+.how-steps { list-style: none; padding: 0; margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; counter-reset: step; }
 .how-steps li { counter-increment: step; padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--frame); }
 .how-steps b { display: flex; align-items: center; gap: 8px; font-size: 14.5px; }
 .how-steps b::before { content: counter(step); display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--brass); color: var(--brass-text); font-size: 11.5px; font-weight: 600; }
@@ -199,9 +215,9 @@ h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 
 .evidence-links button, .proof-links button, .raw-link { display: inline-flex; align-items: center; min-height: 24px; padding: 0; background: none; border: 0; font-size: 12.5px; font-weight: 600; color: var(--brass-text); cursor: pointer; text-decoration: underline; text-decoration-color: rgba(125, 95, 34, 0.35); text-underline-offset: 2px; }
 .evidence-links button:hover, .proof-links button:hover, .raw-link:hover { color: var(--text); text-decoration-color: currentColor; }
 
-/* ---------- The five steps: one connected rail ---------- */
-.rail { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 var(--gutter) 14px; background: var(--surface); border: 1px solid var(--frame); border-radius: var(--radius); box-shadow: var(--lift); overflow: hidden; }
-.rail > div { position: relative; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 16px; border-left: 1px solid var(--line); }
+/* ---------- The six steps: one connected rail ---------- */
+.rail { display: grid; grid-template-columns: repeat(6, 1fr); margin: 0 var(--gutter) 14px; background: var(--surface); border: 1px solid var(--frame); border-radius: var(--radius); box-shadow: var(--lift); overflow: hidden; }
+.rail > div { position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 14px; border-left: 1px solid var(--line); }
 .rail > div:first-child { border-left: 0; }
 .rail > div > div { min-width: 0; }
 .rail b { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--frame); font-size: 12px; font-weight: 600; color: var(--text3); transition: background 0.3s ease, border-color 0.3s ease; }
@@ -284,6 +300,7 @@ h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 
 .amount-round { margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--text3); }
 .amount .big { margin-top: 2px; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .amount .verdict-line { margin-top: 6px; font-size: 12.5px; font-weight: 600; }
+.amount-extra { margin-top: 2px; font-size: 12.5px; color: var(--text2); font-variant-numeric: tabular-nums; }
 .amount.good .verdict-line { color: var(--green-text); }
 .amount.bad { border-color: var(--red-frame); background: var(--red-soft); }
 .amount.bad .verdict-line { color: var(--red-text); }
@@ -401,6 +418,7 @@ dialog::backdrop { background: rgba(22, 22, 26, 0.6); }
   .side { position: static; }
   .tl { columns: 1; }
   .how-steps { grid-template-columns: 1fr 1fr; }
+  .rail > div { padding: 10px 10px; gap: 8px; }
 }
 @media (max-width: 640px) {
   .top { height: auto; flex-wrap: wrap; padding: 10px var(--gutter); }
@@ -414,9 +432,10 @@ dialog::backdrop { background: rgba(22, 22, 26, 0.6); }
   h1 { font-size: 26px; }
   .story { font-size: 14.5px; }
   .beats li { font-size: 13.5px; }
-  .rail { grid-template-columns: repeat(5, 1fr); }
-  .rail > div { flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; text-align: center; }
-  .rail .name { font-size: 12px; }
+  .rail { grid-template-columns: repeat(6, 1fr); }
+  .rail > div { flex-direction: column; align-items: center; gap: 6px; padding: 10px 2px; text-align: center; }
+  .rail .name { font-size: 11.5px; line-height: 1.25; }
+  .catch-num { font-size: 40px; }
   .rail small { display: none; }
   .row-head { grid-template-columns: 70px minmax(0, 1fr) 16px; gap: 10px; min-height: 52px; padding: 8px 14px; }
   .stamp { padding: 3px 6px; font-size: 10.5px; }
@@ -431,16 +450,34 @@ dialog::backdrop { background: rgba(22, 22, 26, 0.6); }
 }
 
 /* The AI thief's own robberies and the books line, under the ten robberies. */
-.thief { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line, #e3e1da); }
+.thief { padding: 16px 16px 4px; border-top: 1px solid var(--line); }
 .thief header { display: flex; align-items: center; gap: 10px; }
 .thief h3 { margin: 0; font-size: 15px; }
+.thief header .chip { flex: 1; min-width: 0; text-align: right; }
 .thief-note { margin: 6px 0 10px; color: var(--text2); font-size: 14px; line-height: 1.5; }
+.thief-why { margin-top: 4px; font-size: 12.5px; }
+.thief-why summary { cursor: pointer; min-height: 24px; color: var(--text3); }
+.thief-why code { display: block; margin-top: 4px; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); font-size: 11.5px; line-height: 1.5; color: var(--text2); white-space: pre-wrap; overflow-wrap: anywhere; }
 .thief-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.thief-rows .row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 10px 12px; border-radius: 10px; }
-.thief-text { display: grid; gap: 2px; }
-.thief-text .what, .thief-summary { color: var(--text2); font-size: 14px; line-height: 1.45; }
-.thief-summary { color: var(--text, #1f1f23); }
-.books-line { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.45; }
+.thief-rows .row { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 12px; border-radius: 10px; border-bottom: 0; }
+.thief-rows .stamp { justify-self: start; }
+.thief-text { display: grid; gap: 3px; min-width: 0; }
+.thief-outcome { font-size: 14px; font-weight: 600; line-height: 1.45; color: var(--text); }
+.row.robbed .thief-outcome { color: var(--red-text); }
+.thief-idea { font-size: 13px; line-height: 1.45; color: var(--text3); }
+.row.repeat .stamp { background: var(--brass-tint); color: var(--brass-text); }
+.books-line { margin: 12px 16px 16px; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.45; }
 .books-line.ok { background: var(--green-tint); color: var(--green-text); }
 .books-line.bad { background: var(--red-tint); color: var(--red-text); }
+.books-line.info { background: var(--surface-2); color: var(--text2); }
+.books-line b { font-weight: 600; }
+.books-line details { margin-top: 6px; font-size: 13px; }
+.books-line summary { cursor: pointer; min-height: 24px; font-weight: 600; }
+.books-line ul { margin: 6px 0 2px; padding-left: 18px; color: var(--text); }
+.books-line li { padding: 1px 0; }
+.books-line code { font-size: 12px; }
+@media (max-width: 640px) {
+  .thief-rows .row { grid-template-columns: 70px minmax(0, 1fr); gap: 10px; }
+  .older summary, .thief-why summary, .books-line summary { min-height: 44px; display: flex; align-items: center; }
+}
 

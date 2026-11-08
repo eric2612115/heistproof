@@ -11,19 +11,22 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const START = "<!-- evidence:start -->";
 const END = "<!-- evidence:end -->";
 
-const WHO = {
-  heistproof: "Heistproof's coding agent (APIMatic's plugin + Heistproof's skills)",
-  baseline: "the same agent and model, without any PayPal skills",
-  existing: "a hand-written checkout, fixed by the coding agent",
-  check: "checked as it is (no AI changes any code)",
+/** What was checked, in a few words: who wrote the checkout, and for the shops checked as they are, which shop. */
+const CHECKED = {
+  "fogline-afternoon": "Hand-written, planted mistakes",
+  "fogline-naive": "Hand-written, planted mistakes (cents sent as dollars)",
+  "fogline-after": "The coding agent's checkout, checked again",
+  "copper-kettle": "Copper Kettle, careful, built differently",
 };
-const SHOP = {
-  "fogline-express": "Fogline, card-only sample shop",
-  "fogline-afternoon": "Fogline, hand-written PayPal checkout with typical mistakes",
-  "fogline-naive": "Fogline, hand-written PayPal checkout with typical mistakes (naive)",
-  "fogline-after": "Fogline, the checkout the coding agent wrote in the full run",
-  "copper-kettle": "Copper Kettle, a second shop built differently on purpose",
-};
+const rounds = (n) => (n === 1 ? "1 round" : `${n} rounds`);
+function checkout(mode, template, fixes) {
+  if (mode === "heistproof") return `Written by the coding agent (APIMatic's plugin + Heistproof's skills)${fixes ? `, fixed in ${rounds(fixes)}` : ""}`;
+  if (mode === "baseline") return "Written by the same model with no PayPal skills";
+  if (mode === "existing") return `Hand-written, planted mistakes, fixed by the coding agent${fixes ? ` in ${rounds(fixes)}` : ""}`;
+  return CHECKED[template] ?? template;
+}
+/** The story order: the agent's run, its control, the robbed checkouts, the fix, then the rest. */
+const RANK = (mode, template) => ({ heistproof: 0, baseline: 1 })[mode] ?? (mode === "existing" ? 4 : { "fogline-afternoon": 2, "fogline-naive": 3, "copper-kettle": 5, "fogline-after": 6 }[template] ?? 7);
 
 export function rows() {
   const dir = path.join(root, "runs");
@@ -34,38 +37,43 @@ export function rows() {
     const events = fs.readFileSync(path.join(runDir, "events.jsonl"), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
     const start = events.find((e) => e.type === "run.start") ?? {};
     const done = events.findLast((e) => e.type === "run.done") ?? {};
-    const rounds = JSON.parse(fs.readFileSync(path.join(runDir, "rounds.json"), "utf8"));
-    const last = rounds.at(-1) ?? { attacks: [] };
+    const all = JSON.parse(fs.readFileSync(path.join(runDir, "rounds.json"), "utf8"));
+    const last = all.at(-1) ?? { attacks: [] };
     const robbed = last.attacks.filter((a) => a.verdict === "robbed").length;
     const held = last.attacks.filter((a) => a.verdict === "held").length;
+    const other = last.attacks.length - robbed - held;
+    const scripted = robbed
+      ? `**${robbed} got through**, ${held} blocked${last.attacks.length < 10 ? ` (${last.attacks.length} of 10 ran)` : ""}`
+      : `${held} of 10 blocked${other ? `, ${other} could not run` : ""}${last.attacks.length < 10 ? `, ${10 - last.attacks.length} not run` : ""}`;
     const thief = last.thief;
-    const thiefCell = !thief ? "not run" : !thief.ran ? `not run (${thief.reason})` : `${thief.plans.filter((p) => p.verdict === "robbed").length} of ${thief.plans.length} got through`;
-    const books = !last.books ? "-" : !last.books.matched ? "not matched" : last.books.mismatches.length ? `${last.books.mismatches.length} order(s) do not match` : `match (${last.books.paid} PayPal orders)`;
+    const got = thief?.plans?.filter((p) => p.verdict === "robbed").length ?? 0;
+    const repeat = thief?.plans?.filter((p) => p.verdict === "repeat").length ?? 0;
+    const thiefCell = !thief ? "not run" : !thief.ran ? `not run (${thief.reason})` : `${got ? `**${got} of ${thief.plans.length} got through**` : `none of ${thief.plans.length} got through`}${repeat ? `; ${repeat} only repeated a known problem` : ""}`;
+    const books = !last.books ? "not read" : !last.books.matched ? "not matched" : last.books.mismatches.length ? `**${last.books.mismatches.length} order(s) do not match**` : `match (${last.books.paid} PayPal order${last.books.paid === 1 ? "" : "s"})`;
     const template = String(start.template ?? "").split("/").pop();
+    const verdict = done.verdict ?? (done.safe ? "safe" : "unsafe");
     out.push({
       id,
-      shop: SHOP[template] ?? template,
-      who: WHO[start.mode] ?? start.mode ?? "?",
-      paypal: start.offline ? "offline stand-in" : "PayPal sandbox",
-      rounds: rounds.length,
-      scripted: `${robbed} robbed, ${held} blocked${last.attacks.length < 10 ? ` (${last.attacks.length} of 10 ran)` : ""}`,
+      rank: RANK(start.mode, template),
+      checkout: checkout(start.mode, template, all.length - 1),
+      where: start.offline ? " (offline stand-in)" : "",
+      scripted,
       thief: thiefCell,
       books,
-      verdict: done.verdict ?? (done.safe ? "safe" : "unsafe"),
-      commit: start.heistproofCommit ?? "?",
+      verdict: verdict === "safe" && !thief?.ran ? "safe vs the ten" : verdict,
     });
   }
-  return out;
+  return out.sort((a, b) => a.rank - b.rank || a.id.localeCompare(b.id));
 }
 
 export function table() {
   const lines = [
     START,
-    "| Run | Shop | Who wrote the checkout | PayPal | Rounds | 10 scripted robberies (last round) | AI thief | Books vs PayPal | Verdict |",
-    "|---|---|---|---|---|---|---|---|---|",
-    ...rows().map((r) => `| [${r.id}](runs/${r.id}/REPORT.md) | ${r.shop} | ${r.who} | ${r.paypal} | ${r.rounds} | ${r.scripted} | ${r.thief} | ${r.books} | **${r.verdict}** |`),
+    "| Verdict | Checkout | 10 scripted robberies | AI thief | Books vs PayPal | Run |",
+    "|---|---|---|---|---|---|",
+    ...rows().map((r) => `| **${r.verdict}** | ${r.checkout}${r.where} | ${r.scripted} | ${r.thief} | ${r.books} | [${r.id}](runs/${r.id}/REPORT.md) |`),
     "",
-    "_Generated by `node scripts/evidence.mjs` from each run's own files; `npm test` fails if this table is edited by hand._",
+    "_Every run is a real purchase in PayPal's sandbox, then the robberies; the last round's results. Generated by `node scripts/evidence.mjs` from each run's own files; `npm test` fails if this table is edited by hand._",
     END,
   ];
   return lines.join("\n");

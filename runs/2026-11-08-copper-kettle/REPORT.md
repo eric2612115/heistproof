@@ -1,6 +1,6 @@
 # Heistproof evidence report
 
-**Verdict: incomplete; nothing got through, but not every robbery ran, so run it again.** 7 of 10 scripted robberies blocked, 0 robbed the shop. The AI thief tried 6 robberies of its own: none got through. Real purchase: paid and shipped once. Tests: pass.
+**Verdict: safe to ship.** 10 of 10 scripted robberies blocked, 0 robbed the shop. The AI thief tried 6 robberies of its own: none got through. Real purchase: paid and shipped once. Tests: pass.
 
 All payments ran in the PayPal sandbox (no real money). Order and capture ids below are PayPal's own and can be looked up in the merchant's sandbox account.
 
@@ -8,31 +8,31 @@ All payments ran in the PayPal sandbox (no real money). Order and capture ids be
 
 - Tests: pass
 - Buttons shown: paypal yes, venmo yes, paylater no
-- Purchase: Paid $64.00: capture 0GK5123590704015S COMPLETED, shop order KC-326E8E shipped, 1 label.
-  - PayPal order `8EY53815X0040342N`, amount USD 64.00 (bag total $64.00), capture `0GK5123590704015S` COMPLETED
-- Webhook: PayPal's genuine PAYMENT.CAPTURE.COMPLETED event for this order was accepted (HTTP 2xx) (event WH-5C591507B2106840M-3GA03614CW0742201); whether the shop checks signatures is what the forged-webhook robbery tests
+- Purchase: Paid $64.00: capture 6GU02948GG741750L COMPLETED, shop order KC-CAEDD9 shipped, 1 label.
+  - PayPal order `2UR242914J179933J`, amount USD 64.00 (bag total $64.00), capture `6GU02948GG741750L` COMPLETED
+- Webhook: PayPal's genuine PAYMENT.CAPTURE.COMPLETED event for this order was accepted (HTTP 2xx) (event WH-9J333152SD6374516-5E179345B54039135); whether the shop checks signatures is what the forged-webhook robbery tests
 - Books: 6 PayPal order(s) the shop calls paid, checked against PayPal's records: each backed by a completed capture that covers it, none shipped more than once
 
 | Robbery | What it tries | Rules | Result | What happened |
 |---|---|---|---|---|
-| Price tampering | Pay $0.01 for the $49 hoodie | 1, 2 | Blocked | Every tampered request still produced a USD 64.00 PayPal order, or none (the unchanged request did produce one). |
-| Negative quantity | Buy -1, 0.5 or 1,000 hoodies, or a product that doesn't exist | 11 | Blocked | All five bad bags were refused before any PayPal order was created (the unchanged bag did create one). |
-| Payment nobody approved | Claim payment for an order no buyer approved | 4 | Blocked | PayPal refused the capture (order 0DP10072F60787904 is CREATED); the shop kept it unpaid. |
-| Approval without payment | Get it shipped before PayPal takes the money | 4, 8 | Blocked | Buyer approved order 0W555507FT4399826, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped. |
-| Declined card | Get it shipped after the card is declined | 5 | Blocked | PayPal answered 422 INSTRUMENT_DECLINED (debug id f7478105e59cb); the shop kept the order unpaid. |
-| Forged webhook | Fake PayPal's 'payment completed' message | 6 | Not run | PayPal delivered no PAYMENT.CAPTURE.COMPLETED webhook in time to forge from. |
-| Webhook replay | Resend PayPal's real message to ship again | 7, 8 | Not run | PayPal delivered no PAYMENT.CAPTURE.COMPLETED webhook about this shop's orders in time to replay. |
-| Late event | Send 'approved' after 'completed' to roll an order back | 9 | Not run | PayPal sent no CHECKOUT.ORDER.APPROVED event for any paid order of this shop. |
+| Price tampering | Pay $0.01 for the $64 kettle | 1, 2 | Blocked | Every tampered request still produced a PayPal order for USD 64.00 or more, or none (the unchanged request did produce one). |
+| Negative quantity | Buy -1, 0.5 or 1,000 of an item, a product that doesn't exist, or a bag with a negative line | 11 | Blocked | All 6 bad bags were refused before any PayPal order was created (the unchanged bag did create one). |
+| Payment nobody approved | Claim payment for an order no buyer approved | 4 | Blocked | PayPal refused the capture (order 6UC18918NM273353X is CREATED); the shop kept it unpaid. |
+| Approval without payment | Get it shipped before PayPal takes the money | 4, 8 | Blocked | Buyer approved order 5CT22900JX526190K, the capture was blocked, and PayPal's 'approved' webhook arrived: nothing paid, nothing shipped. |
+| Declined card | Get it shipped after the card is declined | 5 | Blocked | PayPal answered 422 INSTRUMENT_DECLINED (debug id f972233689bae); the shop kept the order unpaid. |
 | Double click | Capture twice at once to get two shipments | 8, 10 | Blocked | Two simultaneous captures: PayPal captured 1, the shop printed 1 label. |
-| Secret in the browser | Look for the PayPal secret in every page and script | 12 | Blocked | Checked 7 pages, scripts and endpoints, and every answer during the purchase: only the client id is public. |
+| Forged webhook | Fake PayPal's 'payment completed' message | 6 | Blocked | Forged events got HTTP 400 unsigned and 400 with stolen signature headers, and changed nothing: order KC-F61F85 stayed unpaid. |
+| Webhook replay | Resend PayPal's real message to ship again | 7, 8 | Blocked | Event WH-9J333152SD6374516-5E179345B54039135 for order KC-CAEDD9 replayed 3 times byte for byte: no extra label. |
+| Late event | Send 'approved' after 'completed' to roll an order back | 9 | Blocked | Order KC-CAEDD9 stayed shipped after a late 'approved' event. |
+| Secret in the browser | Look for the PayPal secret or an access token in every page and script | 12 | Blocked | Checked 7 pages, scripts and endpoints, and every answer during the purchase: no secret and no access token, only the client id is public. |
 
 AI thief (Meta Model API muse-wonder-1.0): read only what any visitor can see and tried 6 robberies of its own; none got through. The books against PayPal's records decide each one, not the model.
 
 | AI thief's robbery | Its idea | Result | What happened |
 |---|---|---|---|
-| Latest-order capture mix-up | The shop may bind a capture to its most recently created session order instead of the shop order originally bound to that PayPal order. | Blocked | The books still match PayPal's records: nothing taken. |
-| Capture-time basket upsizing | The capture handler may trust lines supplied in the capture request when creating the shipment, even though PayPal captures only the originally approved amount. | Blocked | The books still match PayPal's records: nothing taken. |
-| Legitimate capture, different beneficiary | The capture endpoint may mark the shop order named in the request body as paid when presented with an already completed legitimate PayPal capture, instead of enforcing the original PayPal-order-to-shop-order binding. | Blocked | The books still match PayPal's records: nothing taken. |
-| Webhook retargeted to unpaid order | The webhook handler may select the order solely from resource.custom_id and trust the completed status and edited amount without properly verifying the signature or the capture's original order binding. | Blocked | The books still match PayPal's records: nothing taken. |
-| Duplicate-line split brain | Pricing may collapse duplicate product lines by SKU while fulfilment iterates every raw line, creating a discrepancy between the charged and shipped quantities. | Blocked | The books still match PayPal's records: nothing taken. |
-| Currency-unit confusion | The shop may keep the numeric total at 64 while passing a client-supplied currency to PayPal, then record the captured order as a completed USD payment without checking the captured currency. | Blocked | The books still match PayPal's records: nothing taken. |
+| Partial capture amount | The create-order price is checked, but the capture endpoint forwards a client-supplied capture amount to PayPal or fails to compare the captured amount with the $64 order total. | Blocked | The books still match PayPal's records: nothing taken. |
+| Duplicate-line split | Pricing deduplicates repeated SKUs, as the browser cart does, while fulfilment sums the raw order lines. | Blocked | The books still match PayPal's records: nothing taken. |
+| Cross-order webhook credit | The webhook handler confirms that the supplied capture ID is a real completed PayPal capture, but credits the shop order named by editable body fields without binding that capture to its original order or checking that it was already used. | Blocked | The books still match PayPal's records: nothing taken. |
+| Planted payment identity | Order creation accepts client-supplied shop-reference, PayPal-order, invoice, or capture identifiers, allowing a new order to share the legitimate paid order's identity; a completely unedited signed webhook then credits the newest matching order. | Blocked | The books still match PayPal's records: nothing taken. |
+| Currency denomination swap | The shop forwards a client-selected currency or validates only the numeric amount 64.00 without requiring USD, so 64 JPY is treated as payment of a $64 basket. | Blocked | The books still match PayPal's records: nothing taken. |
+| Interleaved capture binding | The capture handler inconsistently resolves the shop order from session/latest-order state instead of strictly from the PayPal order in the path, and a later sequential capture attempt trusts the already-completed capture to ship the remaining order. | Blocked | The books still match PayPal's records: nothing taken. |
