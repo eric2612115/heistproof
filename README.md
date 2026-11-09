@@ -8,6 +8,8 @@ Heistproof robs a PayPal checkout before anyone else can. It buys from the runni
 
 It is for anyone shipping a PayPal checkout that an AI wrote or changed: shop owners who build with AI, agencies that hand checkouts to clients, and teams that want a gate in CI.
 
+**Ready today:** it has already caught real problems in a widely copied open-source shop, in PayPal's real sandbox; it needs no keys to try; and one GitHub Action step puts it in front of every pull request.
+
 <p align="center"><img src="assets/cover.png" width="720" alt="Add PayPal. Then try to rob it. Tested for real in PayPal's sandbox: ten scripted robberies and an AI thief against a PayPal checkout, with the verdict read from PayPal's own records."></p>
 
 **See it now, nothing to install:** the console, hosted on Render at [heistproof-console.onrender.com](https://heistproof-console.onrender.com), replays every recorded sandbox run with PayPal's own ids and screenshots.
