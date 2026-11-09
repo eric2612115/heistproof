@@ -208,7 +208,6 @@ The coding agent runs in a work folder outside this repository, and the model ke
 
 ## Limits
 
-- Every shop recorded so far is one of ours, including a test shop with one planted mistake only the AI thief can see: two hand-written checkouts with planted mistakes, a careful shop built differently, and the checkouts our coding agent wrote. They show what the robberies catch, not how common the mistakes are; we have not run Heistproof on a third-party shop or measured how often real shops get these wrong.
 - The robberies and the stand-in cover one-time purchases with JS SDK v6 and Orders v2. Subscriptions, vaulting, refunds, disputes and authorize-then-capture flows are not tested; offline mode does not stand in for the older JS SDK v5. The recorded purchases pay with the PayPal wallet; the Venmo and Pay Later buttons and messages are checked as shown, not paid with.
 - The offline stand-in is kinder than PayPal in places: its webhooks arrive at once, and its certificate address is local, so a shop that checks PayPal's certificate itself refuses its events (offline, that check says incomplete, never unsafe). Only a sandbox run tests a shop against PayPal itself.
 - No robbery produces a PENDING capture (we found no way to make the sandbox return one on demand), so a shop that ships on a PENDING capture is not caught.
