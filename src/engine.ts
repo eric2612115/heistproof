@@ -20,7 +20,7 @@ export type ProviderSpec = {
 export const PROVIDERS: ProviderSpec[] = [
   { id: "anthropic", label: "Anthropic", keys: ["ANTHROPIC_API_KEY"], protocol: "anthropic", base: "https://api.anthropic.com", model: "claude-sonnet-5-5", smallModel: "claude-haiku-5-5" },
   { id: "openai", label: "OpenAI", keys: ["OPENAI_API_KEY"], protocol: "openai", base: "https://api.openai.com/v1", model: "gpt-5", family: /^gpt-(\d+(?:\.\d+)?)$/ },
-  { id: "gemini", label: "Google Gemini", keys: ["GEMINI_API_KEY", "GOOGLE_API_KEY"], protocol: "openai", base: "https://generativelanguage.googleapis.com/v1beta/openai", model: "gemini-2.5-pro", family: /^(?:models\/)?gemini-(\d+(?:\.\d+)?)-pro$/ },
+  { id: "gemini", label: "Google Gemini", keys: ["GEMINI_API_KEY", "GOOGLE_API_KEY"], protocol: "openai", base: "https://generativelanguage.googleapis.com/v1beta/openai", model: "gemini-3.8-flash", family: /^(?:models\/)?gemini-(\d+(?:\.\d+)?)-flash$/ },
   { id: "meta", label: "Meta Model API", keys: ["MODEL_API_KEY", "META_API_KEY"], protocol: "anthropic", base: "https://api.meta.ai", model: "muse-wonder-1.0", smallModel: "muse-spark-1.3" },
   { id: "openrouter", label: "OpenRouter", keys: ["OPENROUTER_API_KEY"], protocol: "openai", base: "https://openrouter.ai/api/v1", model: "anthropic/claude-sonnet-4.5" },
   { id: "deepseek", label: "DeepSeek", keys: ["DEEPSEEK_API_KEY"], protocol: "anthropic", base: "https://api.deepseek.com/anthropic", model: "deepseek-chat" },
