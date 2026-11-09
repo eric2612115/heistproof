@@ -10,6 +10,8 @@ It is for anyone shipping a PayPal checkout that an AI wrote or changed: shop ow
 
 <p align="center"><img src="assets/cover.png" width="720" alt="Add PayPal. Then try to rob it. Tested for real in PayPal's sandbox: ten scripted robberies and an AI thief against a PayPal checkout, with the verdict read from PayPal's own records."></p>
 
+**See it now, nothing to install:** the console, hosted on Render at [heistproof-console.onrender.com](https://heistproof-console.onrender.com), replays every recorded sandbox run with PayPal's own ids and screenshots.
+
 **Try it with no keys:** `npm install` (a few minutes the first time), then `npm run demo` (about 90 seconds) robs two checkouts with Heistproof's offline PayPal stand-in, in a real browser; `npm run console` shows every step, screenshot and every PayPal call the shop made. Or open the repository in GitHub Codespaces, which installs everything and opens the console. The recorded sandbox runs below replay in the same console.
 
 ## What the evidence shows
@@ -46,12 +48,13 @@ Every claim in this README, with the test or recording that produces it: [docs/c
 
 <p align="center"><img src="assets/console.png" width="820" alt="The Heistproof console on a robbed run: the verdict, the six steps, the price-tampering robbery with PayPal's own review page asking for $0.01, and PayPal's captured amount"></p>
 
-`npm run console`, or the hosted copy, replays every recorded run: the verdict, the six steps, each robbery with PayPal's own review page, the shop's back office and PayPal's raw answers with their debug ids. Every number on it is read from the run's own event log.
+`npm run console`, or the [hosted copy](https://heistproof-console.onrender.com), replays every recorded run: the verdict, the six steps, each robbery with PayPal's own review page, the shop's back office and PayPal's raw answers with their debug ids. Every number on it is read from the run's own event log.
 
 ## Try it
 
 | What you want | What you need | Command |
 |---|---|---|
+| See every recorded sandbox run | a browser | open [heistproof-console.onrender.com](https://heistproof-console.onrender.com) |
 | See the ten robberies rob one checkout and fail on another | Node.js only | `npm run demo` |
 | Check any shop that already takes PayPal, offline | Node.js only | `npm run check -- <shop> --offline` |
 | The same against PayPal's real sandbox | a PayPal sandbox app | `npm run check -- <shop>` |
