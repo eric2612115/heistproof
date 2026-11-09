@@ -111,22 +111,24 @@ verdict ──> fix loop with the coding agent ──> branch, report, and a pul
 
 ## The ten robberies
 
-| Robbery | What it tries | The safeguard it tests | What getting through looks like |
+Each robbery checks one safeguard. The table names the risk and the PayPal safeguard, not how to carry it out; the code is in [`src/attacks.ts`](src/attacks.ts) for anyone who runs it on their own shop.
+
+| Robbery | What it checks | The safeguard it tests | What getting through looks like |
 |---|---|---|---|
-| Price tampering | Pay $0.01 for a full-price item: every price field in the request, under any name, set to a cent; or the currency switched | the server sets the amount ([OWASP WSTG-BUSL-10](https://github.com/OWASP/wstg/blob/master/document/4-Web_Application_Security_Testing/10-Business_Logic/10-Payment_Functionality.md): price and currency tampering) | PayPal is asked for less than the unchanged bag costs, and the shop takes that payment and ships (a shop that refuses to take it is blocked) |
-| Negative quantity | Buy -1, 0.5 or 1,000 of an item, a product that does not exist, or a bag with a negative line | the bag is validated (WSTG-BUSL-10: quantity tampering) | PayPal is asked for less than the goods the shop could ship (a thousand at full price is not a robbery) |
-| Payment nobody approved | Claim payment for an order no buyer approved | paid means captured by PayPal ([Orders v2](https://developer.paypal.com/docs/api/orders/v2/)) | an unapproved order marked paid |
-| Approval without payment | Get it shipped before PayPal takes the money | fulfil only a COMPLETED capture (a PENDING capture is not tested; see Limits) | a label for an order that was approved but never captured |
-| Declined card | Get it shipped after the card is declined | check the capture's result ([negative testing](https://developer.paypal.com/tools/sandbox/negative-testing/): `INSTRUMENT_DECLINED`) | a label after PayPal's 422 |
-| Forged webhook | Fake PayPal's "payment completed" message, naming the unpaid order by every reference a shop might use | [verify every webhook](https://developer.paypal.com/api/rest/webhooks/rest/) | an unsigned or edited event changes an order |
-| Webhook replay | Resend PayPal's real message to ship again | handle each event once | two labels for one payment |
-| Late event | Send "approved" after "completed" | orders never move backwards | a paid order drops back |
-| Double click | Capture twice at once | [`PayPal-Request-Id`](https://developer.paypal.com/api/rest/reference/idempotency/) and fulfilling once | two labels from two simultaneous captures (if neither capture goes through, the robbery says it could not run) |
-| Secret in the browser | Look for the PayPal secret or an access token in every page, script and answer | secrets stay on the server | the client secret, `id:secret` in base64, or a PayPal access token reaches the browser |
+| Price tampering | a full-price item cannot be bought for less | the server sets the amount ([OWASP WSTG-BUSL-10](https://github.com/OWASP/wstg/blob/master/document/4-Web_Application_Security_Testing/10-Business_Logic/10-Payment_Functionality.md): price and currency tampering) | PayPal is asked for less than the unchanged bag costs, and the shop takes that payment and ships (a shop that refuses to take it is blocked) |
+| Negative quantity | a bad quantity or unknown item is refused | the bag is validated (WSTG-BUSL-10: quantity tampering) | PayPal is asked for less than the goods the shop could ship (a thousand at full price is not a robbery) |
+| Payment nobody approved | an unapproved order is never treated as paid | paid means captured by PayPal ([Orders v2](https://developer.paypal.com/docs/api/orders/v2/)) | an unapproved order marked paid |
+| Approval without payment | nothing ships before PayPal takes the money | fulfil only a COMPLETED capture (a PENDING capture is not tested; see Limits) | a label for an order that was approved but never captured |
+| Declined card | a declined payment never ships | check the capture's result ([negative testing](https://developer.paypal.com/tools/sandbox/negative-testing/): `INSTRUMENT_DECLINED`) | a label after PayPal's 422 |
+| Forged webhook | only PayPal's real notifications are trusted | [verify every webhook](https://developer.paypal.com/api/rest/webhooks/rest/) | an unsigned or edited event changes an order |
+| Webhook replay | one payment ships only once | handle each event once | two labels for one payment |
+| Late event | a completed payment cannot be undone by a stale event | orders never move backwards | a paid order drops back |
+| Double click | one order ships only once | [`PayPal-Request-Id`](https://developer.paypal.com/api/rest/reference/idempotency/) and fulfilling once | two labels from two simultaneous captures (if neither capture goes through, the robbery says it could not run) |
+| Secret in the browser | no PayPal secret reaches the browser | secrets stay on the server | the client secret, `id:secret` in base64, or a PayPal access token reaches the browser |
 
 The rules the coding agent is given are in [`plugin/skills/checkout-hardening`](plugin/skills/checkout-hardening/SKILL.md); the robberies are in [`src/attacks.ts`](src/attacks.ts), the thief in [`src/thief.ts`](src/thief.ts), the books in [`src/books.ts`](src/books.ts).
 
-**Each robbery catches its own mistake.** [`test/attacks/one-bug.test.ts`](test/attacks/one-bug.test.ts) takes [Copper Kettle](shops/copper-kettle/README.md), a careful shop that blocks all ten, and makes ten copies with exactly one well-known mistake each; each copy is robbed by the robbery for that mistake. Three more copies hold mistakes an independent review found that an earlier version of the robberies missed (a unit price the page sends under its own field name, a webhook handler that finds the order by `invoice_id` and checks no signature, an access token handed to the page), and each is now caught. Two correct shops (one that sells a thousand at the catalog price, one that adds $5 shipping in PayPal's breakdown) must pass, and a shop that captures orders it created to authorize must fail. One last copy has a mistake none of the ten can see (a capture route that lets a request field choose which order a payment pays for): the ten all pass it, and the AI thief's own robbery, recorded from a real run and replayed in CI, gets one payment to pay for two orders.
+**Each robbery catches its own mistake.** [`test/attacks/one-bug.test.ts`](test/attacks/one-bug.test.ts) takes [Copper Kettle](shops/copper-kettle/README.md), a careful shop that blocks all ten, and makes ten copies with exactly one well-known mistake each; each copy is robbed by the robbery for that mistake. Three more copies hold mistakes an independent review found that an earlier version of the robberies missed, and each is now caught. Two correct shops (one that sells a thousand at the catalog price, one that adds $5 shipping in PayPal's breakdown) must pass, and a shop that captures orders it created to authorize must fail. One last copy has a mistake none of the ten can see: the ten all pass it, and the AI thief's own robbery, recorded from a real run and replayed in CI, catches it — one payment paying for two orders.
 
 ## Use it in CI
 
