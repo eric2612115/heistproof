@@ -18,7 +18,7 @@ const CHECKED = {
   "fogline-after": "The coding agent's checkout, checked again",
   "copper-kettle": "Copper Kettle, careful, built differently",
   "copper-kettle-binding": "Copper Kettle with one planted mistake only the AI thief can see",
-  "proshop-v2-before": "ProShop v2, a real open-source shop (400+ forks), before its author's 2023 fix",
+  "proshop-v2-before": "ProShop v2, a real open-source shop (400+ forks), before its maintainer's 2023 fix",
 };
 const rounds = (n) => (n === 1 ? "1 round" : `${n} rounds`);
 function checkout(mode, template, fixes) {

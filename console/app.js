@@ -111,7 +111,7 @@ const SHOPS = {
   "copper-kettle": "Copper Kettle, a second shop built differently on purpose",
   "copper-kettle-binding": "Copper Kettle with one planted mistake, a test shop",
   "copper-kettle-bug-binding": "Copper Kettle with one planted mistake, a test shop",
-  "proshop-v2-before": "an open-source shop, as it was before its author's 2023 fix",
+  "proshop-v2-before": "an open-source shop, as it was before its maintainer's 2023 fix",
 };
 /** "About this shop", for the sample shops that carry planted mistakes on purpose. */
 const HAND_NOTE = (t, why) => `About this shop: ${t} is a sample PayPal checkout written by hand with planted mistakes (it ${why}). It is kept in shops/ as a test target, not as a survey of real shops.`;
@@ -341,7 +341,7 @@ function renderFindings() {
   const rec = (id) => RUNS.find((r) => r.id === id && r.recorded !== false && r.verdict);
   const cards = [];
   const before = rec("2026-11-08-proshop-before");
-  if (before?.ran) cards.push(findCard(before, "Open-source shop · before its author's 2023 fix", before.robbed, before.total, before.robbed > 0, before.robbed === 1 ? "robbery got through" : "robberies got through"));
+  if (before?.ran) cards.push(findCard(before, "Open-source shop · before its maintainer's 2023 fix", before.robbed, before.total, before.robbed > 0, before.robbed === 1 ? "robbery got through" : "robberies got through"));
   const agent = rec("2026-11-08-full-run");
   if (agent?.thief?.tried) cards.push(findCard(agent, "AI thief · on the agent-written checkout", agent.thief.robbed, agent.thief.tried, agent.thief.robbed > 0, agent.thief.robbed === 1 ? "invented robbery worked" : "invented robberies worked"));
   const live = rec("2026-11-08-thief-binding");
