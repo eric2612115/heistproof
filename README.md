@@ -4,6 +4,8 @@
 
 **Add PayPal. Then try to rob it.**
 
+**In:** a PayPal checkout, yours or one its AI adds. **Out:** ship or don't ship, decided by PayPal's own records, not by the AI.
+
 Heistproof robs a PayPal checkout before anyone else can. It buys from the running shop for real in PayPal's sandbox, tries ten scripted robberies, lets an AI thief invent robberies of its own, and reconciles the shop's books with PayPal's own records. Point it at a checkout you already have, or let its AI coding agent add PayPal, Venmo and Pay Later and fix whatever gets through. Either way the checkout ships only when every robbery fails: a branch with the evidence report, and a pull request when the shop is on GitHub.
 
 It is for anyone shipping a PayPal checkout that an AI wrote or changed: shop owners who build with AI, agencies that hand checkouts to clients, and teams that want a gate in CI.
@@ -20,9 +22,9 @@ It is for anyone shipping a PayPal checkout that an AI wrote or changed: shop ow
 
 Every claim below is backed by a recorded run in [`runs/`](runs/) and a row in [`docs/claims.md`](docs/claims.md) (claim → test → log → status). Where this sits against the other entries is in [`docs/prior-art.md`](docs/prior-art.md). Reviewers can start there.
 
-**Proof of work:** during the hackathon Heistproof found new problems in two different real codebases — a widely-copied open-source shop (disclosed privately) and PayPal SDK tooling (reported upstream) — not in samples we wrote ourselves.
+**Proof of work:** during the hackathon Heistproof found two new problems in real third-party code, one in a widely copied open-source shop and one in PayPal SDK tooling, not in samples we wrote ourselves. Both were reported to their maintainers; the hackathon organizers may request the details.
 
-- **It finds real bugs in live third-party code, not only our own samples.** In PayPal's sandbox it caught a gap in APIMatic's PayPal SDK — the capture call went out with no `Content-Type`, so PayPal answered `415` while the agent's own tests passed — reported as [issue #120](https://github.com/context-plugins/plugin-marketplace/issues/120) and reproducible on any sandbox app with `npm run repro:415`. On [ProShop](https://github.com/bradtraversy/proshop-v2), a shop forked over 400 times, it reproduced the money-handling bugs the author fixed in 2023 ([run](runs/2026-11-08-proshop-before/REPORT.md)) and found one the current version still has (disclosed privately to the maintainer; details held until it is patched, and the hackathon organizers may request them). Details: [`docs/claims.md`](docs/claims.md) (C13, C21).
+- **It finds real bugs in live third-party code, not only our own samples.** On [ProShop](https://github.com/bradtraversy/proshop-v2), a shop forked over 400 times, it reproduced the money-handling bugs the author fixed in 2023 ([run](runs/2026-11-08-proshop-before/REPORT.md)). In every full run, the checkout the coding agent wrote passed its own tests, yet PayPal's real sandbox refused its first payment; the real purchase caught it and the agent fixed it in one round ([run](runs/2026-11-08-full-run/REPORT.md)). Details: [`docs/claims.md`](docs/claims.md) (C13, C21, C22).
 - **The same robberies on three kinds of checkout, in PayPal's real sandbox.** A hand-written checkout with planted mistakes was robbed 8 ways out of 10, and its books stopped matching PayPal's ([run](runs/2026-11-08-afternoon-robbed/REPORT.md)). The checkout Heistproof's coding agent wrote blocked all 10 and everything the AI thief invented ([full run](runs/2026-11-08-full-run/REPORT.md)). A hand-written checkout that asked PayPal for $4,900 for a $49 bag and shipped a hoodie for one cent was fixed by the agent in one round, then blocked all 10 ([run](runs/2026-11-08-naive-hardened/REPORT.md)).
 - **Heistproof does not assume AI code is unsafe; it tests a checkout either way.** The same model with no plugin and no PayPal skills wrote a checkout that was safe at the first try ([run](runs/2026-11-08-ai-alone/REPORT.md)).
 - **Each robbery catches its own mistake, and the AI thief catches more.** Ten copies of a careful shop, each with one planted mistake, are each robbed by the robbery for that mistake; copies with mistakes an earlier version missed are caught too, and correct shops (one that sells a thousand at full price, one that adds shipping) are not flagged. An eleventh mistake, invisible to all ten, is caught by the AI thief's own robbery. CI runs all of it on every push ([`test/attacks/one-bug.test.ts`](test/attacks/one-bug.test.ts)).
@@ -83,7 +85,7 @@ For the real sandbox you also need `cloudflared` so PayPal can deliver webhooks 
 ## Why it matters
 
 - **AI agents are starting to shop and pay.** Traffic from AI assistants to US retail sites grew 393% year over year in Q1 2026 (Adobe, reported by [Decrypt](https://decrypt.co/364733/ai-traffic-us-retailers-jumps-q1-agentic-shoppers-outspend-humans)), and PayPal's [Agent Ready](https://developer.paypal.com/agentic-commerce-services/about) lets merchants take payments from AI assistants. A mistake an automated shopper finds, it can repeat at machine speed.
-- **The checkouts are written by AI too, and the same AI does not always write the same checkout.** In our recordings the same model on the same shop was safe at the first try when it worked alone, and was refused by PayPal's real sandbox when it followed APIMatic's plugin, although its own tests passed both times. A verdict has to come from robbing the checkout, not from reading it.
+- **The checkouts are written by AI too, and the same AI does not always write the same checkout.** In our recordings the same model on the same shop was safe at the first try when it worked alone, and was refused by PayPal's real sandbox on its first payment in the full runs, although its own tests passed both times. A verdict has to come from robbing the checkout, not from reading it.
 - **PayPal already provides every safeguard; the question is whether the shop uses it.** Server-side orders, capture status, [`PayPal-Request-Id`](https://developer.paypal.com/api/rest/reference/idempotency/), [webhook signature verification](https://developer.paypal.com/api/rest/webhooks/rest/), [negative testing](https://developer.paypal.com/tools/sandbox/negative-testing/). None of the robberies is a hole in PayPal: PayPal charges what the merchant's server asks it to charge. Each robbery checks that one safeguard is used.
 
 ## How it works
@@ -200,7 +202,7 @@ The relay and the bridge hold the key. The agent gets only their local address a
 
 ## APIMatic's PayPal Context Plugin
 
-The plugin (`paypal@context-plugins`, MIT) points the coding agent at the SDK map inside APIMatic's PayPal TypeScript SDK and makes it plan before it codes. In the full run the agent loaded `typescript-integrate-paypal` first, then the plugin's getting-started, error-handling, client-initialization, authentication, calling-endpoints, models, configuration-resilience and testing skills, installed the SDK, wrote `paypal-plan.md`, and only then wrote PayPal code. Heistproof found one place where the plugin's guidance and the SDK meet PayPal badly: the capture call's optional body, described above. The integration skill's rule (leave out what nothing requires) and the calling skill's warning (an optional-looking body is not permission to omit it) point different ways; the agent followed the rule, the SDK sent no `Content-Type`, and PayPal's sandbox refused the capture. Naming capture explicitly in the skill, or having the SDK send `{}` with a JSON content type when the body is left out, would close it. A baseline run with no plugin and no skills is recorded too, so the plugin's effect is not taken on faith.
+The plugin (`paypal@context-plugins`, MIT) points the coding agent at the SDK map inside APIMatic's PayPal TypeScript SDK and makes it plan before it codes. In the full run the agent loaded `typescript-integrate-paypal` first, then the plugin's getting-started, error-handling, client-initialization, authentication, calling-endpoints, models, configuration-resilience and testing skills, installed the SDK, wrote `paypal-plan.md`, and only then wrote PayPal code. A baseline run with no plugin and no skills is recorded too, so the plugin's effect is not taken on faith.
 
 ## Security
 
@@ -233,6 +235,10 @@ The coding agent runs in a work folder outside this repository, and the model ke
 - `HEISTPROOF_HEADED=1` shows the browser. `HEISTPROOF_PORT_BASE` moves every local port (default 4410).
 - `HEISTPROOF_SHARED_ENV=<file>` reads settings from a file shared by several projects, and `HEISTPROOF_BUYERS_FILE=<file>` reads sandbox buyers from a JSON file. Both are optional.
 - `node scripts/build-site.mjs <dir>` builds the static console with every recorded run; `node scripts/export-run.mjs <run> <name>` turns a local run into a committed recording (refusing any file that holds a secret).
+
+## Built during the hackathon
+
+All code in this repository was written during the PayPal AI Hackathon (first commit 2026-11-07), including the sample shops and the console. Reused, not written by us: APIMatic's PayPal Context Plugin and TypeScript SDK (fetched at run time), Playwright, and ProShop v2 (MIT), fetched as a test subject and left unchanged.
 
 ## License
 
