@@ -152,9 +152,9 @@ export function failures(r: Round): Array<{ title: string; detail: string }> {
     out.push({ title: "The real purchase did not complete correctly", detail: `${r.prove.verdict}${told ? ` ${told}.` : ""}` });
   }
   if (r.webhook === "refused" && !r.offline) out.push({ title: "The shop refused PayPal's genuine PAYMENT.CAPTURE.COMPLETED webhook", detail: `A genuine, signed delivery (event ${r.webhookEvent}) to the shop's webhook route did not get a 2xx answer.` });
-  for (const a of r.attacks) if (a.verdict === "error") out.push({ title: `Robbery "${a.title}" could not run`, detail: a.summary });
-  for (const a of r.attacks) if (a.verdict === "robbed") out.push({ title: `Robbery "${a.title}" worked (${a.what}; rules ${a.rule.join(", ")})`, detail: a.summary });
-  for (const p of r.thief?.plans ?? []) if (p.verdict === "robbed") out.push({ title: `The AI thief got through: ${p.name}`, detail: `${p.idea} What it did: ${p.steps.map((s) => `${JSON.stringify(s.step)} -> ${s.result}`).join("; ")}. ${p.summary}` });
+  for (const a of r.attacks) if (a.verdict === "error") out.push({ title: `Check "${a.title}" could not run`, detail: a.summary });
+  for (const a of r.attacks) if (a.verdict === "robbed") out.push({ title: `Check "${a.title}" failed: the shop accepted it (rules ${a.rule.join(", ")})`, detail: a.summary });
+  for (const p of r.thief?.plans ?? []) if (p.verdict === "robbed") out.push({ title: `An AI-designed check failed: ${p.name}`, detail: `${p.idea} What it did: ${p.steps.map((s) => `${JSON.stringify(s.step)} -> ${s.result}`).join("; ")}. ${p.summary}` });
   if (r.books?.mismatches.length) out.push({ title: "The shop's books do not match PayPal's", detail: r.books.mismatches.map((m) => `order ${m.order}: ${m.problem}`).join("; ") });
   return out;
 }

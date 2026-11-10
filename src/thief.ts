@@ -12,7 +12,8 @@ import type { WebhookTap } from "./webhooks/tap.ts";
 import type { Run } from "./events.ts";
 
 /**
- * The AI thief: after the ten scripted robberies, a model plays a dishonest shopper or a rogue shopping agent. It sees only
+ * The AI thief: after the ten scripted robberies, a model designs payment-integrity test cases of its own (the prompt is
+ * worded as a developer's negative test, so providers' safety filters do not mistake it for a request to steal). It sees only
  * what any visitor can see (the storefront's scripts, the requests the shop's own page sent during the real purchase, and
  * the shape of the PayPal events the shop receives), invents robberies of its own, and Heistproof carries them out against
  * the shop, step by step, through a small fixed set of moves that can only reach this shop. The model never decides who
@@ -140,25 +141,25 @@ async function whatAVisitorSees(ctx: ThiefContext): Promise<string> {
     "PayPal events the shop received (you may resend one, edited or not; you cannot sign a new one):",
     ...deliveries.map((d) => `- ${d.event}: resource ${d.sample} (shop answered ${d.shopAnswered})`),
     "",
-    "The ten known robberies already tried, and how each ended:",
-    ...ctx.scripted.map((a) => `- ${a.title} (${a.what}): ${a.verdict}`),
+    "The ten standard test cases already run, and their results:",
+    ...ctx.scripted.map((a) => `- ${a.title}: ${a.verdict === "robbed" ? "failed (the shop accepted it)" : a.verdict === "held" ? "passed (the shop refused it)" : a.verdict}`),
   ];
   return redact(parts.join("\n"));
 }
 
-const SYSTEM = `You are the AI thief in Heistproof, a security test the shop's owner runs on their own computer against PayPal's sandbox (test money only, nothing real is taken). You play a dishonest shopper or a rogue AI shopping agent.
-Goal: get goods without paying their full price, get more parcels than you paid for, or make the shop treat an order as paid when PayPal never captured the money.
-You only know what any visitor can see. Ten well-known robberies were already tried; invent different ones: other fields, other routes the scripts mention, other orders of steps, combinations.
+const SYSTEM = `You design negative test cases for a payment-integrity check that a shop's own developers run on their own computer against PayPal's sandbox (test money only).
+The rule under test: the shop must never record an order as paid, or ship more than was paid for, unless PayPal holds a completed capture that covers exactly that order at its full price.
+You see only what any visitor's browser sees. Ten standard test cases have already run; propose different ones that could reveal a mistake those ten would miss: other fields, other routes the scripts mention, other orders of steps, combinations.
 Answer with one JSON object and nothing else.`;
 
 function instructions(n: number): string {
-  return `Write exactly ${n} robbery plans as {"plans":[...]}. Each plan: {"name": short title, "idea": the mistake you hope the shop made, "expect": what you would get if it works, "steps": [...]} with at most ${MAX_STEPS} steps from these moves:
+  return `Write exactly ${n} test cases as {"plans":[...]}. Each test case: {"name": short title, "idea": the implementation mistake it checks for, "expect": what the shop's records would show if that mistake is present, "steps": [...]} with at most ${MAX_STEPS} steps from these moves:
 - {"do":"request","method":"POST","path":"/a/route/the/scripts/use","body":{...},"headers":{"x-...":"..."},"times":1,"together":false,"save":"a"}: a request to this shop as the shopper (same cookies; the page's own headers are added for you). times up to 3; together:true sends them at the same moment.
-- {"do":"buy","tamper":{...},"blockCapture":false,"save":"b"}: a real purchase in the shopper's browser; the buyer approves on PayPal's page. tamper is merged into the create-order request body the page sends. blockCapture:true stops the page's capture request after approval.
+- {"do":"buy","tamper":{...},"blockCapture":false,"save":"b"}: a real purchase in the shopper's browser; the buyer approves on PayPal's page. tamper holds fields that replace values in the create-order request body the page sends. blockCapture:true stops the page's capture request after approval.
 - {"do":"webhook","event":"PAYMENT.CAPTURE.COMPLETED","edit":{"resource.custom_id":"..."},"signed":true,"times":1}: resend a real PayPal event the shop received (PAYMENT.CAPTURE.COMPLETED or CHECKOUT.ORDER.APPROVED), with edits at dotted paths. signed:true keeps PayPal's original signature headers (an edited body no longer matches them); signed:false sends none.
 - {"do":"wait","ms":1000}
 Values may use placeholders: {{legit.paypalOrderId}}, {{legit.captureId}}, {{legit.shopOrderId}}, {{legit.bagTotal}}, {{a.status}} and {{a.body.<field>}} for a saved request's answer, {{b.paypalOrderId}}, {{b.captureId}}, {{b.shopOrderId}} for a saved purchase.
-Paths must be routes of this shop (starting with /). Do not repeat the ten known robberies as they were run.`;
+Paths must be routes of this shop (starting with /). Do not repeat the ten standard test cases as they were run.`;
 }
 
 /**

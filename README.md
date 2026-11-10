@@ -172,6 +172,8 @@ The offline stand-in ([`src/paypal/stand-in.ts`](src/paypal/stand-in.ts)) covers
 
 ## Bring any model
 
+**Use your own AI key; nothing from us is needed.** Only two things call a model: `npm run heist` (the coding agent adds PayPal and fixes what fails) and the AI thief's live test cases. `npm run demo`, `npm run test:attacks`, `npm run check` and the console run without a key; the AI thief's recorded cases replay with no key (`npm run test:attacks`, or `--thief-plans=<file>`). Set a key with `npm run setup -- ai`, or add one line to `.env.local`, for example `ANTHROPIC_API_KEY=...`; `npm run doctor` shows which model will be used. With several keys set, `HEISTPROOF_PROVIDER` picks one (`anthropic`, `openai`, `gemini`, `meta`, `openrouter`, `deepseek`). Each model writes code and invents test cases its own way, so live AI steps differ from run to run; the recorded runs in `runs/` show exactly what happened in ours.
+
 The agent harness is always Claude Code, because that is where APIMatic's plugin lives; the model is whatever key you give `npm run setup`:
 
 | Key | Provider | How it is called |

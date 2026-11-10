@@ -5,7 +5,7 @@ Add PayPal checkout to this shop so shoppers can pay with PayPal, Venmo or Pay L
 Use your skills, in this order:
 1. APIMatic's PayPal Context Plugin for every server-side PayPal API call. Load paypal:typescript-integrate-paypal first and follow its plan-first workflow: install the SDK it names, read its SDK map, and write paypal-plan.md with the contract sheet before you edit any project file. The plugin's TypeScript skills also apply to this JavaScript (ESM) project.
 2. heistproof:paypal-web-sdk-v6 for the browser buttons (PayPal, Venmo, Pay Later) and Pay Later messaging.
-3. heistproof:checkout-hardening for the rules an attacker will test as soon as you finish.
+3. heistproof:checkout-hardening for the payment-safety rules the test harness checks as soon as you finish.
 
 Contract with the test harness (keep these names exactly):
 - The server reads PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET and PAYPAL_WEBHOOK_ID from the environment, and the PayPal REST base URL from PAYPAL_API_BASE (default https://api-m.sandbox.paypal.com). Every PayPal REST call, including the OAuth token and webhook verification, goes to PAYPAL_API_BASE; pass it to the SDK as its base URL override.
@@ -28,9 +28,9 @@ Contract with the test harness (keep these names exactly): the server reads PAYP
 Finish with a short summary of what you changed.`;
 
 export function fixPrompt(failures: Array<{ title: string; detail: string }>): string {
-  return `Heistproof ran your checkout against the PayPal sandbox and attacked it. These checks failed:
+  return `The test harness ran your checkout against the PayPal sandbox. These payment-safety checks failed:
 
 ${failures.map((f, i) => `${i + 1}. ${f.title}\n   ${f.detail}`).join("\n")}
 
-Fix the code so a real shopper's purchase completes and every attack fails, without breaking the card checkout or the PayPal buttons. PayPal's own answers above (status, issue, debug id) come from the real sandbox and win over what your tests assumed. Reload heistproof:checkout-hardening and the APIMatic PayPal skills if you need them, update paypal-plan.md if a contract changes, keep npm test green, and add a test for each fix. Do not commit. Finish with what you changed for each failure.`;
+Fix the code so a real shopper's purchase completes and every check passes, without breaking the card checkout or the PayPal buttons. PayPal's own answers above (status, issue, debug id) come from the real sandbox and win over what your tests assumed. Reload heistproof:checkout-hardening and the APIMatic PayPal skills if you need them, update paypal-plan.md if a contract changes, keep npm test green, and add a test for each fix. Do not commit. Finish with what you changed for each failure.`;
 }
