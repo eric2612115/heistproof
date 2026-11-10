@@ -38,8 +38,19 @@ function cleanSchema(schema: unknown): unknown {
   return out;
 }
 
+/**
+ * Provider data a tool call must carry back on the next turn, keyed by tool call id. Gemini 3 models return a
+ * `thought_signature` in `extra_content.google` on each step's function call and refuse the next request (400 "Function
+ * call is missing a thought_signature") unless it comes back unchanged. Claude Code keeps only id, name and input, so the
+ * bridge remembers the rest.
+ */
+export type Signatures = Map<string, unknown>;
+const isGemini = (upstream: string) => /generativelanguage\.googleapis\.com/.test(upstream);
+// Google's documented placeholder for a function call whose signature is not known (for example, history from elsewhere).
+const GEMINI_SKIP_SIGNATURE = { google: { thought_signature: "skip_thought_signature_validator" } };
+
 /** Anthropic request -> Chat Completions request. */
-export function toChat(req: AnthropicRequest, maxOutputTokens: number, upstream: string): Record<string, unknown> {
+export function toChat(req: AnthropicRequest, maxOutputTokens: number, upstream: string, signatures?: Signatures): Record<string, unknown> {
   const messages: Array<Record<string, unknown>> = [];
   const system = typeof req.system === "string" ? req.system : textOf(req.system ?? []);
   if (system) messages.push({ role: "system", content: system });
@@ -47,9 +58,14 @@ export function toChat(req: AnthropicRequest, maxOutputTokens: number, upstream:
     const blocks: Block[] = typeof m.content === "string" ? [{ type: "text", text: m.content }] : m.content;
     if (m.role === "assistant") {
       const text = blocks.filter((b) => b.type === "text").map((b) => b.text).join("");
-      const calls = blocks
+      const calls: Array<Record<string, unknown>> = blocks
         .filter((b) => b.type === "tool_use")
-        .map((b) => ({ id: b.id, type: "function", function: { name: b.name, arguments: JSON.stringify(b.input ?? {}) } }));
+        .map((b) => {
+          const extra = signatures?.get(b.id);
+          return { id: b.id, type: "function", function: { name: b.name, arguments: JSON.stringify(b.input ?? {}) }, ...(extra ? { extra_content: extra } : {}) };
+        });
+      // Gemini needs a signature on the first function call of every step; use the documented placeholder if none is known.
+      if (calls.length && isGemini(upstream) && !calls.some((c) => c.extra_content)) calls[0].extra_content = GEMINI_SKIP_SIGNATURE;
       messages.push({ role: "assistant", content: text || (calls.length ? null : ""), ...(calls.length ? { tool_calls: calls } : {}) });
       continue;
     }
@@ -84,7 +100,7 @@ export function toChat(req: AnthropicRequest, maxOutputTokens: number, upstream:
 const STOP: Record<string, string> = { stop: "end_turn", tool_calls: "tool_use", function_call: "tool_use", length: "max_tokens", content_filter: "end_turn" };
 
 /** Chat Completions response -> Anthropic message (non-streaming). */
-export function fromChat(res: any, model: string): Record<string, unknown> {
+export function fromChat(res: any, model: string, signatures?: Signatures): Record<string, unknown> {
   const choice = res?.choices?.[0] ?? {};
   const content: Block[] = [];
   if (choice.message?.content) content.push({ type: "text", text: String(choice.message.content) });
@@ -95,7 +111,9 @@ export function fromChat(res: any, model: string): Record<string, unknown> {
     } catch {
       input = { _raw: c.function?.arguments };
     }
-    content.push({ type: "tool_use", id: c.id || `toolu_${randomUUID().slice(0, 12)}`, name: c.function?.name, input });
+    const id = c.id || `toolu_${randomUUID().slice(0, 12)}`;
+    if (c.extra_content) signatures?.set(id, c.extra_content);
+    content.push({ type: "tool_use", id, name: c.function?.name, input });
   }
   const hasTools = content.some((b) => b.type === "tool_use");
   return {
@@ -111,13 +129,14 @@ export function fromChat(res: any, model: string): Record<string, unknown> {
 }
 
 /** Streams Chat Completions chunks out as Anthropic server-sent events. */
-async function pipeStream(upstream: Response, res: http.ServerResponse, model: string) {
+async function pipeStream(upstream: Response, res: http.ServerResponse, model: string, signatures?: Signatures) {
   const send = (event: string, data: unknown) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
   send("message_start", { type: "message_start", message: { id: `msg_${randomUUID().replace(/-/g, "").slice(0, 24)}`, type: "message", role: "assistant", model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } } });
   let index = -1;
   let open: "text" | "tool" | null = null;
   const toolBlocks = new Map<number, number>(); // upstream tool index -> our block index
+  const toolIds = new Map<number, string>(); // upstream tool index -> the tool_use id we sent
   let finish: string | null = null;
   let usage = { input_tokens: 0, output_tokens: 0 };
   let sawTool = false;
@@ -166,8 +185,11 @@ async function pipeStream(upstream: Response, res: http.ServerResponse, model: s
           open = "tool";
           sawTool = true;
           toolBlocks.set(key, index);
-          send("content_block_start", { type: "content_block_start", index, content_block: { type: "tool_use", id: tc.id || `toolu_${randomUUID().slice(0, 12)}`, name: tc.function?.name ?? "", input: {} } });
+          const id = tc.id || `toolu_${randomUUID().slice(0, 12)}`;
+          toolIds.set(key, id);
+          send("content_block_start", { type: "content_block_start", index, content_block: { type: "tool_use", id, name: tc.function?.name ?? "", input: {} } });
         }
+        if (tc.extra_content && toolIds.has(key)) signatures?.set(toolIds.get(key)!, tc.extra_content);
         const args = tc.function?.arguments;
         if (args) send("content_block_delta", { type: "content_block_delta", index: toolBlocks.get(key), delta: { type: "input_json_delta", partial_json: args } });
       }
@@ -186,6 +208,7 @@ export async function startBridge(opts: BridgeOptions): Promise<{ url: string; t
   const maxOut = opts.maxOutputTokens ?? 16_000;
   // Only the run that started the bridge may use it (Claude Code sends the token as its API key).
   const token = opts.token ?? newToken();
+  const signatures: Signatures = new Map();
   const server = http.createServer(async (req, res) => {
     if (!authorized(req, token)) {
       res.writeHead(401, { "content-type": "application/json" });
@@ -211,7 +234,7 @@ export async function startBridge(opts: BridgeOptions): Promise<{ url: string; t
       return res.end(JSON.stringify({ input_tokens: Math.ceil(chars / 4) }));
     }
     if (!path.endsWith("/messages")) return fail(404, `unsupported path ${path}`);
-    const chat = toChat(body, maxOut, base);
+    const chat = toChat(body, maxOut, base, signatures);
     let upstream: Response;
     try {
       upstream = await fetch(`${base}/chat/completions`, {
@@ -226,10 +249,10 @@ export async function startBridge(opts: BridgeOptions): Promise<{ url: string; t
       const text = await upstream.text();
       return fail(upstream.status, `upstream ${upstream.status}: ${text.slice(0, 800)}`);
     }
-    if (body.stream) return pipeStream(upstream, res, body.model);
+    if (body.stream) return pipeStream(upstream, res, body.model, signatures);
     const json = await upstream.json();
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify(fromChat(json, body.model)));
+    res.end(JSON.stringify(fromChat(json, body.model, signatures)));
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = (server.address() as { port: number }).port;

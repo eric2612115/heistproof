@@ -71,3 +71,22 @@ test("streams text and tool calls as Anthropic server-sent events", async () => 
     upstream.close();
   }
 });
+
+test("carries Gemini's thought signature from a tool call to the next request", () => {
+  const signatures = new Map<string, unknown>();
+  const sig = { google: { thought_signature: "sig-123" } };
+  const msg = fromChat({ choices: [{ message: { tool_calls: [{ id: "call_1", type: "function", function: { name: "Glob", arguments: '{"pattern":"*"}' }, extra_content: sig }] }, finish_reason: "tool_calls" }] }, "gemini-3.8-flash", signatures) as any;
+  assert.equal(msg.content[0].id, "call_1");
+  const gemini = "https://generativelanguage.googleapis.com/v1beta/openai";
+  const next = toChat({ model: "gemini-3.8-flash", messages: [
+    { role: "user", content: "list files" },
+    { role: "assistant", content: [{ type: "tool_use", id: "call_1", name: "Glob", input: { pattern: "*" } }] },
+    { role: "user", content: [{ type: "tool_result", tool_use_id: "call_1", content: "README.md" }] },
+  ] }, 1000, gemini, signatures) as any;
+  assert.deepEqual(next.messages[1].tool_calls[0].extra_content, sig);
+  // An unknown call to Gemini gets Google's placeholder; other providers get nothing extra.
+  const unknown = toChat({ model: "m", messages: [{ role: "assistant", content: [{ type: "tool_use", id: "x", name: "Read", input: {} }] }] }, 1000, gemini, new Map()) as any;
+  assert.equal(unknown.messages[0].tool_calls[0].extra_content.google.thought_signature, "skip_thought_signature_validator");
+  const openai = toChat({ model: "m", messages: [{ role: "assistant", content: [{ type: "tool_use", id: "x", name: "Read", input: {} }] }] }, 1000, "https://api.openai.com/v1", new Map()) as any;
+  assert.equal(openai.messages[0].tool_calls[0].extra_content, undefined);
+});
